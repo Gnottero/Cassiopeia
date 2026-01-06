@@ -1,0 +1,9 @@
+{
+    "command.cassiopeia.structure.saved": "Structure '%s' saved successfully.",
+    "command.cassiopeia.structure.save.failed": "Failed to save structure: %s",
+    "command.cassiopeia.structure.not_found": "Structure '%s' not found.",
+    "command.cassiopeia.structure.verified": "Structure verified!",
+    "command.cassiopeia.structure.mismatch": "Structure mismatch.",
+    "block.cassiopeia.tier_1_controller": "Tier 1 Controller",
+    "item.cassiopeia.tier_1_controller": "Tier 1 Controller"
+}

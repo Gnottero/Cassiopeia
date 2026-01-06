@@ -1,0 +1,16 @@
+{
+	"required": true,
+	"package": "com.gnottero.cassiopeia.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [],
+	"client": [
+		"client.LevelRendererMixin",
+		"client.CameraAccessor"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	},
+	"overwrites": {
+		"requireAnnotations": true
+	}
+}

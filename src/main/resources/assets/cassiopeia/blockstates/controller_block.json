@@ -1,0 +1,19 @@
+{
+    "variants": {
+        "facing=north": {
+            "model": "cassiopeia:block/controller_block"
+        },
+        "facing=east": {
+            "model": "cassiopeia:block/controller_block",
+            "y": 90
+        },
+        "facing=south": {
+            "model": "cassiopeia:block/controller_block",
+            "y": 180
+        },
+        "facing=west": {
+            "model": "cassiopeia:block/controller_block",
+            "y": 270
+        }
+    }
+}
