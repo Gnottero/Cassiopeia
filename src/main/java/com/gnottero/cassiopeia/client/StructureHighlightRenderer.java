@@ -29,7 +29,8 @@ import java.util.List;
 public class StructureHighlightRenderer {
 
     private static final List<Highlight> highlights = new ArrayList<>();
-    private static final long HIGHLIGHT_DURATION_MS = 5000; // 5 seconds
+    private static final long HIGHLIGHT_DURATION_MS = 3000; // 5 seconds
+    private static final float GHOST_BLOCK_ALPHA_PERCENTAGE = 0.75f; // Alpha value (0.0-1.0) for ghost blocks
     private static long highlightStartTime = 0;
 
     public static void init() {
@@ -86,7 +87,8 @@ public class StructureHighlightRenderer {
         Vec3 camPos = ((CameraAccessor) camera).cassiopeia$getPosition();
 
         // Wrap to force translucent rendering using context consumers
-        MultiBufferSource ghostSource = type -> consumers.getBuffer(RenderTypes.translucentMovingBlock());
+        MultiBufferSource ghostSource = type -> new TranslucentVertexConsumer(
+                consumers.getBuffer(RenderTypes.translucentMovingBlock()), (int) (GHOST_BLOCK_ALPHA_PERCENTAGE * 255));
 
         for (Highlight highlight : highlights) {
             BlockPos pos = highlight.pos;
@@ -176,6 +178,67 @@ public class StructureHighlightRenderer {
 
     public static List<Highlight> getHighlights() {
         return highlights;
+    }
+
+    private static class TranslucentVertexConsumer implements com.mojang.blaze3d.vertex.VertexConsumer {
+        private final com.mojang.blaze3d.vertex.VertexConsumer delegate;
+        private final int alpha;
+
+        public TranslucentVertexConsumer(com.mojang.blaze3d.vertex.VertexConsumer delegate, int alpha) {
+            this.delegate = delegate;
+            this.alpha = alpha;
+        }
+
+        @Override
+        public com.mojang.blaze3d.vertex.VertexConsumer addVertex(float x, float y, float z) {
+            delegate.addVertex(x, y, z);
+            return this;
+        }
+
+        @Override
+        public com.mojang.blaze3d.vertex.VertexConsumer setColor(int r, int g, int b, int a) {
+            delegate.setColor(r, g, b, (a * alpha) / 255);
+            return this;
+        }
+
+        @Override
+        public com.mojang.blaze3d.vertex.VertexConsumer setColor(int color) {
+            int a = (color >> 24) & 0xFF;
+            int r = (color >> 16) & 0xFF;
+            int g = (color >> 8) & 0xFF;
+            int b = color & 0xFF;
+            return setColor(r, g, b, a);
+        }
+
+        @Override
+        public com.mojang.blaze3d.vertex.VertexConsumer setUv(float u, float v) {
+            delegate.setUv(u, v);
+            return this;
+        }
+
+        @Override
+        public com.mojang.blaze3d.vertex.VertexConsumer setUv1(int u, int v) {
+            delegate.setUv1(u, v);
+            return this;
+        }
+
+        @Override
+        public com.mojang.blaze3d.vertex.VertexConsumer setUv2(int u, int v) {
+            delegate.setUv2(u, v);
+            return this;
+        }
+
+        @Override
+        public com.mojang.blaze3d.vertex.VertexConsumer setNormal(float nx, float ny, float nz) {
+            delegate.setNormal(nx, ny, nz);
+            return this;
+        }
+
+        @Override
+        public com.mojang.blaze3d.vertex.VertexConsumer setLineWidth(float width) {
+            delegate.setLineWidth(width);
+            return this;
+        }
     }
 
     public record Highlight(BlockPos pos, Structure.StructureError.ErrorType type, BlockState expectedState) {
