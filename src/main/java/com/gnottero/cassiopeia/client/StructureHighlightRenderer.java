@@ -11,11 +11,8 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
-import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gizmos.Gizmos;
 import net.minecraft.world.level.block.state.BlockState;
@@ -68,7 +65,6 @@ public class StructureHighlightRenderer {
      * Called during BEFORE_DEBUG_RENDER with proper view matrix applied.
      */
     private static void renderGhostBlocks(WorldRenderContext context) {
-        System.out.println("DEBUG: renderGhostBlocks called. Highlight count: " + highlights.size());
         if (!hasHighlights())
             return;
 
@@ -96,12 +92,8 @@ public class StructureHighlightRenderer {
             BlockPos pos = highlight.pos;
             BlockState state = highlight.expectedState;
 
-            System.out.println("DEBUG: Rendering block at " + pos + " state: " + state);
-
-            if (state == null || state.isAir()) {
-                System.out.println("DEBUG: Skipping - state is null or air");
+            if (state == null || state.isAir())
                 continue;
-            }
 
             poseStack.pushPose();
 
@@ -119,15 +111,11 @@ public class StructureHighlightRenderer {
                         0xF000F0, // Full brightness
                         OverlayTexture.NO_OVERLAY);
             } catch (Exception e) {
-                System.out.println("DEBUG: Render failed: " + e.getMessage());
-                e.printStackTrace();
+                // Silently ignore render errors
             }
 
             poseStack.popPose();
         }
-
-        // Do not verify/flush manually when using context consumers
-        // bufferSource.endBatch(RenderTypes.translucentMovingBlock());
     }
 
     /**

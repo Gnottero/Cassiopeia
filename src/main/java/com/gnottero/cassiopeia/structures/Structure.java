@@ -32,6 +32,7 @@ public class Structure {
         this.controller = controller;
     }
 
+    @SuppressWarnings("null")
     public String getController() {
         return controller;
     }
@@ -270,6 +271,10 @@ public class Structure {
     /**
      * Builds the expected BlockState with denormalized facing properties.
      */
+    /**
+     * Builds the expected BlockState with denormalized facing properties.
+     */
+    @SuppressWarnings("null")
     private BlockState buildExpectedBlockState(String blockId, Map<String, String> properties,
             Direction controllerFacing) {
         Block block = BuiltInRegistries.BLOCK.getValue(Identifier.parse(blockId));
@@ -298,25 +303,6 @@ public class Structure {
             }
         }
         return state;
-    }
-
-    /**
-     * Denormalizes facing properties in the map for display purposes.
-     */
-    private Map<String, String> denormalizeProperties(Map<String, String> properties, Direction controllerFacing) {
-        if (properties == null)
-            return null;
-        Map<String, String> result = new java.util.HashMap<>(properties);
-        for (String key : result.keySet()) {
-            if (key.equals("facing") || key.equals("horizontal_facing")) {
-                Direction normalizedDir = Direction.byName(result.get(key));
-                if (normalizedDir != null) {
-                    Direction denormalized = BlockUtils.denormalizeFacing(normalizedDir, controllerFacing);
-                    result.put(key, denormalized.getName());
-                }
-            }
-        }
-        return result;
     }
 
     @SuppressWarnings("unchecked")
