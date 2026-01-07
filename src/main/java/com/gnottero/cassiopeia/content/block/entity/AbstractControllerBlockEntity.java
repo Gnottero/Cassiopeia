@@ -17,6 +17,7 @@ import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Optional;
 
 public abstract class AbstractControllerBlockEntity extends BlockEntity {
@@ -49,6 +50,9 @@ public abstract class AbstractControllerBlockEntity extends BlockEntity {
     protected void loadAdditional(@NotNull ValueInput input) {
         super.loadAdditional(input);
         this.structureId = input.getStringOr(STRUCTURE_ID_KEY, "ticker_structure");
+        if (this.structureId.isEmpty()) {
+            this.structureId = "ticker_structure";
+        }
     }
 
     @Nullable
@@ -59,6 +63,15 @@ public abstract class AbstractControllerBlockEntity extends BlockEntity {
 
     @Override
     public @NotNull CompoundTag getUpdateTag(HolderLookup.@NotNull Provider registries) {
+        // Since we are using ValueOutput for saving, we might need to handle
+        // getUpdateTag efficiently
+        // For now, super implementation or empty compund might be fallback, strict
+        // saveWithoutMetadata is 1.21 vanilla
+        // but if saveAdditional takes ValueOutput, saveWithoutMetadata might not work
+        // as expected if it expects CompoundTag filling.
+        // However, looking at the previous file, it used
+        // `this.saveWithoutMetadata(registries)`.
+        // Let's assume that works.
         return this.saveWithoutMetadata(registries);
     }
 
@@ -68,9 +81,29 @@ public abstract class AbstractControllerBlockEntity extends BlockEntity {
         }
 
         Optional<Structure> structureOpt = StructureManager.getStructure(structureId);
-        if (structureOpt.isPresent()) {
-            return structureOpt.get().verify(level, pos);
+        if (structureOpt.isEmpty()) {
+            return false;
         }
-        return false;
+
+        Structure structure = structureOpt.get();
+
+        // For single-block structures (just the controller), skip complex verification
+        // Check if structure only contains the controller block at offset [0,0,0]
+        List<Structure.BlockEntry> blocks = structure.getBlocks();
+        if (blocks.size() == 1) {
+            Structure.BlockEntry entry = blocks.get(0);
+            List<Double> offset = entry.getOffset();
+            // If the only block is at offset 0,0,0 - this is a single-block machine
+            if (offset.get(0) == 0.0 && offset.get(1) == 0.0 && offset.get(2) == 0.0) {
+                // Just verify the controller block matches
+                String expectedBlockId = entry.getBlock();
+                String actualBlockId = net.minecraft.core.registries.BuiltInRegistries.BLOCK
+                        .getKey(level.getBlockState(pos).getBlock()).toString();
+                return actualBlockId.equals(expectedBlockId);
+            }
+        }
+
+        // For multi-block structures, use full verification
+        return structure.verify(level, pos);
     }
 }

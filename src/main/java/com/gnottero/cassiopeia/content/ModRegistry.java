@@ -1,8 +1,15 @@
 package com.gnottero.cassiopeia.content;
 
 import com.gnottero.cassiopeia.Cassiopeia;
-import com.gnottero.cassiopeia.content.block.Tier1ControllerBlock;
-import com.gnottero.cassiopeia.content.block.entity.Tier1ControllerBlockEntity;
+import com.gnottero.cassiopeia.content.block.BasicControllerBlock;
+import com.gnottero.cassiopeia.content.block.entity.BasicControllerBlockEntity;
+import com.gnottero.cassiopeia.content.menu.CrusherMenu;
+import com.gnottero.cassiopeia.content.menu.UnpackagerMenu;
+import com.gnottero.cassiopeia.content.recipe.CrusherRecipe;
+import com.gnottero.cassiopeia.content.recipe.CrusherRecipeSerializer;
+import com.gnottero.cassiopeia.content.recipe.UnpackagerRecipe;
+import com.gnottero.cassiopeia.content.recipe.UnpackagerRecipeSerializer;
+import com.gnottero.cassiopeia.content.machine.MachineHandlerRegistry;
 
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
@@ -18,6 +25,8 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -28,54 +37,92 @@ import net.minecraft.world.level.material.MapColor;
 public class ModRegistry {
 
         // --- BLOCKS ---
-        public static final ResourceKey<Block> TIER_1_CONTROLLER_KEY = ResourceKey.create(Registries.BLOCK,
-                        Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, "tier_1_controller"));
+        public static final ResourceKey<Block> BASIC_CONTROLLER_KEY = ResourceKey.create(Registries.BLOCK,
+                        Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, "basic_controller"));
 
-        public static final Block TIER_1_CONTROLLER_BLOCK = registerBlock("tier_1_controller",
-                        new Tier1ControllerBlock(
-                                        BlockBehaviour.Properties.of().setId(TIER_1_CONTROLLER_KEY)
+        public static final Block BASIC_CONTROLLER_BLOCK = registerBlock("basic_controller",
+                        new BasicControllerBlock(
+                                        BlockBehaviour.Properties.of().setId(BASIC_CONTROLLER_KEY)
                                                         .mapColor(MapColor.METAL).strength(5.0F, 6.0F)
                                                         .sound(SoundType.METAL).requiresCorrectToolForDrops()
                                                         .noOcclusion()));
 
         // --- ITEMS ---
-        public static final ResourceKey<Item> TIER_1_CONTROLLER_ITEM_KEY = ResourceKey.create(Registries.ITEM,
-                        Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, "tier_1_controller"));
+        public static final ResourceKey<Item> BASIC_CONTROLLER_ITEM_KEY = ResourceKey.create(Registries.ITEM,
+                        Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, "basic_controller"));
 
-        public static final BlockItem TIER_1_CONTROLLER_ITEM = registerItem("tier_1_controller",
-                        new BlockItem(TIER_1_CONTROLLER_BLOCK,
-                                        new Item.Properties().setId(TIER_1_CONTROLLER_ITEM_KEY)));
+        public static final BlockItem BASIC_CONTROLLER_ITEM = registerItem("basic_controller",
+                        new BlockItem(BASIC_CONTROLLER_BLOCK,
+                                        new Item.Properties().setId(BASIC_CONTROLLER_ITEM_KEY)));
 
         // --- BLOCK ENTITIES ---
-        public static final BlockEntityType<Tier1ControllerBlockEntity> TIER_1_CONTROLLER_BLOCK_ENTITY = registerBlockEntity(
-                        "tier_1_controller",
-                        FabricBlockEntityTypeBuilder.create(Tier1ControllerBlockEntity::new, TIER_1_CONTROLLER_BLOCK));
+        public static final BlockEntityType<BasicControllerBlockEntity> BASIC_CONTROLLER_BLOCK_ENTITY = registerBlockEntity(
+                        "basic_controller",
+                        FabricBlockEntityTypeBuilder.create(BasicControllerBlockEntity::new, BASIC_CONTROLLER_BLOCK));
 
         // --- MENUS ---
-        // (No custom menus used for now)
+        public static final MenuType<CrusherMenu> CRUSHER_MENU = Registry.register(
+                        BuiltInRegistries.MENU,
+                        Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, "crusher"),
+                        new MenuType<>(CrusherMenu::new, FeatureFlags.VANILLA_SET));
+
+        public static final MenuType<UnpackagerMenu> UNPACKAGER_MENU = Registry.register(
+                        BuiltInRegistries.MENU,
+                        Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, "unpackager"),
+                        new MenuType<>(UnpackagerMenu::new, FeatureFlags.VANILLA_SET));
+
+        // --- RECIPE TYPES ---
+        public static final RecipeType<CrusherRecipe> CRUSHER_RECIPE_TYPE = Registry.register(
+                        BuiltInRegistries.RECIPE_TYPE,
+                        Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, "crushing"),
+                        new RecipeType<CrusherRecipe>() {
+                                @Override
+                                public String toString() {
+                                        return "crushing";
+                                }
+                        });
+
+        public static final RecipeType<UnpackagerRecipe> UNPACKAGER_RECIPE_TYPE = Registry.register(
+                        BuiltInRegistries.RECIPE_TYPE,
+                        Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, "unpackaging"),
+                        new RecipeType<UnpackagerRecipe>() {
+                                @Override
+                                public String toString() {
+                                        return "unpackaging";
+                                }
+                        });
+
+        // --- RECIPE SERIALIZERS ---
+        public static final RecipeSerializer<CrusherRecipe> CRUSHER_RECIPE_SERIALIZER = Registry.register(
+                        BuiltInRegistries.RECIPE_SERIALIZER,
+                        Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, "crushing"),
+                        CrusherRecipeSerializer.INSTANCE);
+
+        public static final RecipeSerializer<UnpackagerRecipe> UNPACKAGER_RECIPE_SERIALIZER = Registry.register(
+                        BuiltInRegistries.RECIPE_SERIALIZER,
+                        Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, "unpackaging"),
+                        UnpackagerRecipeSerializer.INSTANCE);
 
         // --- CREATIVE TABS ---
         public static final CreativeModeTab CASSIOPEIA_TAB = Registry.register(BuiltInRegistries.CREATIVE_MODE_TAB,
                         Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, "general"),
                         FabricItemGroup.builder()
                                         .title(Component.literal("Cassiopeia"))
-                                        .icon(() -> new ItemStack(TIER_1_CONTROLLER_ITEM))
+                                        .icon(() -> new ItemStack(BASIC_CONTROLLER_ITEM))
                                         .displayItems((params, output) -> {
-                                                output.accept(TIER_1_CONTROLLER_ITEM);
+                                                output.accept(BASIC_CONTROLLER_ITEM);
                                         })
                                         .build());
 
         public static void register() {
-                // Static init
+                // Initialize machine handlers
+                MachineHandlerRegistry.init();
         }
 
         // --- HELPER METHODS ---
 
         private static Block registerBlock(String name, Block block) {
                 Identifier id = Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, name);
-                // Ensure registry key is associated?
-                // The block passed in should already have the correct properties setup with
-                // resource key if needed by 1.21
                 return Registry.register(BuiltInRegistries.BLOCK, id, block);
         }
 

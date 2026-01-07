@@ -1,0 +1,13 @@
+{
+    "type": "cassiopeia:crushing",
+    "ingredient": "minecraft:iron_ingot",
+    "result": {
+        "id": "minecraft:iron_block",
+        "count": 9,
+        "components": {
+            "minecraft:custom_name": "Compressed Iron",
+            "minecraft:enchantment_glint_override": true
+        }
+    },
+    "time": 200
+}

@@ -1,20 +1,24 @@
 package com.gnottero.cassiopeia.content.block;
 
 import com.gnottero.cassiopeia.content.block.entity.AbstractControllerBlockEntity;
-import com.gnottero.cassiopeia.content.block.entity.Tier1ControllerBlockEntity;
+import com.gnottero.cassiopeia.content.block.entity.BasicControllerBlockEntity;
+import com.gnottero.cassiopeia.content.machine.MachineHandlerRegistry;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class Tier1ControllerBlock extends AbstractControllerBlock {
-    public static final MapCodec<Tier1ControllerBlock> CODEC = simpleCodec(Tier1ControllerBlock::new);
+public class BasicControllerBlock extends AbstractControllerBlock {
+    public static final MapCodec<BasicControllerBlock> CODEC = simpleCodec(BasicControllerBlock::new);
 
-    public Tier1ControllerBlock(Properties properties) {
+    public BasicControllerBlock(Properties properties) {
         super(properties);
     }
 
@@ -26,12 +30,36 @@ public class Tier1ControllerBlock extends AbstractControllerBlock {
     @Nullable
     @Override
     public BlockEntity newBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state) {
-        return new Tier1ControllerBlockEntity(pos, state);
+        return new BasicControllerBlockEntity(pos, state);
+    }
+
+    @Nullable
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(@NotNull Level level, @NotNull BlockState state,
+            @NotNull BlockEntityType<T> type) {
+        if (level.isClientSide()) {
+            return null;
+        }
+        return (lvl, pos, st, be) -> {
+            if (be instanceof BasicControllerBlockEntity controllerBE) {
+                BasicControllerBlockEntity.serverTick(lvl, pos, st, controllerBE);
+            }
+        };
     }
 
     @Override
     protected void openGui(Player player, AbstractControllerBlockEntity be) {
         String structureId = be.getStructureId();
+
+        // Check if this is a machine with a registered handler
+        if (structureId != null && be instanceof BasicControllerBlockEntity machineBE) {
+            if (MachineHandlerRegistry.hasHandler(structureId)) {
+                player.openMenu(machineBE);
+                return;
+            }
+        }
+
+        // Default behavior for structures without machine handlers
         String title = "Inventory";
         if (structureId != null && !structureId.isEmpty()) {
             StringBuilder sb = new StringBuilder();

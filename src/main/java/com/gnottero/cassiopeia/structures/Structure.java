@@ -73,16 +73,18 @@ public class Structure {
             facingProp = controllerState.getBlock().getStateDefinition().getProperty("horizontal_facing");
         }
 
-        if (facingProp == null) {
-            return false;
+        Direction controllerFacing;
+        if (facingProp != null) {
+            Object facingVal = controllerState.getValue(facingProp);
+            if (facingVal instanceof Direction) {
+                controllerFacing = (Direction) facingVal;
+            } else {
+                controllerFacing = Direction.NORTH; // Default if facing value is not a Direction
+            }
+        } else {
+            // No facing property on controller - default to NORTH for verification
+            controllerFacing = Direction.NORTH;
         }
-
-        Object facingVal = controllerState.getValue(facingProp);
-        if (!(facingVal instanceof Direction)) {
-            return false;
-        }
-
-        Direction controllerFacing = (Direction) facingVal;
 
         // Calculate coordinate system bases
         Vec3 front = new Vec3(controllerFacing.getStepX(), controllerFacing.getStepY(), controllerFacing.getStepZ());

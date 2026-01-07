@@ -115,6 +115,10 @@ public class StructureManager {
 
         File file = new File(STRUCTURE_DIR, identifier + ".json");
         if (!file.exists()) {
+            createDefaultIfKnown(identifier, file);
+        }
+
+        if (!file.exists()) {
             return Optional.empty();
         }
 
@@ -128,6 +132,28 @@ public class StructureManager {
             e.printStackTrace();
         }
         return Optional.empty();
+    }
+
+    private static void createDefaultIfKnown(String identifier, File file) {
+        if (!identifier.equals("unpackager") && !identifier.equals("crusher")) {
+            return;
+        }
+
+        String controllerId = "cassiopeia:basic_controller";
+        Structure structure = new Structure();
+        structure.setController(controllerId);
+
+        List<Double> offset = List.of(0.0, 0.0, 0.0);
+
+        // Add controller itself as the single block
+        // Note: properties map can be empty to match any properties
+        structure.addBlock(new Structure.BlockEntry(controllerId, offset, new java.util.HashMap<>()));
+
+        try (Writer writer = new FileWriter(file)) {
+            GSON.toJson(structure, writer);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @org.jetbrains.annotations.NotNull
