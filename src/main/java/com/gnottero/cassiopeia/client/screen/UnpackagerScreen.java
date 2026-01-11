@@ -5,53 +5,51 @@ import com.gnottero.cassiopeia.content.menu.UnpackagerMenu;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
-import org.jetbrains.annotations.NotNull;
 
 /**
- * Screen for the unpackager machine.
- * Simple 2-slot layout with progress arrow.
+ * Screen for the Unpackager machine.
+ * Displays animated progress arrow.
  */
 @Environment(EnvType.CLIENT)
-public class UnpackagerScreen extends AbstractContainerScreen<UnpackagerMenu> {
+public class UnpackagerScreen extends AbstractMachineScreen<UnpackagerMenu> {
 
-    // Using vanilla furnace texture for now (could create custom later)
-    private static final Identifier TEXTURE = Identifier.withDefaultNamespace("textures/gui/container/furnace.png");
+    // Using crusher texture for now - TODO: create unpackager-specific texture
+    private static final Identifier BACKGROUND = Identifier.fromNamespaceAndPath(
+            Cassiopeia.MOD_ID, "textures/gui/container/crusher.png");
+    private static final Identifier PROGRESS = Identifier.fromNamespaceAndPath(
+            Cassiopeia.MOD_ID, "textures/gui/sprites/container/crusher/crush_progress.png");
 
-    public UnpackagerScreen(UnpackagerMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title);
+    // Sprite dimensions
+    private static final int ARROW_WIDTH = 24;
+    private static final int ARROW_HEIGHT = 17;
+
+    // UI positions relative to GUI top-left
+    private static final int ARROW_X = 79;
+    private static final int ARROW_Y = 34;
+
+    public UnpackagerScreen(UnpackagerMenu menu, Inventory playerInventory, Component title) {
+        super(menu, playerInventory, title, BACKGROUND);
     }
 
     @Override
-    protected void init() {
-        super.init();
-        this.titleLabelX = (this.imageWidth - this.font.width(this.title)) / 2;
-    }
-
-    @Override
-    protected void renderBg(@NotNull GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
-        int x = (this.width - this.imageWidth) / 2;
-        int y = (this.height - this.imageHeight) / 2;
-
-        // Draw main texture
-        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, x, y, 0, 0, this.imageWidth, this.imageHeight, 256,
-                256);
-
-        // Draw progress arrow
-        int progressWidth = this.menu.getProgressScaled(24);
-        if (progressWidth > 0) {
-            guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, x + 79, y + 34, 176, 14, progressWidth, 17, 256,
-                    256);
+    protected void renderMachineIndicators(GuiGraphics guiGraphics, int x, int y, float partialTick) {
+        // Draw progress arrow - fills from left to right
+        float progress = this.menu.getProgressPercent();
+        if (progress > 0) {
+            renderHorizontalProgressSprite(
+                    guiGraphics,
+                    PROGRESS,
+                    x + ARROW_X, y + ARROW_Y,
+                    ARROW_WIDTH, ARROW_HEIGHT,
+                    progress);
         }
     }
 
     @Override
-    public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
-        this.renderTooltip(guiGraphics, mouseX, mouseY);
+    protected int getLabelColor() {
+        return 0xFFE0E0E0; // Off-white/dirty white
     }
 }

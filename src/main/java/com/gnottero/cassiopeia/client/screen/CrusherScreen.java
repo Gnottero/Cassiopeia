@@ -1,57 +1,71 @@
 package com.gnottero.cassiopeia.client.screen;
 
+import com.gnottero.cassiopeia.Cassiopeia;
 import com.gnottero.cassiopeia.content.menu.CrusherMenu;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
-import org.jetbrains.annotations.NotNull;
 
+/**
+ * Screen for the Crusher machine.
+ * Displays animated flame indicator and progress arrow.
+ */
 @Environment(EnvType.CLIENT)
-public class CrusherScreen extends AbstractContainerScreen<CrusherMenu> {
+public class CrusherScreen extends AbstractMachineScreen<CrusherMenu> {
 
-    // Using vanilla furnace texture for simplicity
-    private static final Identifier TEXTURE = Identifier.withDefaultNamespace("textures/gui/container/furnace.png");
+    // Mod textures
+    private static final Identifier BACKGROUND = Identifier.fromNamespaceAndPath(
+            Cassiopeia.MOD_ID, "textures/gui/container/crusher.png");
+    private static final Identifier CRUSH_PROGRESS = Identifier.fromNamespaceAndPath(
+            Cassiopeia.MOD_ID, "textures/gui/sprites/container/crusher/crush_progress.png");
+    private static final Identifier LIT_PROGRESS = Identifier.fromNamespaceAndPath(
+            Cassiopeia.MOD_ID, "textures/gui/sprites/container/crusher/lit_progress.png");
+
+    // Sprite dimensions (measured from actual textures)
+    private static final int ARROW_WIDTH = 24;
+    private static final int ARROW_HEIGHT = 17;
+    private static final int FLAME_WIDTH = 14;
+    private static final int FLAME_HEIGHT = 14;
+
+    // UI positions relative to GUI top-left
+    private static final int FLAME_X = 56;
+    private static final int FLAME_Y = 36;
+    private static final int ARROW_X = 79;
+    private static final int ARROW_Y = 34;
 
     public CrusherScreen(CrusherMenu menu, Inventory playerInventory, Component title) {
-        super(menu, playerInventory, title);
+        super(menu, playerInventory, title, BACKGROUND);
     }
 
     @Override
-    protected void init() {
-        super.init();
-        // Center title
-        this.titleLabelX = (this.imageWidth - this.font.width(this.title)) / 2;
-    }
-
-    @Override
-    protected void renderBg(@NotNull GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
-        int x = (this.width - this.imageWidth) / 2;
-        int y = (this.height - this.imageHeight) / 2;
-
-        // Draw background using blit with RenderPipeline
-        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, x, y, 0, 0, this.imageWidth, this.imageHeight, 256,
-                256);
-
-        // Draw burn indicator (flame)
+    protected void renderMachineIndicators(GuiGraphics guiGraphics, int x, int y, float partialTick) {
+        // Draw burn indicator (flame) - fills from bottom to top when burning
         if (this.menu.isBurning()) {
-            int burnHeight = (int) (14 * this.menu.getBurnProgress());
-            guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, x + 56, y + 36 + 14 - burnHeight, 176,
-                    14 - burnHeight, 14, burnHeight, 256, 256);
+            renderVerticalProgressSprite(
+                    guiGraphics,
+                    LIT_PROGRESS,
+                    x + FLAME_X, y + FLAME_Y,
+                    FLAME_WIDTH, FLAME_HEIGHT,
+                    this.menu.getBurnProgress());
         }
 
-        // Draw progress arrow
-        int progressWidth = (int) (24 * this.menu.getCrushProgress());
-        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, x + 79, y + 34, 176, 14, progressWidth, 17, 256, 256);
+        // Draw progress arrow - fills from left to right
+        float crushProgress = this.menu.getCrushProgress();
+        if (crushProgress > 0) {
+            renderHorizontalProgressSprite(
+                    guiGraphics,
+                    CRUSH_PROGRESS,
+                    x + ARROW_X, y + ARROW_Y,
+                    ARROW_WIDTH, ARROW_HEIGHT,
+                    crushProgress);
+        }
     }
 
     @Override
-    public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
-        this.renderTooltip(guiGraphics, mouseX, mouseY);
+    protected int getLabelColor() {
+        return 0xFFE0E0E0; // Off-white/dirty white
     }
 }
