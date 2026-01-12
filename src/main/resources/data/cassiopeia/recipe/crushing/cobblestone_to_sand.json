@@ -1,0 +1,15 @@
+{
+    "type": "cassiopeia:crushing",
+    "category": "items",
+    "crushingtime": 200,
+    "experience": 0.2,
+    "group": "cobblestone",
+    "ingredient": "minecraft:cobblestone",
+    "result": {
+        "count": 2,
+        "id": "minecraft:sand",
+        "components": {
+            "minecraft:custom_name": "\"Crushed Sand\""
+        }
+    }
+}

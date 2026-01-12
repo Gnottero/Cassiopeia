@@ -1,10 +1,28 @@
 package com.gnottero.cassiopeia.content.block;
 
 import com.gnottero.cassiopeia.content.block.entity.AbstractControllerBlockEntity;
-
+import com.gnottero.cassiopeia.network.StructureHighlightPayload;
+import com.gnottero.cassiopeia.structures.Structure;
+import com.gnottero.cassiopeia.structures.Structure.StructureError;
+import com.gnottero.cassiopeia.structures.StructureManager;
 import com.mojang.serialization.MapCodec;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import org.jetbrains.annotations.NotNull;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -21,8 +39,6 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import java.util.List;
-import java.util.Map;
 
 public abstract class AbstractControllerBlock extends BaseEntityBlock {
 
@@ -62,169 +78,183 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
 
         BlockEntity be = level.getBlockEntity(pos);
         if (be instanceof AbstractControllerBlockEntity controllerBE) {
-            String structureId = controllerBE.getStructureId();
-            if (structureId != null && !structureId.isEmpty()) {
-                java.util.Optional<com.gnottero.cassiopeia.structures.Structure> structureOpt = com.gnottero.cassiopeia.structures.StructureManager
-                        .getStructure(structureId);
-                if (structureOpt.isPresent()) {
-                    com.gnottero.cassiopeia.structures.Structure structure = structureOpt.get();
-
-                    List<com.gnottero.cassiopeia.structures.Structure.StructureError> errors = structure
-                            .getValidationErrors(level, pos);
-
-                    if (errors.isEmpty()) {
-                        // Structure is valid
-                        openGui(player, controllerBE);
-                        return InteractionResult.SUCCESS;
-                    } else {
-                        // Structure incomplete
-
-                        // Send highlight packet
-                        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-                            net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(serverPlayer,
-                                    new com.gnottero.cassiopeia.network.StructureHighlightPayload(errors));
-                        }
-
-                        // Title Case Name
-                        StringBuilder nameBuilder = new StringBuilder();
-                        boolean capitalizeNext = true;
-                        for (char c : structureId.toCharArray()) {
-                            if (c == '_') {
-                                nameBuilder.append(' ');
-                                capitalizeNext = true;
-                            } else {
-                                if (capitalizeNext) {
-                                    nameBuilder.append(Character.toUpperCase(c));
-                                    capitalizeNext = false;
-                                } else {
-                                    nameBuilder.append(c);
-                                }
-                            }
-                        }
-                        String titleCaseName = nameBuilder.toString();
-
-                        net.minecraft.network.chat.MutableComponent msg = net.minecraft.network.chat.Component
-                                .literal("Structure ").withStyle(net.minecraft.ChatFormatting.RED)
-                                .append(net.minecraft.network.chat.Component.literal(titleCaseName)
-                                        .withStyle(net.minecraft.ChatFormatting.GOLD))
-                                .append(net.minecraft.network.chat.Component.literal(" incomplete.")
-                                        .withStyle(net.minecraft.ChatFormatting.RED));
-
-                        // 1. Process Errors for Chat
-                        Map<String, Integer> missingCounts = new java.util.HashMap<>();
-                        // For wrong state: group by Block ID -> Map of (Description -> Count)
-                        // Description could be "facing=north, powered=true"
-                        Map<String, Map<String, Integer>> wrongStateCounts = new java.util.HashMap<>();
-
-                        for (com.gnottero.cassiopeia.structures.Structure.StructureError error : errors) {
-                            if (error.type == com.gnottero.cassiopeia.structures.Structure.StructureError.ErrorType.MISSING) {
-                                missingCounts.put(error.expectedBlockId,
-                                        missingCounts.getOrDefault(error.expectedBlockId, 0) + 1);
-                            } else {
-                                String stateDesc = "";
-                                if (error.expectedState != null && !error.expectedState.isEmpty()) {
-                                    List<String> props = new java.util.ArrayList<>(error.expectedState.keySet());
-                                    // Sort for consistency
-                                    java.util.Collections.sort(props);
-                                    StringBuilder sb = new StringBuilder();
-                                    for (String key : props) {
-                                        if (sb.length() > 0)
-                                            sb.append(", ");
-                                        sb.append(key).append("=").append(error.expectedState.get(key));
-                                    }
-                                    stateDesc = sb.toString();
-                                }
-
-                                wrongStateCounts.computeIfAbsent(error.expectedBlockId, k -> new java.util.HashMap<>())
-                                        .merge(stateDesc, 1, Integer::sum);
-                            }
-                        }
-
-                        // 2. Report Missing Blocks
-                        if (!missingCounts.isEmpty()) {
-                            msg.append(net.minecraft.network.chat.Component.literal("\n\nMissing Blocks:")
-                                    .withStyle(net.minecraft.ChatFormatting.RED,
-                                            net.minecraft.ChatFormatting.UNDERLINE));
-
-                            for (java.util.Map.Entry<String, Integer> entry : missingCounts.entrySet()) {
-                                String blockName = entry.getKey();
-                                net.minecraft.network.chat.MutableComponent blockComponent = getBlockComponent(
-                                        blockName);
-
-                                msg.append(net.minecraft.network.chat.Component.literal("\n • ")
-                                        .withStyle(net.minecraft.ChatFormatting.RED));
-                                msg.append(net.minecraft.network.chat.Component.literal(entry.getValue() + "x ")
-                                        .withStyle(net.minecraft.ChatFormatting.GOLD));
-                                msg.append(blockComponent.withStyle(net.minecraft.ChatFormatting.GRAY));
-                            }
-                        }
-
-                        // 3. Report Mismatched States
-                        if (!wrongStateCounts.isEmpty()) {
-                            msg.append(net.minecraft.network.chat.Component.literal("\n\nIncorrect States:")
-                                    .withStyle(net.minecraft.ChatFormatting.RED,
-                                            net.minecraft.ChatFormatting.UNDERLINE));
-
-                            for (java.util.Map.Entry<String, Map<String, Integer>> blockEntry : wrongStateCounts
-                                    .entrySet()) {
-                                String blockName = blockEntry.getKey();
-                                net.minecraft.network.chat.MutableComponent blockComponent = getBlockComponent(
-                                        blockName);
-
-                                for (java.util.Map.Entry<String, Integer> stateEntry : blockEntry.getValue()
-                                        .entrySet()) {
-                                    msg.append(net.minecraft.network.chat.Component.literal("\n • ")
-                                            .withStyle(net.minecraft.ChatFormatting.RED));
-                                    msg.append(
-                                            net.minecraft.network.chat.Component.literal(stateEntry.getValue() + "x ")
-                                                    .withStyle(net.minecraft.ChatFormatting.GOLD));
-                                    msg.append(blockComponent.copy().withStyle(net.minecraft.ChatFormatting.GRAY));
-
-                                    if (!stateEntry.getKey().isEmpty()) {
-                                        msg.append(net.minecraft.network.chat.Component
-                                                .literal(" (Expected: " + stateEntry.getKey() + ")")
-                                                .withStyle(net.minecraft.ChatFormatting.DARK_GRAY,
-                                                        net.minecraft.ChatFormatting.ITALIC));
-                                    }
-                                }
-                            }
-                        }
-
-                        player.displayClientMessage(msg, false);
-                        return InteractionResult.SUCCESS;
-                    }
-
-                } else {
-                    player.displayClientMessage(
-                            net.minecraft.network.chat.Component
-                                    .literal("Structure definition not found: " + structureId)
-                                    .withStyle(net.minecraft.ChatFormatting.RED),
-                            false);
-                    return InteractionResult.SUCCESS;
-                }
-            } else {
-                player.displayClientMessage(
-                        net.minecraft.network.chat.Component.literal("No structure ID set for this controller.")
-                                .withStyle(net.minecraft.ChatFormatting.RED),
-                        false);
-                return InteractionResult.SUCCESS;
-            }
+            return handleStructureInteraction(level, pos, player, controllerBE);
         }
         return InteractionResult.PASS;
     }
 
-    private net.minecraft.network.chat.MutableComponent getBlockComponent(String blockName) {
+    private InteractionResult handleStructureInteraction(Level level, BlockPos pos, Player player,
+            AbstractControllerBlockEntity controllerBE) {
+        String structureId = controllerBE.getStructureId();
+
+        if (structureId == null || structureId.isEmpty()) {
+            sendErrorMessage(player, "No structure ID set for this controller.");
+            return InteractionResult.SUCCESS;
+        }
+
+        Optional<Structure> structureOpt = StructureManager.getStructure(structureId);
+        if (structureOpt.isEmpty()) {
+            sendErrorMessage(player, "Structure definition not found: " + structureId);
+            return InteractionResult.SUCCESS;
+        }
+
+        Structure structure = structureOpt.get();
+        List<StructureError> errors = structure.getValidationErrors(level, pos);
+
+        if (errors.isEmpty()) {
+            handleValidationSuccess(player, controllerBE);
+        } else {
+            handleValidationFailure(player, structureId, errors);
+        }
+
+        return InteractionResult.SUCCESS;
+    }
+
+    private void handleValidationSuccess(Player player, AbstractControllerBlockEntity controllerBE) {
+        openGui(player, controllerBE);
+    }
+
+    private void handleValidationFailure(Player player, String structureId, List<StructureError> errors) {
+        sendHighlightPacket(player, errors);
+        MutableComponent msg = buildFailureMessage(structureId, errors);
+        player.displayClientMessage(msg, false);
+    }
+
+    private void sendHighlightPacket(Player player, List<StructureError> errors) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            ServerPlayNetworking.send(serverPlayer,
+                    new StructureHighlightPayload(errors));
+        }
+    }
+
+    private void sendErrorMessage(Player player, String message) {
+        player.displayClientMessage(
+                Component.literal(message).withStyle(ChatFormatting.RED),
+                false);
+    }
+
+    private MutableComponent buildFailureMessage(String structureId,
+            List<StructureError> errors) {
+        String titleCaseName = formatStructureName(structureId);
+
+        MutableComponent msg = Component
+                .literal("Structure ").withStyle(ChatFormatting.RED)
+                .append(Component.literal(titleCaseName)
+                        .withStyle(ChatFormatting.GOLD))
+                .append(Component.literal(" incomplete.")
+                        .withStyle(ChatFormatting.RED));
+
+        appendMissingBlocks(msg, errors);
+        appendMismatchedStates(msg, errors);
+
+        return msg;
+    }
+
+    private String formatStructureName(String structureId) {
+        StringBuilder nameBuilder = new StringBuilder();
+        boolean capitalizeNext = true;
+        for (char c : structureId.toCharArray()) {
+            if (c == '_') {
+                nameBuilder.append(' ');
+                capitalizeNext = true;
+            } else {
+                if (capitalizeNext) {
+                    nameBuilder.append(Character.toUpperCase(c));
+                    capitalizeNext = false;
+                } else {
+                    nameBuilder.append(c);
+                }
+            }
+        }
+        return nameBuilder.toString();
+    }
+
+    private void appendMissingBlocks(MutableComponent msg, List<StructureError> errors) {
+        Map<String, Integer> missingCounts = new HashMap<>();
+        for (StructureError error : errors) {
+            if (error.type == StructureError.ErrorType.MISSING) {
+                missingCounts.merge(error.expectedBlockId, 1, Integer::sum);
+            }
+        }
+
+        if (!missingCounts.isEmpty()) {
+            msg.append(Component.literal("\n\nMissing Blocks:")
+                    .withStyle(ChatFormatting.RED, ChatFormatting.UNDERLINE));
+
+            for (Map.Entry<String, Integer> entry : missingCounts.entrySet()) {
+                addErrorLine(msg, entry.getValue(), getBlockComponent(entry.getKey()));
+            }
+        }
+    }
+
+    private void appendMismatchedStates(MutableComponent msg, List<StructureError> errors) {
+        Map<String, Map<String, Integer>> wrongStateCounts = new HashMap<>();
+
+        for (StructureError error : errors) {
+            if (error.type != StructureError.ErrorType.MISSING) {
+                String stateDesc = formatStateDescription(error.expectedState);
+                wrongStateCounts.computeIfAbsent(error.expectedBlockId, k -> new HashMap<>())
+                        .merge(stateDesc, 1, Integer::sum);
+            }
+        }
+
+        if (!wrongStateCounts.isEmpty()) {
+            msg.append(Component.literal("\n\nIncorrect States:")
+                    .withStyle(ChatFormatting.RED, ChatFormatting.UNDERLINE));
+
+            for (Map.Entry<String, Map<String, Integer>> blockEntry : wrongStateCounts.entrySet()) {
+                MutableComponent blockComponent = getBlockComponent(blockEntry.getKey());
+                for (Map.Entry<String, Integer> stateEntry : blockEntry.getValue().entrySet()) {
+                    addErrorLine(msg, stateEntry.getValue(), blockComponent.copy());
+                    if (!stateEntry.getKey().isEmpty()) {
+                        msg.append(Component
+                                .literal(" (Expected: " + stateEntry.getKey() + ")")
+                                .withStyle(ChatFormatting.DARK_GRAY,
+                                        ChatFormatting.ITALIC));
+                    }
+                }
+            }
+        }
+    }
+
+    private String formatStateDescription(Map<String, String> expectedState) {
+        if (expectedState == null || expectedState.isEmpty()) {
+            return "";
+        }
+        List<String> props = new ArrayList<>(expectedState.keySet());
+        Collections.sort(props);
+        StringBuilder sb = new StringBuilder();
+        for (String key : props) {
+            if (sb.length() > 0)
+                sb.append(", ");
+            sb.append(key).append("=").append(expectedState.get(key));
+        }
+        return sb.toString();
+    }
+
+    private void addErrorLine(MutableComponent msg, int count,
+            MutableComponent content) {
+        msg.append(Component.literal("\n • ")
+                .withStyle(ChatFormatting.RED));
+        msg.append(Component.literal(count + "x ")
+                .withStyle(ChatFormatting.GOLD));
+        msg.append(content.withStyle(ChatFormatting.GRAY));
+    }
+
+    private MutableComponent getBlockComponent(String blockName) {
         try {
-            java.util.Optional<net.minecraft.core.Holder.Reference<Block>> blockHolder = net.minecraft.core.registries.BuiltInRegistries.BLOCK
-                    .get(net.minecraft.resources.Identifier.parse(blockName));
+            Identifier id = Identifier.parse(blockName);
+            Optional<Holder.Reference<Block>> blockHolder = BuiltInRegistries.BLOCK
+                    .get(id);
+
             if (blockHolder.isPresent()) {
-                return net.minecraft.network.chat.Component
+                return Component
                         .translatable(blockHolder.get().value().getDescriptionId());
             }
         } catch (Exception e) {
             // ignore
         }
-        return net.minecraft.network.chat.Component.literal(blockName);
+        return Component.literal(blockName);
     }
 
     protected abstract void openGui(Player player, AbstractControllerBlockEntity be);

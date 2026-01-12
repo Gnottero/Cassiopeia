@@ -139,14 +139,7 @@ public class CrusherMachineHandler implements MachineHandler {
 
                     if (litTime > 0) {
                         changed = true;
-                        Item fuelItem = fuelStack.getItem();
-                        ItemStack remainder = fuelItem.getCraftingRemainder();
-                        fuelStack.shrink(1);
-                        if (fuelStack.isEmpty() && !remainder.isEmpty()) {
-                            items.set(FUEL_SLOT, remainder);
-                        } else if (fuelStack.isEmpty()) {
-                            items.set(FUEL_SLOT, ItemStack.EMPTY);
-                        }
+                        consumeFuel(items);
                     }
                 }
 
@@ -155,11 +148,14 @@ public class CrusherMachineHandler implements MachineHandler {
                     if (crushingProgress >= crushingTotalTime) {
                         crushingProgress = 0;
                         process(items, recipe);
+
+                        // Parse ID safe
                         String idStr = holder.id().toString();
                         int idx = idStr.lastIndexOf(" / ");
                         if (idx != -1)
                             idStr = idStr.substring(idx + 3, idStr.length() - 1);
                         be.recipeUsed(Identifier.tryParse(idStr));
+
                         changed = true;
                     } else {
                         changed = true;
@@ -196,7 +192,19 @@ public class CrusherMachineHandler implements MachineHandler {
         }
         SingleRecipeInput recipeInput = new SingleRecipeInput(input);
         return serverLevel.recipeAccess()
-                .getRecipeFor(ModRegistry.CRUSHER_RECIPE_TYPE, recipeInput, serverLevel);
+                .getRecipeFor(ModRegistry.RecipeTypes.CRUSHER, recipeInput, serverLevel);
+    }
+
+    private void consumeFuel(NonNullList<ItemStack> items) {
+        ItemStack fuelStack = items.get(FUEL_SLOT);
+        Item fuelItem = fuelStack.getItem();
+        ItemStack remainder = fuelItem.getCraftingRemainder();
+        fuelStack.shrink(1);
+        if (fuelStack.isEmpty() && !remainder.isEmpty()) {
+            items.set(FUEL_SLOT, remainder);
+        } else if (fuelStack.isEmpty()) {
+            items.set(FUEL_SLOT, ItemStack.EMPTY);
+        }
     }
 
     private boolean canProcess(NonNullList<ItemStack> items, CrusherRecipe recipe) {

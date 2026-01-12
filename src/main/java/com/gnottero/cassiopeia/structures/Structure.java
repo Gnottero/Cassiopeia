@@ -8,16 +8,20 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
-import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Optional;
 
 public class Structure {
     private List<BlockEntry> blocks;
     private String controller;
+
+    private transient boolean initialized = false;
+    private transient Block cachedControllerBlock;
 
     public Structure() {
         this.blocks = new ArrayList<>();
@@ -30,6 +34,7 @@ public class Structure {
 
     public void setController(String controller) {
         this.controller = controller;
+        this.initialized = false;
     }
 
     @SuppressWarnings("null")
@@ -43,122 +48,36 @@ public class Structure {
 
     public void addBlock(BlockEntry entry) {
         this.blocks.add(entry);
+        this.initialized = false;
+    }
+
+    private void ensureInitialized() {
+        if (initialized)
+            return;
+
+        if (controller != null && !controller.isEmpty()) {
+            Identifier id = Identifier.tryParse(controller);
+            if (id != null) {
+                cachedControllerBlock = BuiltInRegistries.BLOCK.getOptional(id).orElse(null);
+            }
+        }
+
+        for (BlockEntry entry : blocks) {
+            entry.initialize();
+        }
+        initialized = true;
     }
 
     /**
      * Verifies if the structure exists in the world at the given controller
      * position.
      *
-     * @param level      The level to check.
-     * @param controller The position of the controller block.
+     * @param level         The level to check.
+     * @param controllerPos The position of the controller block.
      * @return true if the structure matches, false otherwise.
      */
     public boolean verify(Level level, BlockPos controllerPos) {
-        if (level == null || controllerPos == null) {
-            return false;
-        }
-        BlockState controllerState = level.getBlockState(controllerPos);
-
-        // Check if the controller block matches the required controller ID
-        if (this.controller != null && !this.controller.isEmpty()) {
-            String currentControllerId = BuiltInRegistries.BLOCK.getKey(controllerState.getBlock()).toString();
-            if (!currentControllerId.equals(this.controller)) {
-                return false;
-            }
-        }
-
-        Property<?> facingProp = controllerState.getBlock().getStateDefinition().getProperty("facing");
-        if (facingProp == null) {
-            // Try "horizontal_facing" as well, just in case
-            facingProp = controllerState.getBlock().getStateDefinition().getProperty("horizontal_facing");
-        }
-
-        Direction controllerFacing;
-        if (facingProp != null) {
-            Object facingVal = controllerState.getValue(facingProp);
-            if (facingVal instanceof Direction) {
-                controllerFacing = (Direction) facingVal;
-            } else {
-                controllerFacing = Direction.NORTH; // Default if facing value is not a Direction
-            }
-        } else {
-            // No facing property on controller - default to NORTH for verification
-            controllerFacing = Direction.NORTH;
-        }
-
-        // Calculate coordinate system bases
-        Vec3 front = new Vec3(controllerFacing.getStepX(), controllerFacing.getStepY(), controllerFacing.getStepZ());
-        Vec3 up = new Vec3(0, 1, 0);
-        Vec3 right = front.cross(up);
-
-        for (BlockEntry entry : blocks) {
-            List<Double> offset = entry.getOffset();
-            double offFront = offset.get(0);
-            double offUp = offset.get(1);
-            double offRight = offset.get(2);
-
-            double targetX = controllerPos.getX() + offFront * front.x + offUp * up.x + offRight * right.x;
-            double targetY = controllerPos.getY() + offFront * front.y + offUp * up.y + offRight * right.y;
-            double targetZ = controllerPos.getZ() + offFront * front.z + offUp * up.z + offRight * right.z;
-
-            BlockPos targetPos = new BlockPos((int) Math.round(targetX), (int) Math.round(targetY),
-                    (int) Math.round(targetZ));
-            BlockState targetState = level.getBlockState(targetPos);
-
-            // 1. Check Block Type
-            String expectedBlockId = entry.getBlock(); // e.g. "minecraft:stone"
-            String targetId = BuiltInRegistries.BLOCK.getKey(targetState.getBlock()).toString();
-
-            if (!targetId.equals(expectedBlockId)) {
-                return false;
-            }
-
-            // 2. Check Properties
-            Map<String, String> expectedProps = entry.getProperties();
-            if (expectedProps != null && !expectedProps.isEmpty()) {
-                for (Map.Entry<String, String> propEntry : expectedProps.entrySet()) {
-                    String propName = propEntry.getKey();
-                    String expectedValue = propEntry.getValue();
-
-                    Property<?> property = targetState.getBlock().getStateDefinition().getProperty(propName);
-                    if (property == null) {
-                        return false;
-                    }
-
-                    Object actualObj = targetState.getValue(property);
-                    String actualValue = actualObj.toString();
-
-                    if (actualObj instanceof Direction) {
-                        // Simplify facing checks if needed, but existing logic tried to normalize.
-                        // For now, let's keep it simple or strictly match string if normalization logic
-                        // is complex and dependent on BlockUtils which I didn't verify heavily.
-                        // But wait, existing logic had:
-                        /*
-                         * if (propName.equals("facing") && actualObj instanceof Direction) {
-                         * Direction actualFacing = (Direction) actualObj;
-                         * Direction normalizedActual = BlockUtils.normalizeFacing(actualFacing,
-                         * controllerFacing);
-                         * actualValue = normalizedActual.getName();
-                         * }
-                         */
-                        // I should preserve that logic if I can.
-                        if ((propName.equals("facing") || propName.equals("horizontal_facing"))
-                                && actualObj instanceof Direction) {
-                            Direction actualFacing = (Direction) actualObj;
-                            // Assuming BlockUtils exists and was working
-                            Direction normalizedActual = BlockUtils.normalizeFacing(actualFacing, controllerFacing);
-                            actualValue = normalizedActual.getName();
-                        }
-                    }
-
-                    if (!Objects.equals(actualValue, expectedValue)) {
-                        return false;
-                    }
-                }
-            }
-        }
-
-        return true;
+        return validate(level, controllerPos, true).isEmpty();
     }
 
     /**
@@ -170,156 +89,144 @@ public class Structure {
      * @return A List of StructureError objects.
      */
     public List<StructureError> getValidationErrors(Level level, BlockPos controllerPos) {
-        List<StructureError> errors = new java.util.ArrayList<>();
+        return validate(level, controllerPos, false);
+    }
 
+    /**
+     * Core validation logic.
+     *
+     * @param level            The level to check.
+     * @param controllerPos    The position of the controller block.
+     * @param stopOnFirstError If true, returns immediately upon finding the first
+     *                         error (used for verification).
+     * @return A list of errors found. If stopOnFirstError is true, the list will
+     *         contain at most one error.
+     */
+    private List<StructureError> validate(Level level, BlockPos controllerPos, boolean stopOnFirstError) {
         if (level == null || controllerPos == null) {
-            return errors;
+            return Collections.singletonList(new StructureError(controllerPos, StructureError.ErrorType.MISSING,
+                    "Invalid arguments", null, null));
         }
+
+        ensureInitialized();
+
         BlockState controllerState = level.getBlockState(controllerPos);
 
-        Property<?> facingProp = controllerState.getBlock().getStateDefinition().getProperty("facing");
-        if (facingProp == null) {
-            facingProp = controllerState.getBlock().getStateDefinition().getProperty("horizontal_facing");
+        // Check Controller
+        if (cachedControllerBlock != null && !controllerState.is(cachedControllerBlock)) {
+            if (stopOnFirstError)
+                return Collections.singletonList(
+                        new StructureError(controllerPos, StructureError.ErrorType.MISSING, controller, null, null));
+            // If we're getting errors, we probably want to report the controller is wrong
+            // first and foremost
+            return Collections.singletonList(
+                    new StructureError(controllerPos, StructureError.ErrorType.MISSING, controller, null, null));
         }
 
-        if (facingProp == null) {
-            return errors;
-        }
+        Direction controllerFacing = getControllerFacing(controllerState);
+        BlockUtils.Basis basis = BlockUtils.getBasis(controllerFacing);
 
-        Object facingVal = controllerState.getValue(facingProp);
-        if (!(facingVal instanceof Direction)) {
-            return errors;
-        }
-
-        Direction controllerFacing = (Direction) facingVal;
-        Vec3 front = new Vec3(controllerFacing.getStepX(), controllerFacing.getStepY(), controllerFacing.getStepZ());
-        Vec3 up = new Vec3(0, 1, 0);
-        Vec3 right = front.cross(up);
+        List<StructureError> errors = new ArrayList<>();
 
         for (BlockEntry entry : blocks) {
-            List<Double> offset = entry.getOffset();
-            double offFront = offset.get(0);
-            double offUp = offset.get(1);
-            double offRight = offset.get(2);
-
-            double targetX = controllerPos.getX() + offFront * front.x + offUp * up.x + offRight * right.x;
-            double targetY = controllerPos.getY() + offFront * front.y + offUp * up.y + offRight * right.y;
-            double targetZ = controllerPos.getZ() + offFront * front.z + offUp * up.z + offRight * right.z;
-
-            BlockPos targetPos = new BlockPos((int) Math.round(targetX), (int) Math.round(targetY),
-                    (int) Math.round(targetZ));
+            BlockPos targetPos = BlockUtils.calculateTargetPos(controllerPos, entry.getOffset(), basis);
             BlockState targetState = level.getBlockState(targetPos);
 
-            String expectedBlockId = entry.getBlock();
-            String targetId = BuiltInRegistries.BLOCK.getKey(targetState.getBlock()).toString();
+            // 1. Check Block Type
+            if (!targetState.is(entry.cachedBlock)) {
+                BlockState expectedStateForRender = buildExpectedBlockState(entry, controllerFacing);
+                errors.add(new StructureError(targetPos, StructureError.ErrorType.MISSING, entry.getBlock(), null,
+                        expectedStateForRender));
+                if (stopOnFirstError)
+                    return errors;
+                continue;
+            }
 
-            // Build expected BlockState with denormalized properties for rendering
-            BlockState expectedBlockState = buildExpectedBlockState(expectedBlockId, entry.getProperties(),
-                    controllerFacing);
-
-            if (!targetId.equals(expectedBlockId)) {
-                errors.add(new StructureError(targetPos, StructureError.ErrorType.MISSING, expectedBlockId, null,
-                        expectedBlockState));
-            } else {
-                Map<String, String> expectedProps = entry.getProperties();
-                Map<String, String> mismatchedProps = new java.util.HashMap<>(); // Only track mismatched properties
-                if (expectedProps != null && !expectedProps.isEmpty()) {
-                    for (Map.Entry<String, String> propEntry : expectedProps.entrySet()) {
-                        String propName = propEntry.getKey();
-                        String expectedValue = propEntry.getValue();
-
-                        Property<?> property = targetState.getBlock().getStateDefinition().getProperty(propName);
-                        if (property == null) {
-                            // Property doesn't exist on block - treat as mismatch
-                            mismatchedProps.put(propName, expectedValue);
-                            continue;
-                        }
-
-                        Object actualObj = targetState.getValue(property);
-                        String actualValue = actualObj.toString();
-                        String normalizedExpected = expectedValue;
-
-                        if ((propName.equals("facing") || propName.equals("horizontal_facing"))
-                                && actualObj instanceof Direction) {
-                            Direction actualFacing = (Direction) actualObj;
-                            Direction normalizedActual = BlockUtils.normalizeFacing(actualFacing, controllerFacing);
-                            actualValue = normalizedActual.getName();
-                        }
-
-                        if (!Objects.equals(actualValue, normalizedExpected)) {
-                            // Only add mismatched property with denormalized value for display
-                            String displayValue = expectedValue;
-                            if (propName.equals("facing") || propName.equals("horizontal_facing")) {
-                                Direction normalizedDir = Direction.byName(expectedValue);
-                                if (normalizedDir != null) {
-                                    displayValue = BlockUtils.denormalizeFacing(normalizedDir, controllerFacing)
-                                            .getName();
-                                }
-                            }
-                            mismatchedProps.put(propName, displayValue);
-                        }
-                    }
-                }
-                if (!mismatchedProps.isEmpty()) {
-                    errors.add(new StructureError(targetPos, StructureError.ErrorType.WRONG_STATE, expectedBlockId,
-                            mismatchedProps, expectedBlockState));
-                }
+            // 2. Check Properties
+            Map<String, String> mismatchedProps = checkProperties(targetState, entry, controllerFacing);
+            if (!mismatchedProps.isEmpty()) {
+                BlockState expectedStateForRender = buildExpectedBlockState(entry, controllerFacing);
+                errors.add(new StructureError(targetPos, StructureError.ErrorType.WRONG_STATE, entry.getBlock(),
+                        mismatchedProps, expectedStateForRender));
+                if (stopOnFirstError)
+                    return errors;
             }
         }
 
         return errors;
     }
 
-    /**
-     * Builds the expected BlockState with denormalized facing properties.
-     */
-    /**
-     * Builds the expected BlockState with denormalized facing properties.
-     */
-    @SuppressWarnings("null")
-    private BlockState buildExpectedBlockState(String blockId, Map<String, String> properties,
-            Direction controllerFacing) {
-        Block block = BuiltInRegistries.BLOCK.getValue(Identifier.parse(blockId));
-        if (block == null) {
-            return null;
+    private Direction getControllerFacing(BlockState controllerState) {
+        Property<?> facingProp = controllerState.getBlock().getStateDefinition().getProperty("facing");
+        if (facingProp == null) {
+            facingProp = controllerState.getBlock().getStateDefinition().getProperty("horizontal_facing");
         }
-        BlockState state = block.defaultBlockState();
 
-        if (properties != null) {
-            for (Map.Entry<String, String> propEntry : properties.entrySet()) {
-                String propName = propEntry.getKey();
-                String propValue = propEntry.getValue();
-
-                Property<?> property = state.getBlock().getStateDefinition().getProperty(propName);
-                if (property != null) {
-                    // Denormalize facing properties
-                    if ((propName.equals("facing") || propName.equals("horizontal_facing"))) {
-                        Direction normalizedDir = Direction.byName(propValue);
-                        if (normalizedDir != null) {
-                            Direction denormalized = BlockUtils.denormalizeFacing(normalizedDir, controllerFacing);
-                            propValue = denormalized.getName();
-                        }
-                    }
-                    state = setPropertyValue(state, property, propValue);
-                }
+        if (facingProp != null) {
+            Object val = controllerState.getValue(facingProp);
+            if (val instanceof Direction) {
+                return (Direction) val;
             }
         }
-        return state;
+        return Direction.NORTH;
     }
 
-    @SuppressWarnings("unchecked")
-    private <T extends Comparable<T>> BlockState setPropertyValue(BlockState state, Property<T> property,
-            String value) {
-        return property.getValue(value).map(v -> state.setValue(property, v)).orElse(state);
-    }
-
-    // Kept for backward compatibility if needed that delegates to new method
-    public Map<String, Integer> getMissingBlocks(Level level, BlockPos controllerPos) {
-        Map<String, Integer> combined = new java.util.HashMap<>();
-        for (StructureError error : getValidationErrors(level, controllerPos)) {
-            combined.merge(error.expectedBlockId, 1, Integer::sum);
+    private Map<String, String> checkProperties(BlockState targetState, BlockEntry entry, Direction controllerFacing) {
+        if (entry.cachedProperties == null || entry.cachedProperties.isEmpty()) {
+            return Collections.emptyMap();
         }
-        return combined;
+
+        Map<String, String> mismatched = new HashMap<>();
+
+        for (Map.Entry<Property<?>, Comparable<?>> propEntry : entry.cachedProperties.entrySet()) {
+            Property<?> property = propEntry.getKey();
+            Comparable<?> expectedValue = propEntry.getValue();
+
+            // Handle Facing rotation
+            if (property.getName().equals("facing") || property.getName().equals("horizontal_facing")) {
+                if (expectedValue instanceof Direction expectedDir) {
+                    // The expected value stored in the structure is "normalized" (relative to
+                    // NORTH).
+                    // We need to denormalize it to the actual world direction to compare with the
+                    // world state.
+                    Direction expectedWorldDir = BlockUtils.denormalizeFacing(expectedDir, controllerFacing);
+
+                    if (!targetState.getValue(property).equals(expectedWorldDir)) {
+                        mismatched.put(property.getName(), expectedDir.getName()); // Return the normalized name as
+                                                                                   // expected
+                    }
+                    continue;
+                }
+            }
+
+            if (!targetState.getValue(property).equals(expectedValue)) {
+                mismatched.put(property.getName(), expectedValue.toString());
+            }
+        }
+        return mismatched;
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private BlockState buildExpectedBlockState(BlockEntry entry, Direction controllerFacing) {
+        if (entry.cachedBlock == null)
+            return null;
+
+        BlockState state = entry.cachedBlock.defaultBlockState();
+        if (entry.cachedProperties == null)
+            return state;
+
+        for (Map.Entry<Property<?>, Comparable<?>> propEntry : entry.cachedProperties.entrySet()) {
+            Property property = propEntry.getKey();
+            Comparable value = propEntry.getValue();
+
+            if (property.getName().equals("facing") || property.getName().equals("horizontal_facing")) {
+                if (value instanceof Direction dir) {
+                    value = BlockUtils.denormalizeFacing(dir, controllerFacing);
+                }
+            }
+            state = state.setValue(property, value);
+        }
+        return state;
     }
 
     public static class StructureError {
@@ -332,7 +239,7 @@ public class Structure {
         public final ErrorType type;
         public final String expectedBlockId;
         public final Map<String, String> expectedState;
-        public final BlockState expectedBlockState; // Full BlockState for rendering
+        public final BlockState expectedBlockState;
 
         public StructureError(BlockPos pos, ErrorType type, String expectedBlockId, Map<String, String> expectedState,
                 BlockState expectedBlockState) {
@@ -349,10 +256,32 @@ public class Structure {
         private List<Double> offset;
         private Map<String, String> properties;
 
+        private transient Block cachedBlock;
+        private transient Map<Property<?>, Comparable<?>> cachedProperties;
+
         public BlockEntry(String block, List<Double> offset, Map<String, String> properties) {
             this.block = block;
             this.offset = offset;
             this.properties = properties;
+        }
+
+        public void initialize() {
+            Identifier id = Identifier.tryParse(block);
+            if (id != null) {
+                this.cachedBlock = BuiltInRegistries.BLOCK.getOptional(id).orElse(null);
+            }
+            if (this.cachedBlock != null && properties != null) {
+                this.cachedProperties = new HashMap<>();
+                for (Map.Entry<String, String> entry : properties.entrySet()) {
+                    Property<?> prop = cachedBlock.getStateDefinition().getProperty(entry.getKey());
+                    if (prop != null) {
+                        Optional<? extends Comparable<?>> val = prop.getValue(entry.getValue());
+                        val.ifPresent(comparable -> cachedProperties.put(prop, comparable));
+                    }
+                }
+            } else {
+                this.cachedProperties = Collections.emptyMap();
+            }
         }
 
         public String getBlock() {

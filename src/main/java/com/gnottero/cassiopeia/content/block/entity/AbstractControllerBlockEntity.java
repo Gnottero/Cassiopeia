@@ -14,6 +14,8 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+
+import org.apache.logging.log4j.util.Strings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +25,7 @@ import java.util.Optional;
 public abstract class AbstractControllerBlockEntity extends BlockEntity {
 
     private static final String STRUCTURE_ID_KEY = "structure_id";
-    private String structureId = "ticker_structure";
+    private String structureId = Strings.EMPTY;
 
     public AbstractControllerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -41,7 +43,7 @@ public abstract class AbstractControllerBlockEntity extends BlockEntity {
     @Override
     protected void saveAdditional(@NotNull ValueOutput output) {
         super.saveAdditional(output);
-        if (structureId != null && !structureId.isEmpty()) {
+        if (!structureId.isEmpty()) {
             output.putString(STRUCTURE_ID_KEY, structureId);
         }
     }
@@ -49,10 +51,7 @@ public abstract class AbstractControllerBlockEntity extends BlockEntity {
     @Override
     protected void loadAdditional(@NotNull ValueInput input) {
         super.loadAdditional(input);
-        this.structureId = input.getStringOr(STRUCTURE_ID_KEY, "ticker_structure");
-        if (this.structureId.isEmpty()) {
-            this.structureId = "ticker_structure";
-        }
+        this.structureId = input.getStringOr(STRUCTURE_ID_KEY, Strings.EMPTY);
     }
 
     @Nullable
@@ -63,20 +62,11 @@ public abstract class AbstractControllerBlockEntity extends BlockEntity {
 
     @Override
     public @NotNull CompoundTag getUpdateTag(HolderLookup.@NotNull Provider registries) {
-        // Since we are using ValueOutput for saving, we might need to handle
-        // getUpdateTag efficiently
-        // For now, super implementation or empty compund might be fallback, strict
-        // saveWithoutMetadata is 1.21 vanilla
-        // but if saveAdditional takes ValueOutput, saveWithoutMetadata might not work
-        // as expected if it expects CompoundTag filling.
-        // However, looking at the previous file, it used
-        // `this.saveWithoutMetadata(registries)`.
-        // Let's assume that works.
         return this.saveWithoutMetadata(registries);
     }
 
     public boolean verifyStructure(Level level, BlockPos pos) {
-        if (structureId == null || structureId.isEmpty()) {
+        if (structureId.isEmpty()) {
             return false;
         }
 

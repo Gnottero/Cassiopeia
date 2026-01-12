@@ -55,34 +55,7 @@ public class BasicControllerBlock extends AbstractControllerBlock {
         if (structureId != null && be instanceof BasicControllerBlockEntity machineBE) {
             if (MachineHandlerRegistry.hasHandler(structureId)) {
                 player.openMenu(machineBE);
-                return;
             }
         }
-
-        // Default behavior for structures without machine handlers
-        String title = "Inventory";
-        if (structureId != null && !structureId.isEmpty()) {
-            StringBuilder sb = new StringBuilder();
-            boolean capitalizeNext = true;
-            for (char c : structureId.toCharArray()) {
-                if (c == '_') {
-                    sb.append(' ');
-                    capitalizeNext = true;
-                } else {
-                    if (capitalizeNext) {
-                        sb.append(Character.toUpperCase(c));
-                        capitalizeNext = false;
-                    } else {
-                        sb.append(c);
-                    }
-                }
-            }
-            title = sb.toString();
-        }
-
-        player.openMenu(new net.minecraft.world.SimpleMenuProvider(
-                (syncId, inventory, p) -> net.minecraft.world.inventory.ChestMenu.threeRows(syncId, inventory,
-                        new net.minecraft.world.SimpleContainer(27)),
-                net.minecraft.network.chat.Component.literal(title)));
     }
 }

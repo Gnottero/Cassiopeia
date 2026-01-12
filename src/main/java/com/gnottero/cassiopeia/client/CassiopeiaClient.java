@@ -1,7 +1,6 @@
 package com.gnottero.cassiopeia.client;
 
 import com.gnottero.cassiopeia.client.screen.CrusherScreen;
-import com.gnottero.cassiopeia.client.screen.UnpackagerScreen;
 import com.gnottero.cassiopeia.content.ModRegistry;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
@@ -15,7 +14,6 @@ public class CassiopeiaClient implements ClientModInitializer {
         StructureHighlightRenderer.init();
 
         // Register screens
-        MenuScreens.register(ModRegistry.CRUSHER_MENU, CrusherScreen::new);
-        MenuScreens.register(ModRegistry.UNPACKAGER_MENU, UnpackagerScreen::new);
+        MenuScreens.register(ModRegistry.Menus.CRUSHER, CrusherScreen::new);
     }
 }

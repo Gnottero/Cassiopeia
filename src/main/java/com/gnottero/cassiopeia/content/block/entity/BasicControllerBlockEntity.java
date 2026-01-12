@@ -27,6 +27,9 @@ import java.util.List;
 import java.util.Optional;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.nbt.CompoundTag;
 
 /**
@@ -68,7 +71,7 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity
     };
 
     public BasicControllerBlockEntity(BlockPos pos, BlockState state) {
-        super(ModRegistry.BASIC_CONTROLLER_BLOCK_ENTITY, pos, state);
+        super(ModRegistry.BlockEntities.BASIC_CONTROLLER, pos, state);
     }
 
     private Optional<MachineHandler> getHandler() {
@@ -235,7 +238,9 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity
         for (String key : recipesTag.keySet()) {
             Identifier id = Identifier.tryParse(key);
             if (id != null) {
-                this.recipesUsed.put(id, recipesTag.getInt(key).orElse(0));
+                @SuppressWarnings("deprecation")
+                // put returns previous value, safe to ignore
+                var _unused = this.recipesUsed.put(id, recipesTag.getInt(key).orElse(0));
             }
         }
     }
@@ -264,12 +269,27 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity
     }
 
     public void awardUsedRecipes(Player player, List<ItemStack> items) {
-        // Simple implementation - in a full mod we would use RicepBook support
-        // For now we just clear it to prevent infinite accumulation if not used
-        // Or keep it if we want persistent stats.
-        // Vanilla AbstractFurnaceBlockEntity clears it after awarding XP.
-        // Since we don't have XP handling yet, we'll just expose the method for future
-        // use.
+        if (this.level == null || this.level.isClientSide()) {
+            return;
+        }
+
+        List<RecipeHolder<?>> recipesToAward = new java.util.ArrayList<>();
+
+        if (this.level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+            for (it.unimi.dsi.fastutil.objects.Object2IntMap.Entry<Identifier> entry : this.recipesUsed
+                    .object2IntEntrySet()) {
+                // In 1.21+, RecipeManager uses ResourceKey lookup
+                ResourceKey<Recipe<?>> key = ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE,
+                        entry.getKey());
+
+                serverLevel.getServer().getRecipeManager().byKey(key).ifPresent(holder -> {
+                    recipesToAward.add(holder);
+                });
+            }
+        }
+
+        player.awardRecipes(recipesToAward);
+        this.recipesUsed.clear();
     }
 
     public Object2IntOpenHashMap<Identifier> getRecipesUsed() {

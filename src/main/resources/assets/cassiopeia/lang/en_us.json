@@ -7,6 +7,7 @@
     "block.cassiopeia.basic_controller": "Basic Controller",
     "item.cassiopeia.basic_controller": "Basic Controller",
     "container.cassiopeia.crusher": "Crusher",
-    "container.cassiopeia.unpackager": "Unpackager",
-    "container.cassiopeia.controller": "Controller"
+    "container.cassiopeia.controller": "Controller",
+    "gui.cassiopeia.category.crushing": "Crushing",
+    "gui.cassiopeia.jei.time": "%s s"
 }

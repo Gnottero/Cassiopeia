@@ -43,17 +43,17 @@ public class CrusherScreen extends AbstractMachineScreen<CrusherMenu> {
     @Override
     protected void renderMachineIndicators(GuiGraphics guiGraphics, int x, int y, float partialTick) {
         // Draw burn indicator (flame) - fills from bottom to top when burning
-        if (this.menu.isBurning()) {
+        if (this.menu.isLit()) {
             renderVerticalProgressSprite(
                     guiGraphics,
                     LIT_PROGRESS,
                     x + FLAME_X, y + FLAME_Y,
                     FLAME_WIDTH, FLAME_HEIGHT,
-                    this.menu.getBurnProgress());
+                    this.menu.getLitProgress());
         }
 
         // Draw progress arrow - fills from left to right
-        float crushProgress = this.menu.getCrushProgress();
+        float crushProgress = this.menu.getBurnProgress();
         if (crushProgress > 0) {
             renderHorizontalProgressSprite(
                     guiGraphics,

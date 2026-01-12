@@ -1,148 +1,110 @@
 package com.gnottero.cassiopeia.client.screen;
 
-import com.gnottero.cassiopeia.content.menu.AbstractMachineMenu;
+import com.gnottero.cassiopeia.content.menu.AbstractCrushingMenu;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
-import org.jetbrains.annotations.NotNull;
 
 /**
- * Base class for all machine screens.
- * Provides common rendering logic with support for animated progress
- * indicators.
+ * Base screen class for machine GUIs.
+ * Provides common rendering utilities for progress indicators.
+ *
+ * @param <T> The menu type for this screen
  */
 @Environment(EnvType.CLIENT)
-public abstract class AbstractMachineScreen<T extends AbstractMachineMenu> extends AbstractContainerScreen<T> {
+public abstract class AbstractMachineScreen<T extends AbstractCrushingMenu> extends AbstractContainerScreen<T> {
 
-    protected final Identifier backgroundTexture;
+    protected final Identifier background;
 
-    // Standard texture dimensions
-    protected static final int TEXTURE_WIDTH = 256;
-    protected static final int TEXTURE_HEIGHT = 256;
-
-    protected AbstractMachineScreen(T menu, Inventory playerInventory, Component title, Identifier backgroundTexture) {
+    protected AbstractMachineScreen(T menu, Inventory playerInventory, Component title, Identifier background) {
         super(menu, playerInventory, title);
-        this.backgroundTexture = backgroundTexture;
+        this.background = background;
     }
 
     @Override
-    protected void init() {
-        super.init();
-        // Center title
-        this.titleLabelX = (this.imageWidth - this.font.width(this.title)) / 2;
-    }
-
-    @Override
-    protected void renderBg(@NotNull GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
-        int x = this.leftPos;
-        int y = this.topPos;
-
-        // Draw background texture
-        guiGraphics.blit(
-                RenderPipelines.GUI_TEXTURED,
-                this.backgroundTexture,
-                x, y,
-                0, 0,
-                this.imageWidth, this.imageHeight,
-                TEXTURE_WIDTH, TEXTURE_HEIGHT);
-
-        // Render machine-specific indicators
-        renderMachineIndicators(guiGraphics, x, y, partialTick);
-    }
-
-    /**
-     * Render machine-specific progress indicators.
-     * Subclasses should override to draw progress arrows, flame indicators, etc.
-     */
-    protected abstract void renderMachineIndicators(GuiGraphics guiGraphics, int x, int y, float partialTick);
-
-    /**
-     * Render a horizontal progress sprite (left to right fill).
-     *
-     * @param guiGraphics   The graphics context
-     * @param spriteTexture The sprite texture to render
-     * @param x             X position in screen coordinates
-     * @param y             Y position in screen coordinates
-     * @param spriteWidth   Full width of the sprite
-     * @param spriteHeight  Height of the sprite
-     * @param progress      Progress from 0.0 to 1.0
-     */
-    protected void renderHorizontalProgressSprite(
-            GuiGraphics guiGraphics,
-            Identifier spriteTexture,
-            int x, int y,
-            int spriteWidth, int spriteHeight,
-            float progress) {
-        int progressWidth = (int) (spriteWidth * progress);
-        if (progressWidth > 0) {
-            guiGraphics.blit(
-                    RenderPipelines.GUI_TEXTURED,
-                    spriteTexture,
-                    x, y,
-                    0, 0,
-                    progressWidth, spriteHeight,
-                    spriteWidth, spriteHeight);
-        }
-    }
-
-    /**
-     * Render a vertical progress sprite (bottom to top fill).
-     * Commonly used for fuel/burn indicators.
-     *
-     * @param guiGraphics   The graphics context
-     * @param spriteTexture The sprite texture to render
-     * @param x             X position in screen coordinates
-     * @param y             Y position in screen coordinates
-     * @param spriteWidth   Width of the sprite
-     * @param spriteHeight  Full height of the sprite
-     * @param progress      Progress from 0.0 to 1.0
-     */
-    protected void renderVerticalProgressSprite(
-            GuiGraphics guiGraphics,
-            Identifier spriteTexture,
-            int x, int y,
-            int spriteWidth, int spriteHeight,
-            float progress) {
-        int progressHeight = (int) (spriteHeight * progress);
-        if (progressHeight > 0) {
-            int yOffset = spriteHeight - progressHeight;
-            guiGraphics.blit(
-                    RenderPipelines.GUI_TEXTURED,
-                    spriteTexture,
-                    x, y + yOffset,
-                    0, yOffset,
-                    spriteWidth, progressHeight,
-                    spriteWidth, spriteHeight);
-        }
-    }
-
-    @Override
-    public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         super.render(guiGraphics, mouseX, mouseY, partialTick);
         this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
 
     @Override
+    protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
+        int x = (this.width - this.imageWidth) / 2;
+        int y = (this.height - this.imageHeight) / 2;
+
+        // Draw main background
+        guiGraphics.blit(this.background, x, y, 0, 0, this.imageWidth, this.imageHeight, 256, 256);
+
+        // Draw machine-specific indicators (flame, progress arrow, etc.)
+        renderMachineIndicators(guiGraphics, x, y, partialTick);
+    }
+
+    @Override
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        // Draw labels with custom color instead of vanilla dark gray
-        int color = getLabelColor();
-        guiGraphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, color);
-        guiGraphics.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, color);
+        guiGraphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, getLabelColor(), false);
+        guiGraphics.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY,
+                getLabelColor(), false);
     }
 
     /**
-     * Get the color for GUI labels (title and inventory text).
-     * Override in subclasses to customize per machine.
-     * NOTE: MC 1.21+ requires ARGB format with alpha channel (0xAARRGGBB).
+     * Override to render machine-specific progress indicators.
      *
-     * @return ARGB color value (e.g., 0xFF404040 for opaque dark gray)
+     * @param guiGraphics Graphics context
+     * @param x           Left position of the GUI
+     * @param y           Top position of the GUI
+     * @param partialTick Partial tick time
+     */
+    protected abstract void renderMachineIndicators(GuiGraphics guiGraphics, int x, int y, float partialTick);
+
+    /**
+     * Override to customize label color.
+     *
+     * @return ARGB color for labels
      */
     protected int getLabelColor() {
-        return 0xFF404040; // Default: opaque dark gray (vanilla default)
+        return 0xFF404040; // Default dark gray
+    }
+
+    /**
+     * Renders a horizontal progress sprite that fills from left to right.
+     *
+     * @param guiGraphics Graphics context
+     * @param texture     The texture identifier
+     * @param x           X position
+     * @param y           Y position
+     * @param width       Full sprite width
+     * @param height      Sprite height
+     * @param progress    Progress from 0.0 to 1.0
+     */
+    protected void renderHorizontalProgressSprite(GuiGraphics guiGraphics, Identifier texture,
+            int x, int y, int width, int height, float progress) {
+        int scaledWidth = (int) (progress * width);
+        if (scaledWidth > 0) {
+            guiGraphics.blit(texture, x, y, 0, 0, scaledWidth, height, width, height);
+        }
+    }
+
+    /**
+     * Renders a vertical progress sprite that fills from bottom to top.
+     *
+     * @param guiGraphics Graphics context
+     * @param texture     The texture identifier
+     * @param x           X position
+     * @param y           Y position (top of sprite area)
+     * @param width       Sprite width
+     * @param height      Full sprite height
+     * @param progress    Progress from 0.0 to 1.0
+     */
+    protected void renderVerticalProgressSprite(GuiGraphics guiGraphics, Identifier texture,
+            int x, int y, int width, int height, float progress) {
+        int scaledHeight = (int) (progress * height);
+        if (scaledHeight > 0) {
+            int yOffset = height - scaledHeight;
+            guiGraphics.blit(texture, x, y + yOffset, 0, yOffset, width, scaledHeight, width, height);
+        }
     }
 }

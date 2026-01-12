@@ -11,6 +11,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.phys.Vec3;
 
+import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -53,9 +54,10 @@ public class StructureManager {
         Direction controllerFacing = (Direction) facingVal;
 
         // Coordinate system basis
-        Vec3 front = new Vec3(controllerFacing.getStepX(), controllerFacing.getStepY(), controllerFacing.getStepZ());
-        Vec3 up = new Vec3(0, 1, 0);
-        Vec3 right = front.cross(up);
+        BlockUtils.Basis basis = BlockUtils.getBasis(controllerFacing);
+        Vec3 front = basis.front();
+        Vec3 up = basis.up();
+        Vec3 right = basis.right();
 
         // Bounding box iteration
         int minX = Math.min(from.getX(), to.getX());
@@ -98,17 +100,12 @@ public class StructureManager {
 
         // Save to file
         File file = new File(STRUCTURE_DIR, identifier + ".json");
-        try (Writer writer = new FileWriter(file)) {
-            GSON.toJson(structure, writer);
-            CACHE.remove(identifier); // Validate cache
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Failed to save structure file", e);
-        }
+        writeStructureToFile(structure, file);
+        CACHE.remove(identifier); // Validate cache
     }
 
-    @org.jetbrains.annotations.NotNull
-    public static Optional<Structure> getStructure(@org.jetbrains.annotations.NotNull String identifier) {
+    @NotNull
+    public static Optional<Structure> getStructure(@NotNull String identifier) {
         if (CACHE.containsKey(identifier)) {
             return Optional.ofNullable(CACHE.get(identifier));
         }
@@ -135,7 +132,7 @@ public class StructureManager {
     }
 
     private static void createDefaultIfKnown(String identifier, File file) {
-        if (!identifier.equals("unpackager") && !identifier.equals("crusher")) {
+        if (!identifier.equals("crusher")) {
             return;
         }
 
@@ -149,14 +146,19 @@ public class StructureManager {
         // Note: properties map can be empty to match any properties
         structure.addBlock(new Structure.BlockEntry(controllerId, offset, new java.util.HashMap<>()));
 
+        writeStructureToFile(structure, file);
+    }
+
+    private static void writeStructureToFile(Structure structure, File file) {
         try (Writer writer = new FileWriter(file)) {
             GSON.toJson(structure, writer);
         } catch (IOException e) {
             e.printStackTrace();
+            throw new RuntimeException("Failed to save structure file", e);
         }
     }
 
-    @org.jetbrains.annotations.NotNull
+    @NotNull
     public static Set<String> getAvailableStructures() {
         if (!STRUCTURE_DIR.exists()) {
             return Collections.emptySet();
