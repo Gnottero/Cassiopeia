@@ -39,5 +39,6 @@ public class MachineHandlerRegistry {
      */
     public static void init() {
         register(new CrusherMachineHandler());
+        register(new AlloyKilnMachineHandler());
     }
 }

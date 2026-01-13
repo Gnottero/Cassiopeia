@@ -1,44 +1,51 @@
 package com.gnottero.cassiopeia.content.menu;
 
 import com.gnottero.cassiopeia.content.block.entity.BasicControllerBlockEntity;
-import com.gnottero.cassiopeia.content.machine.CrusherMachineHandler;
+import com.gnottero.cassiopeia.content.machine.AlloyKilnMachineHandler;
 import com.gnottero.cassiopeia.content.menu.slot.MachineFuelSlot;
 import com.gnottero.cassiopeia.content.menu.slot.MachineResultSlot;
 import com.gnottero.cassiopeia.content.screen.ModScreenHandlers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.*;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerData;
+import net.minecraft.world.inventory.SimpleContainerData;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
-public class CrusherMenu extends AbstractCrushingMenu {
+/**
+ * Menu for the Alloy Kiln: 2 inputs + fuel → 1 output.
+ */
+public class AlloyKilnMenu extends AbstractContainerMenu {
     public final BasicControllerBlockEntity blockEntity;
     private final Level level;
     private final ContainerData data;
 
-    // Client Constructor - receives BlockPos from ExtendedScreenHandlerType
-    public CrusherMenu(int containerId, Inventory inv, BlockPos pos) {
+    // Client Constructor
+    public AlloyKilnMenu(int containerId, Inventory inv, BlockPos pos) {
         this(containerId, inv, inv.player.level().getBlockEntity(pos),
-                new SimpleContainerData(CrusherMachineHandler.DATA_COUNT));
+                new SimpleContainerData(AlloyKilnMachineHandler.DATA_COUNT));
     }
 
-    // Server Constructor / Internal
-    public CrusherMenu(int containerId, Inventory inv, BlockEntity entity, ContainerData data) {
-        super(ModScreenHandlers.CRUSHER, containerId, inv.player);
+    // Server Constructor
+    public AlloyKilnMenu(int containerId, Inventory inv, BlockEntity entity, ContainerData data) {
+        super(ModScreenHandlers.ALLOY_KILN, containerId);
         this.blockEntity = (BasicControllerBlockEntity) entity;
         this.level = inv.player.level();
         this.data = data;
 
-        // Check container size on blockEntity, not player inventory
-        checkContainerSize(this.blockEntity, CrusherMachineHandler.SLOT_COUNT);
-        checkContainerDataCount(data, CrusherMachineHandler.DATA_COUNT);
+        checkContainerSize(this.blockEntity, AlloyKilnMachineHandler.SLOT_COUNT);
+        checkContainerDataCount(data, AlloyKilnMachineHandler.DATA_COUNT);
 
-        // Add Machine Slots FIRST
-        this.addSlot(new Slot(this.blockEntity, CrusherMachineHandler.INPUT_SLOT, 56, 17));
-        this.addSlot(new MachineFuelSlot(this.level, this.blockEntity, CrusherMachineHandler.FUEL_SLOT, 56, 53));
-        this.addSlot(new MachineResultSlot(inv.player, this.blockEntity, CrusherMachineHandler.OUTPUT_SLOT, 116, 35));
+        // Add machine slots - layout: 2 inputs side by side, fuel below, output to
+        // right
+        this.addSlot(new Slot(this.blockEntity, AlloyKilnMachineHandler.INPUT_SLOT_A, 24, 17));
+        this.addSlot(new Slot(this.blockEntity, AlloyKilnMachineHandler.INPUT_SLOT_B, 52, 17));
+        this.addSlot(new MachineFuelSlot(this.level, this.blockEntity, AlloyKilnMachineHandler.FUEL_SLOT, 38, 53));
+        this.addSlot(new MachineResultSlot(inv.player, this.blockEntity, AlloyKilnMachineHandler.OUTPUT_SLOT, 116, 35));
 
         addPlayerInventory(inv);
         addPlayerHotbar(inv);
@@ -47,60 +54,45 @@ public class CrusherMenu extends AbstractCrushingMenu {
     }
 
     public boolean isFuel(ItemStack stack) {
-        if (level != null) {
-            return CrusherMachineHandler.getBurnTime(level.fuelValues(), stack) > 0;
-        }
-        return false;
+        return level != null && level.fuelValues().burnDuration(stack) > 0;
     }
 
     public boolean isCrafting() {
-        return data.get(2) > 0; // DATA_COOKING_PROGRESS
+        return data.get(AlloyKilnMachineHandler.DATA_ALLOYING_PROGRESS) > 0;
     }
 
     public boolean isBurning() {
-        return data.get(0) > 0; // DATA_LIT_TIME
+        return data.get(AlloyKilnMachineHandler.DATA_LIT_TIME) > 0;
     }
 
-    public boolean hasFuel() {
-        return data.get(0) > 0; // DATA_LIT_TIME
-    }
-
-    // Returns burn progress as a float 0-1
     public float getBurnProgress() {
-        int litTime = data.get(0);
-        int litDuration = data.get(1);
+        int litTime = data.get(AlloyKilnMachineHandler.DATA_LIT_TIME);
+        int litDuration = data.get(AlloyKilnMachineHandler.DATA_LIT_DURATION);
         return litDuration != 0 ? (float) litTime / (float) litDuration : 0;
     }
 
-    // Returns crush progress as a float 0-1
-    public float getCrushProgress() {
-        int progress = data.get(2);
-        int maxProgress = data.get(3);
+    public float getAlloyProgress() {
+        int progress = data.get(AlloyKilnMachineHandler.DATA_ALLOYING_PROGRESS);
+        int maxProgress = data.get(AlloyKilnMachineHandler.DATA_ALLOYING_TOTAL_TIME);
         return maxProgress != 0 ? (float) progress / (float) maxProgress : 0;
     }
 
     public int getScaledProgress() {
-        int progress = data.get(2);
-        int maxProgress = data.get(3); // DATA_COOKING_TOTAL_TIME
-        int progressArrowSize = 24; // Arrow width in pixels
-
+        int progress = data.get(AlloyKilnMachineHandler.DATA_ALLOYING_PROGRESS);
+        int maxProgress = data.get(AlloyKilnMachineHandler.DATA_ALLOYING_TOTAL_TIME);
+        int progressArrowSize = 24;
         return maxProgress != 0 && progress != 0 ? progress * progressArrowSize / maxProgress : 0;
     }
 
     public int getScaledFuelProgress() {
-        int litTime = data.get(0);
-        int litDuration = data.get(1); // DATA_LIT_DURATION
+        int litTime = data.get(AlloyKilnMachineHandler.DATA_LIT_TIME);
+        int litDuration = data.get(AlloyKilnMachineHandler.DATA_LIT_DURATION);
         int burnProgressSize = 14;
-
         return litDuration != 0 && litTime != 0 ? litTime * burnProgressSize / litDuration : 0;
     }
 
-    // QuickMoveStack logic depends on indexes.
-    // Order added: 3 Machine Slots (0-2), then 27 Player Inventory (3-29), then 9
-    // Hotbar (30-38).
-
     private static final int TE_INVENTORY_FIRST_SLOT_INDEX = 0;
-    private static final int TE_INVENTORY_SLOT_COUNT = 3;
+    private static final int TE_INVENTORY_SLOT_COUNT = 4;
     private static final int VANILLA_FIRST_SLOT_INDEX = TE_INVENTORY_FIRST_SLOT_INDEX + TE_INVENTORY_SLOT_COUNT;
     private static final int VANILLA_SLOT_COUNT = 36;
 

@@ -1,0 +1,12 @@
+{
+    "type": "cassiopeia:alloying",
+    "group": "bronze",
+    "input_a": "minecraft:copper_ingot",
+    "input_b": "minecraft:iron_ingot",
+    "result": {
+        "count": 2,
+        "id": "minecraft:gold_ingot"
+    },
+    "experience": 0.5,
+    "alloying_time": 300
+}

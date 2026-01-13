@@ -1,21 +1,29 @@
 package com.gnottero.cassiopeia.content.block.entity;
 
-import com.gnottero.cassiopeia.content.ModRegistry;
 import com.gnottero.cassiopeia.content.machine.MachineHandler;
 import com.gnottero.cassiopeia.content.machine.MachineHandlerRegistry;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
-import net.minecraft.world.MenuProvider;
 import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
@@ -23,29 +31,25 @@ import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import net.minecraft.resources.Identifier;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeHolder;
-import net.minecraft.nbt.CompoundTag;
 
 /**
  * Basic Controller Block Entity.
+ * Delegates machine behavior to MachineHandler implementations.
  */
 public class BasicControllerBlockEntity extends AbstractControllerBlockEntity
-        implements MenuProvider, WorldlyContainer {
+        implements ExtendedScreenHandlerFactory<BlockPos>, WorldlyContainer {
 
     private static final int MAX_SLOT_COUNT = 4;
     private static final int MAX_DATA_COUNT = 8;
     private static final int[] NO_SLOTS = {};
 
-    public static final String TAG_ITEMS = "Items";
-    public static final String TAG_RECIPES_USED = "RecipesUsed";
+    private static final String TAG_ITEMS = "Items";
+    private static final String TAG_RECIPES_USED = "RecipesUsed";
 
-    private NonNullList<ItemStack> machineItems = NonNullList.withSize(MAX_SLOT_COUNT, ItemStack.EMPTY);
+    private final NonNullList<ItemStack> machineItems = NonNullList.withSize(MAX_SLOT_COUNT, ItemStack.EMPTY);
     private final int[] machineData = new int[MAX_DATA_COUNT];
     private final Object2IntOpenHashMap<Identifier> recipesUsed = new Object2IntOpenHashMap<>();
 
@@ -54,13 +58,13 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity
         public int get(int index) {
             if (index < 0 || index >= MAX_DATA_COUNT)
                 return 0;
-            return BasicControllerBlockEntity.this.machineData[index];
+            return machineData[index];
         }
 
         @Override
         public void set(int index, int value) {
             if (index >= 0 && index < MAX_DATA_COUNT) {
-                BasicControllerBlockEntity.this.machineData[index] = value;
+                machineData[index] = value;
             }
         }
 
@@ -71,7 +75,7 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity
     };
 
     public BasicControllerBlockEntity(BlockPos pos, BlockState state) {
-        super(ModRegistry.BlockEntities.BASIC_CONTROLLER, pos, state);
+        super(ModBlockEntities.BASIC_CONTROLLER, pos, state);
     }
 
     private Optional<MachineHandler> getHandler() {
@@ -81,9 +85,13 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity
         return MachineHandlerRegistry.getHandler(structureId);
     }
 
+    // ==================== Server Tick ====================
+
     public static void serverTick(Level level, BlockPos pos, BlockState state, BasicControllerBlockEntity be) {
-        be.getHandler().ifPresent(handler -> handler.tick(level, pos, state, be));
+        be.getHandler().ifPresent(handler -> handler.serverTick(level, pos, state, be));
     }
+
+    // ==================== Machine Data Access ====================
 
     public NonNullList<ItemStack> getMachineItems() {
         return machineItems;
@@ -101,6 +109,12 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity
         }
     }
 
+    public ContainerData getContainerData() {
+        return containerData;
+    }
+
+    // ==================== WorldlyContainer Implementation ====================
+
     @Override
     public int @NotNull [] getSlotsForFace(@NotNull Direction side) {
         return getHandler().map(h -> h.getSlotsForFace(side)).orElse(NO_SLOTS);
@@ -108,13 +122,15 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity
 
     @Override
     public boolean canPlaceItemThroughFace(int index, @NotNull ItemStack stack, @Nullable Direction direction) {
-        return getHandler().map(h -> h.canPlaceItem(index, stack)).orElse(false);
+        return getHandler().map(h -> h.canPlaceItem(this, index, stack)).orElse(false);
     }
 
     @Override
     public boolean canTakeItemThroughFace(int index, @NotNull ItemStack stack, @NotNull Direction direction) {
         return getHandler().map(h -> h.canTakeItem(index, stack, direction)).orElse(false);
     }
+
+    // ==================== Container Implementation ====================
 
     @Override
     public int getContainerSize() {
@@ -135,9 +151,8 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity
     @Override
     public @NotNull ItemStack getItem(int slot) {
         int size = getContainerSize();
-        if (slot < 0 || slot >= size) {
+        if (slot < 0 || slot >= size)
             return ItemStack.EMPTY;
-        }
         return machineItems.get(slot);
     }
 
@@ -169,10 +184,18 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity
             stack.setCount(getMaxStackSize());
         }
 
-        if (slot == 0 && !sameItem) {
-            setMachineData(0, 0);
-            setChanged();
-        }
+        // Reset cooking progress when input changes (not fuel time!)
+        getHandler().ifPresent(handler -> {
+            if (slot == handler.getInputSlotIndex() && !sameItem) {
+                setMachineData(handler.getProcessProgressIndex(), 0);
+                setChanged();
+            }
+        });
+    }
+
+    @Override
+    public boolean canPlaceItem(int index, @NotNull ItemStack stack) {
+        return getHandler().map(h -> h.canPlaceItem(this, index, stack)).orElse(false);
     }
 
     @Override
@@ -188,30 +211,19 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity
         }
     }
 
-    @Override
-    public boolean canPlaceItem(int index, @NotNull ItemStack stack) {
-        return getHandler().map(h -> h.canPlaceItem(index, stack)).orElse(false);
-    }
+    // ==================== NBT Serialization ====================
 
     @Override
     protected void saveAdditional(@NotNull ValueOutput output) {
         super.saveAdditional(output);
 
-        // Save items (Always save, even if empty, when handler is present)
         ContainerHelper.saveAllItems(output, machineItems, true);
 
-        Optional<MachineHandler> handlerOpt = getHandler();
-        if (handlerOpt.isEmpty()) {
-            return;
-        }
-
-        MachineHandler handler = handlerOpt.get();
-        // Save machine specific data
-        handler.saveAdditional(output, this);
+        getHandler().ifPresent(handler -> handler.saveAdditional(output, this));
 
         // Save recipes used
         CompoundTag recipesTag = new CompoundTag();
-        this.recipesUsed.forEach((id, count) -> recipesTag.putInt(id.toString(), count));
+        recipesUsed.forEach((id, count) -> recipesTag.putInt(id.toString(), count));
         output.store(TAG_RECIPES_USED, CompoundTag.CODEC, recipesTag);
     }
 
@@ -219,31 +231,22 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity
     protected void loadAdditional(@NotNull ValueInput input) {
         super.loadAdditional(input);
 
-        // Load items (ContainerHelper takes 2 args in this environment)
         ContainerHelper.loadAllItems(input, machineItems);
 
-        Optional<MachineHandler> handlerOpt = getHandler();
-        if (handlerOpt.isEmpty()) {
-            return;
-        }
-
-        MachineHandler handler = handlerOpt.get();
-        // Load machine specific data
-        handler.loadAdditional(input, this);
+        getHandler().ifPresent(handler -> handler.loadAdditional(input, this));
 
         // Load recipes used
         CompoundTag recipesTag = input.read(TAG_RECIPES_USED, CompoundTag.CODEC).orElse(new CompoundTag());
-
-        this.recipesUsed.clear();
+        recipesUsed.clear();
         for (String key : recipesTag.keySet()) {
             Identifier id = Identifier.tryParse(key);
             if (id != null) {
-                @SuppressWarnings("deprecation")
-                // put returns previous value, safe to ignore
-                var _unused = this.recipesUsed.put(id, recipesTag.getInt(key).orElse(0));
+                recipesUsed.put(id, recipesTag.getInt(key).orElse(0));
             }
         }
     }
+
+    // ==================== Menu Factory ====================
 
     @Override
     public @NotNull Component getDisplayName() {
@@ -260,36 +263,34 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity
                 .orElse(null);
     }
 
-    public ContainerData getContainerData() {
-        return containerData;
+    @Override
+    public BlockPos getScreenOpeningData(@NotNull ServerPlayer player) {
+        return this.worldPosition;
     }
 
+    // ==================== Recipe Tracking ====================
+
     public void recipeUsed(Identifier recipeId) {
-        this.recipesUsed.addTo(recipeId, 1);
+        if (recipeId != null) {
+            recipesUsed.addTo(recipeId, 1);
+        }
     }
 
     public void awardUsedRecipes(Player player, List<ItemStack> items) {
-        if (this.level == null || this.level.isClientSide()) {
+        if (level == null || level.isClientSide())
             return;
-        }
 
-        List<RecipeHolder<?>> recipesToAward = new java.util.ArrayList<>();
+        List<RecipeHolder<?>> recipesToAward = new ArrayList<>();
 
-        if (this.level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
-            for (it.unimi.dsi.fastutil.objects.Object2IntMap.Entry<Identifier> entry : this.recipesUsed
-                    .object2IntEntrySet()) {
-                // In 1.21+, RecipeManager uses ResourceKey lookup
-                ResourceKey<Recipe<?>> key = ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE,
-                        entry.getKey());
-
-                serverLevel.getServer().getRecipeManager().byKey(key).ifPresent(holder -> {
-                    recipesToAward.add(holder);
-                });
+        if (level instanceof ServerLevel serverLevel) {
+            for (var entry : recipesUsed.object2IntEntrySet()) {
+                ResourceKey<Recipe<?>> key = ResourceKey.create(Registries.RECIPE, entry.getKey());
+                serverLevel.getServer().getRecipeManager().byKey(key).ifPresent(recipesToAward::add);
             }
         }
 
         player.awardRecipes(recipesToAward);
-        this.recipesUsed.clear();
+        recipesUsed.clear();
     }
 
     public Object2IntOpenHashMap<Identifier> getRecipesUsed() {

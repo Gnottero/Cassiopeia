@@ -1,7 +1,7 @@
 package com.gnottero.cassiopeia.client.screen;
 
 import com.gnottero.cassiopeia.Cassiopeia;
-import com.gnottero.cassiopeia.content.menu.CrusherMenu;
+import com.gnottero.cassiopeia.content.menu.AlloyKilnMenu;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphics;
@@ -12,39 +12,36 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Screen for the Alloy Kiln: 2 inputs + fuel → output.
+ */
 @Environment(EnvType.CLIENT)
-public class CrusherScreen extends AbstractContainerScreen<CrusherMenu> {
+public class AlloyKilnScreen extends AbstractContainerScreen<AlloyKilnMenu> {
 
-    // Main background texture
     private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID,
-            "textures/gui/container/crusher.png");
+            "textures/gui/container/alloy_kiln.png");
 
-    // Sprite textures for progress indicators
     private static final Identifier LIT_PROGRESS_SPRITE = Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID,
             "textures/gui/sprites/container/lit_progress.png");
-    private static final Identifier CRUSH_PROGRESS_SPRITE = Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID,
+    private static final Identifier ALLOY_PROGRESS_SPRITE = Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID,
             "textures/gui/sprites/container/progress_arrow.png");
 
-    // Customizable label colors (ARGB format)
     protected int titleLabelColor = 0xFFD0D0D0;
     protected int inventoryLabelColor = 0xFFD0D0D0;
 
-    public CrusherScreen(CrusherMenu menu, Inventory playerInventory, Component title) {
+    public AlloyKilnScreen(AlloyKilnMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
     }
 
     @Override
     protected void init() {
         super.init();
-        // Center title
         this.titleLabelX = (this.imageWidth - this.font.width(this.title)) / 2;
     }
 
     @Override
     protected void renderLabels(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        // Render title with custom color
         guiGraphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, this.titleLabelColor, false);
-        // Render inventory label with custom color
         guiGraphics.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY,
                 this.inventoryLabelColor, false);
     }
@@ -63,31 +60,26 @@ public class CrusherScreen extends AbstractContainerScreen<CrusherMenu> {
             float burnProgress = this.menu.getBurnProgress();
             int burnHeight = (int) Math.ceil(14 * burnProgress);
             if (burnHeight > 0) {
-                // Flame sprite position: x+56, y+36 (bottom of flame area)
-                // Sprite draws from bottom up
-                int flameX = x + 56;
+                int flameX = x + 38;
                 int flameY = y + 36 + 14 - burnHeight;
 
-                // Use blit with sprite texture - draw portion of sprite from bottom
                 guiGraphics.blit(RenderPipelines.GUI_TEXTURED, LIT_PROGRESS_SPRITE,
-                        flameX, flameY, // dest x, y
-                        0, 14 - burnHeight, // source u, v (from bottom of sprite)
-                        14, burnHeight, // width, height to draw
-                        14, 14); // total sprite dimensions
+                        flameX, flameY,
+                        0, 14 - burnHeight,
+                        14, burnHeight,
+                        14, 14);
             }
         }
 
-        // Draw progress arrow - sprite dimensions (get from image, appears to be
-        // ~24x17)
-        float crushProgress = this.menu.getCrushProgress();
-        int progressWidth = (int) Math.ceil(24 * crushProgress);
+        // Draw progress arrow - 24x17
+        float alloyProgress = this.menu.getAlloyProgress();
+        int progressWidth = (int) Math.ceil(24 * alloyProgress);
         if (progressWidth > 0) {
-            // Arrow position: x+79, y+34
-            guiGraphics.blit(RenderPipelines.GUI_TEXTURED, CRUSH_PROGRESS_SPRITE,
-                    x + 79, y + 34, // dest x, y
-                    0, 0, // source u, v
-                    progressWidth, 17, // width, height to draw
-                    24, 17); // total sprite dimensions
+            guiGraphics.blit(RenderPipelines.GUI_TEXTURED, ALLOY_PROGRESS_SPRITE,
+                    x + 79, y + 34,
+                    0, 0,
+                    progressWidth, 17,
+                    24, 17);
         }
     }
 
@@ -97,17 +89,11 @@ public class CrusherScreen extends AbstractContainerScreen<CrusherMenu> {
         this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
 
-    // Setters for label colors
     public void setTitleLabelColor(int color) {
         this.titleLabelColor = color;
     }
 
     public void setInventoryLabelColor(int color) {
         this.inventoryLabelColor = color;
-    }
-
-    public void setLabelColors(int titleColor, int inventoryColor) {
-        this.titleLabelColor = titleColor;
-        this.inventoryLabelColor = inventoryColor;
     }
 }

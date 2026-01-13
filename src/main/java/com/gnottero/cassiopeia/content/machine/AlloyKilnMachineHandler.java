@@ -1,8 +1,9 @@
 package com.gnottero.cassiopeia.content.machine;
 
 import com.gnottero.cassiopeia.content.block.entity.BasicControllerBlockEntity;
-import com.gnottero.cassiopeia.content.menu.CrusherMenu;
-import com.gnottero.cassiopeia.content.recipe.CrusherRecipe;
+import com.gnottero.cassiopeia.content.menu.AlloyKilnMenu;
+import com.gnottero.cassiopeia.content.recipe.AlloyingRecipe;
+import com.gnottero.cassiopeia.content.recipe.AlloyingRecipeInput;
 import com.gnottero.cassiopeia.content.recipe.ModRecipes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -16,7 +17,6 @@ import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
-import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.FuelValues;
 import net.minecraft.world.level.block.state.BlockState;
@@ -28,34 +28,35 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Optional;
 
 /**
- * Machine handler for the Crusher.
- * Follows vanilla AbstractFurnaceBlockEntity pattern with serverTick.
+ * Machine handler for the Alloy Kiln.
+ * 2 inputs + fuel → 1 output.
  */
-public class CrusherMachineHandler implements MachineHandler {
+public class AlloyKilnMachineHandler implements MachineHandler {
 
-    public static final String STRUCTURE_ID = "crusher";
+    public static final String STRUCTURE_ID = "alloy_kiln";
 
     // Slot indices
-    public static final int INPUT_SLOT = 0;
-    public static final int FUEL_SLOT = 1;
-    public static final int OUTPUT_SLOT = 2;
-    public static final int SLOT_COUNT = 3;
+    public static final int INPUT_SLOT_A = 0;
+    public static final int INPUT_SLOT_B = 1;
+    public static final int FUEL_SLOT = 2;
+    public static final int OUTPUT_SLOT = 3;
+    public static final int SLOT_COUNT = 4;
 
-    // Data indices (matches vanilla furnace pattern)
+    // Data indices
     public static final int DATA_LIT_TIME = 0;
     public static final int DATA_LIT_DURATION = 1;
-    public static final int DATA_CRUSHING_PROGRESS = 2;
-    public static final int DATA_CRUSHING_TOTAL_TIME = 3;
+    public static final int DATA_ALLOYING_PROGRESS = 2;
+    public static final int DATA_ALLOYING_TOTAL_TIME = 3;
     public static final int DATA_COUNT = 4;
 
     // NBT keys
     private static final String KEY_LIT_TIME = "lit_time_remaining";
     private static final String KEY_LIT_DURATION = "lit_total_time";
-    private static final String KEY_CRUSHING_PROGRESS = "crushing_time_spent";
-    private static final String KEY_CRUSHING_TOTAL_TIME = "crushing_total_time";
+    private static final String KEY_ALLOYING_PROGRESS = "alloying_time_spent";
+    private static final String KEY_ALLOYING_TOTAL_TIME = "alloying_total_time";
 
     // Hopper slot mappings
-    private static final int[] SLOTS_UP = { INPUT_SLOT };
+    private static final int[] SLOTS_UP = { INPUT_SLOT_A, INPUT_SLOT_B };
     private static final int[] SLOTS_DOWN = { OUTPUT_SLOT, FUEL_SLOT };
     private static final int[] SLOTS_SIDES = { FUEL_SLOT };
 
@@ -76,12 +77,17 @@ public class CrusherMachineHandler implements MachineHandler {
 
     @Override
     public int getInputSlotIndex() {
-        return INPUT_SLOT;
+        return INPUT_SLOT_A;
+    }
+
+    @Override
+    public int[] getInputSlotIndices() {
+        return new int[] { INPUT_SLOT_A, INPUT_SLOT_B };
     }
 
     @Override
     public int getProcessProgressIndex() {
-        return DATA_CRUSHING_PROGRESS;
+        return DATA_ALLOYING_PROGRESS;
     }
 
     @Override
@@ -99,9 +105,10 @@ public class CrusherMachineHandler implements MachineHandler {
             return false;
         } else if (slot == FUEL_SLOT) {
             Level level = be.getLevel();
-            return level != null && getBurnTime(level.fuelValues(), stack) > 0;
+            return level != null && level.fuelValues().burnDuration(stack) > 0;
         }
-        return true;
+        // Input slots accept anything
+        return slot == INPUT_SLOT_A || slot == INPUT_SLOT_B;
     }
 
     @Override
@@ -109,12 +116,6 @@ public class CrusherMachineHandler implements MachineHandler {
         return slot == OUTPUT_SLOT;
     }
 
-    /**
-     * Server-side tick processing following vanilla furnace pattern.
-     * - Fuel continues burning even without input (like vanilla)
-     * - Crushing progress only advances when lit and has valid recipe
-     * - Crushing progress resets when input removed or no valid recipe
-     */
     @Override
     public void serverTick(Level level, BlockPos pos, BlockState state, BasicControllerBlockEntity be) {
         if (!be.verifyStructure(level, pos)) {
@@ -124,41 +125,38 @@ public class CrusherMachineHandler implements MachineHandler {
         NonNullList<ItemStack> items = be.getMachineItems();
         FuelValues fuelValues = level.fuelValues();
 
-        // Read current state
         int litTime = be.getMachineData(DATA_LIT_TIME);
         int litDuration = be.getMachineData(DATA_LIT_DURATION);
-        int crushingProgress = be.getMachineData(DATA_CRUSHING_PROGRESS);
-        int crushingTotalTime = be.getMachineData(DATA_CRUSHING_TOTAL_TIME);
+        int alloyingProgress = be.getMachineData(DATA_ALLOYING_PROGRESS);
+        int alloyingTotalTime = be.getMachineData(DATA_ALLOYING_TOTAL_TIME);
 
-        boolean wasLit = litTime > 0;
         boolean changed = false;
 
-        // Decrement fuel (fuel burns regardless of input - vanilla behavior)
+        // Decrement fuel (fuel burns regardless of input)
         if (litTime > 0) {
             litTime--;
             changed = true;
         }
 
-        ItemStack inputStack = items.get(INPUT_SLOT);
+        ItemStack inputA = items.get(INPUT_SLOT_A);
+        ItemStack inputB = items.get(INPUT_SLOT_B);
         ItemStack fuelStack = items.get(FUEL_SLOT);
 
-        // Try to get recipe for current input
-        Optional<RecipeHolder<CrusherRecipe>> recipeOpt = getRecipe(level, inputStack);
+        Optional<RecipeHolder<AlloyingRecipe>> recipeOpt = getRecipe(level, inputA, inputB);
 
         if (recipeOpt.isPresent()) {
-            RecipeHolder<CrusherRecipe> holder = recipeOpt.get();
-            CrusherRecipe recipe = holder.value();
-            int recipeCookTime = recipe.getCrushingTime();
+            RecipeHolder<AlloyingRecipe> holder = recipeOpt.get();
+            AlloyingRecipe recipe = holder.value();
+            int recipeTime = recipe.getAlloyingTime();
 
-            // Update total time if changed
-            if (crushingTotalTime != recipeCookTime) {
-                crushingTotalTime = recipeCookTime;
+            if (alloyingTotalTime != recipeTime) {
+                alloyingTotalTime = recipeTime;
                 changed = true;
             }
 
-            // Try to consume fuel if not lit but have fuel and valid recipe
+            // Try to consume fuel
             if (litTime <= 0 && !fuelStack.isEmpty() && canProcess(items, recipe)) {
-                int burnTime = getBurnTime(fuelValues, fuelStack);
+                int burnTime = fuelValues.burnDuration(fuelStack);
                 if (burnTime > 0) {
                     litTime = burnTime;
                     litDuration = burnTime;
@@ -169,46 +167,43 @@ public class CrusherMachineHandler implements MachineHandler {
 
             // Process if lit and can process
             if (litTime > 0 && canProcess(items, recipe)) {
-                crushingProgress++;
-                if (crushingProgress >= crushingTotalTime) {
-                    crushingProgress = 0;
+                alloyingProgress++;
+                if (alloyingProgress >= alloyingTotalTime) {
+                    alloyingProgress = 0;
                     process(items, recipe);
                     recordRecipeUsed(be, holder);
                 }
                 changed = true;
-            } else if (litTime <= 0 && crushingProgress > 0) {
-                // No fuel - decay progress (vanilla behavior)
-                crushingProgress = Math.max(0, crushingProgress - 2);
+            } else if (litTime <= 0 && alloyingProgress > 0) {
+                alloyingProgress = Math.max(0, alloyingProgress - 2);
                 changed = true;
             }
         } else {
-            // No valid recipe - reset crushing progress but keep fuel burning
-            if (crushingProgress > 0) {
-                crushingProgress = 0;
+            if (alloyingProgress > 0) {
+                alloyingProgress = 0;
                 changed = true;
             }
         }
 
-        // Write state back
         be.setMachineData(DATA_LIT_TIME, litTime);
         be.setMachineData(DATA_LIT_DURATION, litDuration);
-        be.setMachineData(DATA_CRUSHING_PROGRESS, crushingProgress);
-        be.setMachineData(DATA_CRUSHING_TOTAL_TIME, crushingTotalTime);
+        be.setMachineData(DATA_ALLOYING_PROGRESS, alloyingProgress);
+        be.setMachineData(DATA_ALLOYING_TOTAL_TIME, alloyingTotalTime);
 
         if (changed) {
             be.setChanged();
         }
     }
 
-    private Optional<RecipeHolder<CrusherRecipe>> getRecipe(Level level, ItemStack input) {
-        if (level == null || input.isEmpty() || !(level instanceof ServerLevel serverLevel)) {
+    private Optional<RecipeHolder<AlloyingRecipe>> getRecipe(Level level, ItemStack inputA, ItemStack inputB) {
+        if (level == null || (inputA.isEmpty() && inputB.isEmpty()) || !(level instanceof ServerLevel serverLevel)) {
             return Optional.empty();
         }
-        SingleRecipeInput recipeInput = new SingleRecipeInput(input);
-        return serverLevel.recipeAccess().getRecipeFor(ModRecipes.CRUSHER_TYPE, recipeInput, serverLevel);
+        AlloyingRecipeInput recipeInput = new AlloyingRecipeInput(inputA, inputB);
+        return serverLevel.recipeAccess().getRecipeFor(ModRecipes.ALLOYING_TYPE, recipeInput, serverLevel);
     }
 
-    private boolean canProcess(NonNullList<ItemStack> items, CrusherRecipe recipe) {
+    private boolean canProcess(NonNullList<ItemStack> items, AlloyingRecipe recipe) {
         ItemStack result = recipe.getResult();
         ItemStack outputSlot = items.get(OUTPUT_SLOT);
 
@@ -221,8 +216,9 @@ public class CrusherMachineHandler implements MachineHandler {
         return outputSlot.getCount() + result.getCount() <= outputSlot.getMaxStackSize();
     }
 
-    private void process(NonNullList<ItemStack> items, CrusherRecipe recipe) {
-        ItemStack inputStack = items.get(INPUT_SLOT);
+    private void process(NonNullList<ItemStack> items, AlloyingRecipe recipe) {
+        ItemStack inputA = items.get(INPUT_SLOT_A);
+        ItemStack inputB = items.get(INPUT_SLOT_B);
         ItemStack result = recipe.getResult().copy();
         ItemStack outputSlot = items.get(OUTPUT_SLOT);
 
@@ -232,7 +228,8 @@ public class CrusherMachineHandler implements MachineHandler {
             outputSlot.grow(result.getCount());
         }
 
-        inputStack.shrink(1);
+        inputA.shrink(1);
+        inputB.shrink(1);
     }
 
     private void consumeFuel(NonNullList<ItemStack> items) {
@@ -246,7 +243,7 @@ public class CrusherMachineHandler implements MachineHandler {
         }
     }
 
-    private void recordRecipeUsed(BasicControllerBlockEntity be, RecipeHolder<CrusherRecipe> holder) {
+    private void recordRecipeUsed(BasicControllerBlockEntity be, RecipeHolder<AlloyingRecipe> holder) {
         String idStr = holder.id().toString();
         int idx = idStr.lastIndexOf(" / ");
         if (idx != -1) {
@@ -258,35 +255,31 @@ public class CrusherMachineHandler implements MachineHandler {
         }
     }
 
-    public static int getBurnTime(FuelValues fuelValues, ItemStack fuel) {
-        return fuelValues.burnDuration(fuel);
-    }
-
     @Override
     public void saveAdditional(ValueOutput output, BasicControllerBlockEntity be) {
         output.putShort(KEY_LIT_TIME, (short) be.getMachineData(DATA_LIT_TIME));
         output.putShort(KEY_LIT_DURATION, (short) be.getMachineData(DATA_LIT_DURATION));
-        output.putShort(KEY_CRUSHING_PROGRESS, (short) be.getMachineData(DATA_CRUSHING_PROGRESS));
-        output.putShort(KEY_CRUSHING_TOTAL_TIME, (short) be.getMachineData(DATA_CRUSHING_TOTAL_TIME));
+        output.putShort(KEY_ALLOYING_PROGRESS, (short) be.getMachineData(DATA_ALLOYING_PROGRESS));
+        output.putShort(KEY_ALLOYING_TOTAL_TIME, (short) be.getMachineData(DATA_ALLOYING_TOTAL_TIME));
     }
 
     @Override
     public void loadAdditional(ValueInput input, BasicControllerBlockEntity be) {
         be.setMachineData(DATA_LIT_TIME, input.getShortOr(KEY_LIT_TIME, (short) 0));
         be.setMachineData(DATA_LIT_DURATION, input.getShortOr(KEY_LIT_DURATION, (short) 0));
-        be.setMachineData(DATA_CRUSHING_PROGRESS, input.getShortOr(KEY_CRUSHING_PROGRESS, (short) 0));
-        be.setMachineData(DATA_CRUSHING_TOTAL_TIME, input.getShortOr(KEY_CRUSHING_TOTAL_TIME, (short) 0));
+        be.setMachineData(DATA_ALLOYING_PROGRESS, input.getShortOr(KEY_ALLOYING_PROGRESS, (short) 0));
+        be.setMachineData(DATA_ALLOYING_TOTAL_TIME, input.getShortOr(KEY_ALLOYING_TOTAL_TIME, (short) 0));
     }
 
     @Override
     public @NotNull Component getDisplayName() {
-        return Component.translatable("container.cassiopeia.crusher");
+        return Component.translatable("container.cassiopeia.alloy_kiln");
     }
 
     @Override
     public @Nullable AbstractContainerMenu createMenu(int containerId, Inventory playerInventory,
             BasicControllerBlockEntity be, ContainerData data) {
-        return new CrusherMenu(containerId, playerInventory, be, data);
+        return new AlloyKilnMenu(containerId, playerInventory, be, data);
     }
 
     @Override

@@ -8,6 +8,7 @@
     "item.cassiopeia.basic_controller": "Basic Controller",
     "container.cassiopeia.crusher": "Crusher",
     "container.cassiopeia.controller": "Controller",
+    "container.cassiopeia.alloy_kiln": "Alloy Kiln",
     "gui.cassiopeia.category.crushing": "Crushing",
     "gui.cassiopeia.jei.time": "%s s"
 }

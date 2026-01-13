@@ -26,6 +26,12 @@ public class Cassiopeia implements ModInitializer {
 
 		LOGGER.info("Cassiopeia initialized!");
 		net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback.EVENT.register(CassiopeiaCommands::register);
-		com.gnottero.cassiopeia.content.ModRegistry.register();
+		com.gnottero.cassiopeia.content.item.ModItemGroups.registerItemGroups();
+		com.gnottero.cassiopeia.content.item.ModItems.registerModItems();
+		com.gnottero.cassiopeia.content.block.ModBlocks.registerModBlocks();
+		com.gnottero.cassiopeia.content.block.entity.ModBlockEntities.registerModBlockEntities();
+		com.gnottero.cassiopeia.content.screen.ModScreenHandlers.registerScreenHandlers();
+		com.gnottero.cassiopeia.content.recipe.ModRecipes.registerRecipes();
+		com.gnottero.cassiopeia.content.machine.MachineHandlerRegistry.init();
 	}
 }

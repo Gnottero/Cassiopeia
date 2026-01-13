@@ -1,0 +1,20 @@
+package com.gnottero.cassiopeia.content.block.entity;
+
+import com.gnottero.cassiopeia.Cassiopeia;
+import com.gnottero.cassiopeia.content.block.ModBlocks;
+import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+
+public class ModBlockEntities {
+    public static final BlockEntityType<BasicControllerBlockEntity> BASIC_CONTROLLER = Registry.register(
+            BuiltInRegistries.BLOCK_ENTITY_TYPE,
+            Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, "basic_controller"),
+            FabricBlockEntityTypeBuilder.create(BasicControllerBlockEntity::new, ModBlocks.BASIC_CONTROLLER).build());
+
+    public static void registerModBlockEntities() {
+        Cassiopeia.LOGGER.info("Registering Block Entities for " + Cassiopeia.MOD_ID);
+    }
+}

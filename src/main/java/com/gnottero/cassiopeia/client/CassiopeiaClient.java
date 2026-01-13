@@ -1,7 +1,8 @@
 package com.gnottero.cassiopeia.client;
 
+import com.gnottero.cassiopeia.client.screen.AlloyKilnScreen;
 import com.gnottero.cassiopeia.client.screen.CrusherScreen;
-import com.gnottero.cassiopeia.content.ModRegistry;
+import com.gnottero.cassiopeia.content.screen.ModScreenHandlers;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -14,6 +15,7 @@ public class CassiopeiaClient implements ClientModInitializer {
         StructureHighlightRenderer.init();
 
         // Register screens
-        MenuScreens.register(ModRegistry.Menus.CRUSHER, CrusherScreen::new);
+        MenuScreens.register(ModScreenHandlers.CRUSHER, CrusherScreen::new);
+        MenuScreens.register(ModScreenHandlers.ALLOY_KILN, AlloyKilnScreen::new);
     }
 }

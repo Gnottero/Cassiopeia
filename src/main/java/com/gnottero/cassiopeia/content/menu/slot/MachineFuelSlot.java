@@ -4,25 +4,29 @@ import net.minecraft.world.Container;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-
-import com.gnottero.cassiopeia.content.menu.AbstractCrushingMenu;
+import net.minecraft.world.level.Level;
 
 /**
  * A slot for fuel items in machines.
- * Uses level's fuel values when available, with fallback for common fuels.
+ * Uses level's fuel values when available.
  */
 public class MachineFuelSlot extends Slot {
-    private final AbstractCrushingMenu menu;
+    private final Level level;
 
-    public MachineFuelSlot(AbstractCrushingMenu abstractMachineMenu, Container container, int i, int j, int k) {
-        super(container, i, j, k);
-        this.menu = abstractMachineMenu;
+    public MachineFuelSlot(Level level, Container container, int slot, int x, int y) {
+        super(container, slot, x, y);
+        this.level = level;
     }
 
+    @Override
     public boolean mayPlace(ItemStack itemStack) {
-        return this.menu.isFuel(itemStack) || isBucket(itemStack);
+        if (level != null) {
+            return level.fuelValues().burnDuration(itemStack) > 0 || isBucket(itemStack);
+        }
+        return isBucket(itemStack);
     }
 
+    @Override
     public int getMaxStackSize(ItemStack itemStack) {
         return isBucket(itemStack) ? 1 : super.getMaxStackSize(itemStack);
     }
