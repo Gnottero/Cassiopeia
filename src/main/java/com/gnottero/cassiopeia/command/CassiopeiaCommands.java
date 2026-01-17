@@ -1,5 +1,6 @@
 package com.gnottero.cassiopeia.command;
 
+import com.gnottero.cassiopeia.structures.InvalidStructureException;
 import com.gnottero.cassiopeia.structures.Structure;
 import com.gnottero.cassiopeia.structures.StructureManager;
 import com.mojang.brigadier.CommandDispatcher;
@@ -27,12 +28,10 @@ public class CassiopeiaCommands {
             .then(Commands.literal("save")
                 .then(Commands.argument("from", BlockPosArgument.blockPos())
                     .then(Commands.argument("to", BlockPosArgument.blockPos())
-                        .then(Commands.argument("controller", BlockPosArgument.blockPos())
-                            .then(Commands.argument("identifier", StringArgumentType.word())
-                                .executes(ctx -> executeSave(ctx, false))
-                                .then(Commands.argument("keep_air", BoolArgumentType.bool())
-                                    .executes(ctx -> executeSave(ctx, BoolArgumentType.getBool(ctx, "keep_air")))
-                                )
+                        .then(Commands.argument("identifier", StringArgumentType.word())
+                            .executes(ctx -> executeSave(ctx, false))
+                            .then(Commands.argument("keep_air", BoolArgumentType.bool())
+                                .executes(ctx -> executeSave(ctx, BoolArgumentType.getBool(ctx, "keep_air")))
                             )
                         )
                     )
@@ -65,17 +64,21 @@ public class CassiopeiaCommands {
     private static int executeSave(CommandContext<CommandSourceStack> ctx, boolean keepAir) throws CommandSyntaxException {
         BlockPos from = BlockPosArgument.getLoadedBlockPos(ctx, "from");
         BlockPos to = BlockPosArgument.getLoadedBlockPos(ctx, "to");
-        BlockPos controller = BlockPosArgument.getLoadedBlockPos(ctx, "controller");
         String identifier = StringArgumentType.getString(ctx, "identifier");
 
         try {
-            StructureManager.saveStructure(ctx.getSource().getLevel(), from, to, controller, identifier, keepAir);
+            StructureManager.saveStructure(ctx.getSource().getLevel(), from, to, identifier, keepAir);
             ctx.getSource().sendSuccess(
                 () -> Component.translatable("command.cassiopeia.structure.saved", identifier)
                 .withStyle(net.minecraft.ChatFormatting.GREEN),
             false);
             return 1;
-        } catch (Exception e) {
+        }
+        catch (InvalidStructureException e) {
+            ctx.getSource().sendFailure(Component.translatable("command.cassiopeia.structure.save.failed", e.getMessage()));
+            return 0;
+        }
+        catch (Exception e) {
             ctx.getSource().sendFailure(Component.translatable("command.cassiopeia.structure.save.failed", e.getMessage()));
             e.printStackTrace();
             return 0;

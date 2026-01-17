@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+
 public class Structure {
     private List<BlockEntry> blocks;
     private String controller;
@@ -192,8 +193,7 @@ public class Structure {
                     Direction expectedWorldDir = BlockUtils.denormalizeFacing(expectedDir, controllerFacing);
 
                     if (!targetState.getValue(property).equals(expectedWorldDir)) {
-                        mismatched.put(property.getName(), expectedDir.getName()); // Return the normalized name as
-                                                                                   // expected
+                        mismatched.put(property.getName(), expectedDir.getName()); // Return the normalized name as expected
                     }
                     continue;
                 }
@@ -253,7 +253,7 @@ public class Structure {
 
     public static class BlockEntry {
         private String block;
-        private List<Double> offset;
+        private List<Double> offset; //TODO replace with a Vector3d?
         private Map<String, String> properties;
 
         private transient Block cachedBlock;

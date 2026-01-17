@@ -1,5 +1,6 @@
 package com.gnottero.cassiopeia.structures;
 
+import com.gnottero.cassiopeia.content.block.ModBlocks;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.fabricmc.loader.api.FabricLoader;
@@ -12,6 +13,7 @@ import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.phys.Vec3;
 
 import org.jetbrains.annotations.NotNull;
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -23,16 +25,17 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+
+
+
 
 public class StructureManager {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Map<String, Structure> CACHE = new HashMap<>();
-    private static final File STRUCTURE_DIR = FabricLoader.getInstance().getConfigDir().resolve("cassiopeia/structures")
-            .toFile();
+    private static final File STRUCTURE_DIR = FabricLoader.getInstance().getConfigDir().resolve("cassiopeia/structures").toFile();
 
     static {
         if (!STRUCTURE_DIR.exists()) {
@@ -40,15 +43,55 @@ public class StructureManager {
         }
     }
 
-    public static void saveStructure(Level level, BlockPos from, BlockPos to, BlockPos controller, String identifier,
-            boolean keepAir) {
-        BlockState controllerState = level.getBlockState(Objects.requireNonNull(controller));
+
+
+    /**
+     * Scans the specified area and saves it as a structure.
+     * @param level //TODO
+     * @param from //TODO
+     * @param to //TODO
+     * @param identifier //TODO
+     * @param keepAir //TODO
+     * @throws InvalidStructureException if the structure doesn't contain a controller or it contains more than one.
+     */
+    @SuppressWarnings("java:S1119")
+    public static void saveStructure(Level level, BlockPos from, BlockPos to, String identifier, boolean keepAir) throws InvalidStructureException {
+
+        // Find bounding box
+        int minX = Math.min(from.getX(), to.getX());
+        int minY = Math.min(from.getY(), to.getY());
+        int minZ = Math.min(from.getZ(), to.getZ());
+        int maxX = Math.max(from.getX(), to.getX());
+        int maxY = Math.max(from.getY(), to.getY());
+        int maxZ = Math.max(from.getZ(), to.getZ());
+
+        // Find controller block
+        BlockPos controllerPos = null;
+        BlockState controllerState = null;
+        controllerSearch:
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minY; y <= maxY; y++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    final BlockPos pos = new BlockPos(x, y, z);
+                    final var state = level.getBlockState(pos);
+                    if(state.getBlock() == ModBlocks.BASIC_CONTROLLER) {
+                        controllerPos = pos;
+                        controllerState = state;
+                        break controllerSearch;
+                    }
+                }
+            }
+        }
+        if(controllerState == null) {
+            throw new InvalidStructureException("The structure doesn't contain any controller");
+        }
+
 
         Property<?> facingProp = controllerState.getBlock().getStateDefinition().getProperty("facing");
         Object facingVal = (facingProp != null) ? controllerState.getValue(facingProp) : null;
 
         if (!(facingVal instanceof Direction)) {
-            throw new IllegalArgumentException("Controller block must have a facing property");
+            throw new RuntimeException("Controller block must have a facing property");
         }
 
         Direction controllerFacing = (Direction) facingVal;
@@ -59,14 +102,6 @@ public class StructureManager {
         Vec3 up = basis.up();
         Vec3 right = basis.right();
 
-        // Bounding box iteration
-        int minX = Math.min(from.getX(), to.getX());
-        int minY = Math.min(from.getY(), to.getY());
-        int minZ = Math.min(from.getZ(), to.getZ());
-        int maxX = Math.max(from.getX(), to.getX());
-        int maxY = Math.max(from.getY(), to.getY());
-        int maxZ = Math.max(from.getZ(), to.getZ());
-
         Structure structure = new Structure();
         String controllerId = BuiltInRegistries.BLOCK.getKey(controllerState.getBlock()).toString();
         structure.setController(controllerId);
@@ -76,13 +111,16 @@ public class StructureManager {
                 for (int z = minZ; z <= maxZ; z++) {
                     BlockPos pos = new BlockPos(x, y, z);
                     BlockState state = level.getBlockState(pos);
+                    if(state.getBlock() == ModBlocks.BASIC_CONTROLLER && !pos.equals(controllerPos)) {
+                        throw new InvalidStructureException("The structure contains more than one controller");
+                    }
 
                     if (state.isAir() && !keepAir) {
                         continue;
                     }
 
                     // Calculate relative offset
-                    Vec3 delta = new Vec3(x - controller.getX(), y - controller.getY(), z - controller.getZ());
+                    Vec3 delta = new Vec3(x - controllerPos.getX(), y - controllerPos.getY(), z - controllerPos.getZ());
 
                     double offFront = delta.dot(front);
                     double offUp = delta.dot(up);
@@ -103,6 +141,9 @@ public class StructureManager {
         writeStructureToFile(structure, file);
         CACHE.remove(identifier); // Validate cache
     }
+
+
+
 
     @NotNull
     public static Optional<Structure> getStructure(@NotNull String identifier) {
@@ -131,6 +172,9 @@ public class StructureManager {
         return Optional.empty();
     }
 
+
+
+
     private static void createDefaultIfKnown(String identifier, File file) {
         if (!identifier.equals("crusher")) {
             return;
@@ -149,6 +193,9 @@ public class StructureManager {
         writeStructureToFile(structure, file);
     }
 
+
+
+
     private static void writeStructureToFile(Structure structure, File file) {
         try (Writer writer = new FileWriter(file)) {
             GSON.toJson(structure, writer);
@@ -157,6 +204,9 @@ public class StructureManager {
             throw new RuntimeException("Failed to save structure file", e);
         }
     }
+
+
+
 
     @NotNull
     public static Set<String> getAvailableStructures() {
