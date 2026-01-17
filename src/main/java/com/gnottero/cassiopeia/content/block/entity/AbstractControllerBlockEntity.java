@@ -81,35 +81,20 @@ public abstract class AbstractControllerBlockEntity extends BlockEntity {
 
 
     public boolean verifyStructure(Level level, BlockPos pos) {
+
+        // Make sure the ID is there
         if (structureId.isEmpty()) {
             return false;
         }
 
+        // Make sure the structure is loaded
         Optional<Structure> structureOpt = StructureManager.getStructure(structureId);
         if (structureOpt.isEmpty()) {
             return false;
         }
 
+        // Check in-world controller and blocks
         Structure structure = structureOpt.get();
-
-        // For single-block structures (just the controller), skip complex verification
-        // Check if structure only contains the controller block at offset [0,0,0]
-        List<Structure.BlockEntry> blocks = structure.getBlocks();
-        if (blocks.size() == 1) {
-            Structure.BlockEntry entry = blocks.get(0);
-            Vector3d offset = entry.getOffset();
-
-            // If the only block is at offset 0,0,0 - this is a single-block machine
-            if (offset.get(0) == 0.0 && offset.get(1) == 0.0 && offset.get(2) == 0.0) {
-
-                // Just verify the controller block matches
-                String expectedBlockId = entry.getBlock();
-                String actualBlockId = BuiltInRegistries.BLOCK.getKey(level.getBlockState(pos).getBlock()).toString();
-                return actualBlockId.equals(expectedBlockId);
-            }
-        }
-
-        // For multi-block structures, use full verification
         return structure.verify(level, pos);
     }
 }

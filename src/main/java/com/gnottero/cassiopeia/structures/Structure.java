@@ -112,43 +112,43 @@ public class Structure {
             return Collections.singletonList(new StructureError(controllerPos, StructureError.ErrorType.MISSING, "Invalid arguments", null, null));
         }
         ensureInitialized();
+        List<StructureError> errors = new ArrayList<>();
+
 
         // Check Controller
         BlockState controllerState = level.getBlockState(controllerPos);
         if (cachedControllerBlock != null && !controllerState.is(cachedControllerBlock)) {
-            if (stopOnFirstError) {
-
-                // If we're getting errors, we probably want to report the controller is wrong first and foremost
-                return Collections.singletonList(new StructureError(controllerPos, StructureError.ErrorType.MISSING, controller, null, null));
-            }
+            errors.add(new StructureError(controllerPos, StructureError.ErrorType.MISSING, controller, null, null));
+            if (stopOnFirstError) return errors;
         }
 
-        Direction controllerFacing = getControllerFacing(controllerState);
-        BlockUtils.Basis basis = BlockUtils.getBasis(controllerFacing);
 
-        List<StructureError> errors = new ArrayList<>();
+        // Check blocks
+        if(!blocks.isEmpty()) {
+            Direction controllerFacing = getControllerFacing(controllerState);
+            BlockUtils.Basis basis = BlockUtils.getBasis(controllerFacing);
 
-        for (BlockEntry entry : blocks) {
-            BlockPos targetPos = BlockUtils.calculateTargetPos(controllerPos, entry.getOffset(), basis);
-            BlockState targetState = level.getBlockState(targetPos);
+            for (BlockEntry entry : blocks) {
+                BlockPos targetPos = BlockUtils.calculateTargetPos(controllerPos, entry.getOffset(), basis);
+                BlockState targetState = level.getBlockState(targetPos);
 
-            // 1. Check Block Type
-            if (!targetState.is(entry.cachedBlock)) {
-                BlockState expectedStateForRender = buildExpectedBlockState(entry, controllerFacing);
-                errors.add(new StructureError(targetPos, StructureError.ErrorType.MISSING, entry.getBlock(), null, expectedStateForRender));
-                if (stopOnFirstError) return errors;
-                else continue;
-            }
+                // 1. Check Block Type
+                if (!targetState.is(entry.cachedBlock)) {
+                    BlockState expectedStateForRender = buildExpectedBlockState(entry, controllerFacing);
+                    errors.add(new StructureError(targetPos, StructureError.ErrorType.MISSING, entry.getBlock(), null, expectedStateForRender));
+                    if (stopOnFirstError) return errors;
+                    else continue;
+                }
 
-            // 2. Check Properties
-            Map<String, String> mismatchedProps = checkProperties(targetState, entry, controllerFacing);
-            if (!mismatchedProps.isEmpty()) {
-                BlockState expectedStateForRender = buildExpectedBlockState(entry, controllerFacing);
-                errors.add(new StructureError(targetPos, StructureError.ErrorType.WRONG_STATE, entry.getBlock(), mismatchedProps, expectedStateForRender));
-                if (stopOnFirstError) return errors;
+                // 2. Check Properties
+                Map<String, String> mismatchedProps = checkProperties(targetState, entry, controllerFacing);
+                if (!mismatchedProps.isEmpty()) {
+                    BlockState expectedStateForRender = buildExpectedBlockState(entry, controllerFacing);
+                    errors.add(new StructureError(targetPos, StructureError.ErrorType.WRONG_STATE, entry.getBlock(), mismatchedProps, expectedStateForRender));
+                    if (stopOnFirstError) return errors;
+                }
             }
         }
-
         return errors;
     }
 
