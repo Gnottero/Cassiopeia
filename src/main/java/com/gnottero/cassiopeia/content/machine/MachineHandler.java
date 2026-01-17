@@ -72,6 +72,9 @@ public interface MachineHandler {
 
     /**
      * Check if an item can be extracted from a slot.
+     * @param slot  The slot index.
+     * @param stack The item to test.
+     * @param direction The face to extract from.
      */
     boolean canTakeItem(int slot, ItemStack stack, Direction direction);
 

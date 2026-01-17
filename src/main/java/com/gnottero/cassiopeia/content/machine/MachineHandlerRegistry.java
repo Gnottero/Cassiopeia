@@ -17,20 +17,25 @@ public class MachineHandlerRegistry {
 
     /**
      * Register a machine handler.
+     * @param handler The handler to register.
      */
     public static void register(MachineHandler handler) {
         HANDLERS.put(handler.getStructureId(), handler);
     }
 
     /**
-     * Get a handler for the given structure_id.
+     * Retrieve a handler for the given structureId.
+     * @param structureId The ID of the structure.
+     * @return The handler, or an empty Optional if a handler with the provided ID doesn't exist.
      */
     public static Optional<MachineHandler> getHandler(String structureId) {
         return Optional.ofNullable(HANDLERS.get(structureId));
     }
 
     /**
-     * Check if a handler exists for the given structure_id.
+     * Check if a handler exists for the given structureId.
+     * @param structureId The ID of the structure.
+     * @return True if the handler exists, false otherwise.
      */
     public static boolean hasHandler(String structureId) {
         return HANDLERS.containsKey(structureId);
