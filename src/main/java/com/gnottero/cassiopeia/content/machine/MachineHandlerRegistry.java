@@ -4,12 +4,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+
+
+
 /**
  * Registry for machine handlers.
  * Maps structure_id to MachineHandler instance.
  */
 public class MachineHandlerRegistry {
-
+    private MachineHandlerRegistry() {}
     private static final Map<String, MachineHandler> HANDLERS = new HashMap<>();
 
     /**

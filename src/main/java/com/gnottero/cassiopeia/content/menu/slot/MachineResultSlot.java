@@ -7,6 +7,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
+
+
+
 /**
  * A slot for machine output that doesn't accept items from players.
  * Similar to Minecraft's FurnaceResultSlot.
@@ -20,10 +23,12 @@ public class MachineResultSlot extends Slot {
         this.player = player;
     }
 
+    @Override
     public boolean mayPlace(ItemStack itemStack) {
         return false;
     }
 
+    @Override
     public ItemStack remove(int amount) {
         if (this.hasItem()) {
             this.removeCount += Math.min(amount, this.getItem().getCount());
@@ -31,16 +36,18 @@ public class MachineResultSlot extends Slot {
         return super.remove(amount);
     }
 
+    @Override
     public void onTake(Player player, ItemStack itemStack) {
         this.checkTakeAchievements(itemStack);
         super.onTake(player, itemStack);
     }
 
+    @Override
     protected void onQuickCraft(ItemStack itemStack, int count) {
         this.removeCount += count;
         this.checkTakeAchievements(itemStack);
     }
-
+    @Override
     protected void checkTakeAchievements(ItemStack itemStack) {
         itemStack.onCraftedBy(this.player, this.removeCount);
         awardRecipesIfApplicable();

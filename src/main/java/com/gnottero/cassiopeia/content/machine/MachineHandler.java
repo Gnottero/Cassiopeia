@@ -15,6 +15,9 @@ import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+
+
+
 /**
  * Interface for machine behavior handlers.
  * Follows the vanilla AbstractFurnaceBlockEntity pattern.
@@ -60,7 +63,6 @@ public interface MachineHandler {
 
     /**
      * Check if an item can be placed in a slot.
-     * 
      * @param be    The block entity (provides access to level for fuel registry)
      * @param slot  The slot index
      * @param stack The item to place
@@ -92,15 +94,12 @@ public interface MachineHandler {
     /**
      * @return Display name for the container GUI
      */
-    @NotNull
-    Component getDisplayName();
+    @NotNull Component getDisplayName();
 
     /**
      * Create the menu/screen handler for this machine.
      */
-    @Nullable
-    AbstractContainerMenu createMenu(int containerId, Inventory playerInventory,
-            BasicControllerBlockEntity be, ContainerData data);
+    @Nullable AbstractContainerMenu createMenu(int containerId, Inventory playerInventory, BasicControllerBlockEntity be, ContainerData data);
 
     /**
      * Get container data value at index.

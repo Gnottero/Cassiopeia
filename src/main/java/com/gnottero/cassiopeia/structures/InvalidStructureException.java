@@ -1,5 +1,8 @@
 package com.gnottero.cassiopeia.structures;
 
+
+
+
 public class InvalidStructureException extends Exception {
     public InvalidStructureException() {
         super();

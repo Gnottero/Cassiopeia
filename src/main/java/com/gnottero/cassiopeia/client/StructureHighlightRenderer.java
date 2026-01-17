@@ -21,6 +21,9 @@ import net.minecraft.world.phys.Vec3;
 import java.util.ArrayList;
 import java.util.List;
 
+
+
+
 /**
  * Renders structure block highlights using Fabric Rendering API.
  * Uses WorldRenderEvents.BEFORE_DEBUG_RENDER for proper world-space ghost block
@@ -33,7 +36,11 @@ public class StructureHighlightRenderer {
     private static final float GHOST_BLOCK_ALPHA_PERCENTAGE = 0.75f; // Alpha value (0.0-1.0) for ghost blocks
     private static long highlightStartTime = 0;
 
+
+
+
     public static void init() {
+
         // Register packet receiver
         ClientPlayNetworking.registerGlobalReceiver(StructureHighlightPayload.TYPE, (payload, context) -> {
             context.client().execute(() -> {
@@ -51,6 +58,7 @@ public class StructureHighlightRenderer {
         WorldRenderEvents.BEFORE_DEBUG_RENDER.register(StructureHighlightRenderer::renderGhostBlocks);
     }
 
+
     public static boolean hasHighlights() {
         if (highlights.isEmpty())
             return false;
@@ -60,6 +68,7 @@ public class StructureHighlightRenderer {
         }
         return true;
     }
+
 
     /**
      * Render ghost blocks using Fabric WorldRenderEvents.
@@ -88,7 +97,8 @@ public class StructureHighlightRenderer {
 
         // Wrap to force translucent rendering using context consumers
         MultiBufferSource ghostSource = type -> new TranslucentVertexConsumer(
-                consumers.getBuffer(RenderTypes.translucentMovingBlock()), (int) (GHOST_BLOCK_ALPHA_PERCENTAGE * 255));
+            consumers.getBuffer(RenderTypes.translucentMovingBlock()), (int) (GHOST_BLOCK_ALPHA_PERCENTAGE * 255)
+        );
 
         for (Highlight highlight : highlights) {
             BlockPos pos = highlight.pos;
@@ -100,25 +110,18 @@ public class StructureHighlightRenderer {
             poseStack.pushPose();
 
             // Translate to block position relative to camera
-            poseStack.translate(
-                    pos.getX() - camPos.x,
-                    pos.getY() - camPos.y,
-                    pos.getZ() - camPos.z);
+            poseStack.translate(pos.getX() - camPos.x, pos.getY() - camPos.y, pos.getZ() - camPos.z );
 
             try {
-                blockRenderer.renderSingleBlock(
-                        state,
-                        poseStack,
-                        ghostSource,
-                        0xF000F0, // Full brightness
-                        OverlayTexture.NO_OVERLAY);
-            } catch (Exception e) {
+                blockRenderer.renderSingleBlock(state, poseStack, ghostSource, 0xF000F0, OverlayTexture.NO_OVERLAY);
+            } catch (Exception _) {
                 // Silently ignore render errors
             }
 
             poseStack.popPose();
         }
     }
+
 
     /**
      * Emit gizmo outlines for block highlighting.
@@ -136,6 +139,7 @@ public class StructureHighlightRenderer {
             emitBlockOutline(highlight.pos, color);
         }
     }
+
 
     private static void emitBlockOutline(BlockPos pos, int color) {
         float width = 2.0f;
@@ -160,11 +164,13 @@ public class StructureHighlightRenderer {
         Gizmos.line(v100, v110, color, width);
         Gizmos.line(v110, v010, color, width);
         Gizmos.line(v010, v000, color, width);
+
         // Top face edges
         Gizmos.line(v001, v101, color, width);
         Gizmos.line(v101, v111, color, width);
         Gizmos.line(v111, v011, color, width);
         Gizmos.line(v011, v001, color, width);
+
         // Vertical edges
         Gizmos.line(v000, v001, color, width);
         Gizmos.line(v100, v101, color, width);
@@ -172,17 +178,23 @@ public class StructureHighlightRenderer {
         Gizmos.line(v010, v011, color, width);
     }
 
+
     public static void clearHighlights() {
         highlights.clear();
     }
+
 
     public static List<Highlight> getHighlights() {
         return highlights;
     }
 
+
+
+
     private static class TranslucentVertexConsumer implements com.mojang.blaze3d.vertex.VertexConsumer {
         private final com.mojang.blaze3d.vertex.VertexConsumer delegate;
         private final int alpha;
+
 
         public TranslucentVertexConsumer(com.mojang.blaze3d.vertex.VertexConsumer delegate, int alpha) {
             this.delegate = delegate;
@@ -205,8 +217,8 @@ public class StructureHighlightRenderer {
         public com.mojang.blaze3d.vertex.VertexConsumer setColor(int color) {
             int a = (color >> 24) & 0xFF;
             int r = (color >> 16) & 0xFF;
-            int g = (color >> 8) & 0xFF;
-            int b = color & 0xFF;
+            int g = (color >>  8) & 0xFF;
+            int b =  color        & 0xFF;
             return setColor(r, g, b, a);
         }
 
@@ -241,6 +253,5 @@ public class StructureHighlightRenderer {
         }
     }
 
-    public record Highlight(BlockPos pos, Structure.StructureError.ErrorType type, BlockState expectedState) {
-    }
+    public record Highlight(BlockPos pos, Structure.StructureError.ErrorType type, BlockState expectedState) { }
 }

@@ -13,22 +13,25 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
+
+
+
 public class CrusherMenu extends AbstractCrushingMenu {
     public final BasicControllerBlockEntity blockEntity;
-    private final Level level;
     private final ContainerData data;
+
+
+
 
     // Client Constructor - receives BlockPos from ExtendedScreenHandlerType
     public CrusherMenu(int containerId, Inventory inv, BlockPos pos) {
-        this(containerId, inv, inv.player.level().getBlockEntity(pos),
-                new SimpleContainerData(CrusherMachineHandler.DATA_COUNT));
+        this(containerId, inv, inv.player.level().getBlockEntity(pos), new SimpleContainerData(CrusherMachineHandler.DATA_COUNT));
     }
 
     // Server Constructor / Internal
     public CrusherMenu(int containerId, Inventory inv, BlockEntity entity, ContainerData data) {
         super(ModScreenHandlers.CRUSHER, containerId, inv.player);
         this.blockEntity = (BasicControllerBlockEntity) entity;
-        this.level = inv.player.level();
         this.data = data;
 
         // Check container size on blockEntity, not player inventory
@@ -36,8 +39,8 @@ public class CrusherMenu extends AbstractCrushingMenu {
         checkContainerDataCount(data, CrusherMachineHandler.DATA_COUNT);
 
         // Add Machine Slots FIRST
-        this.addSlot(new Slot(this.blockEntity, CrusherMachineHandler.INPUT_SLOT, 56, 17));
-        this.addSlot(new MachineFuelSlot(this.level, this.blockEntity, CrusherMachineHandler.FUEL_SLOT, 56, 53));
+        this.addSlot(new              Slot(this.blockEntity,             CrusherMachineHandler.INPUT_SLOT,   56, 17));
+        this.addSlot(new   MachineFuelSlot(this.level, this.blockEntity, CrusherMachineHandler.FUEL_SLOT,    56, 53));
         this.addSlot(new MachineResultSlot(inv.player, this.blockEntity, CrusherMachineHandler.OUTPUT_SLOT, 116, 35));
 
         addPlayerInventory(inv);
@@ -45,6 +48,9 @@ public class CrusherMenu extends AbstractCrushingMenu {
 
         addDataSlots(data);
     }
+
+
+
 
     public boolean isFuel(ItemStack stack) {
         if (level != null) {
@@ -67,20 +73,20 @@ public class CrusherMenu extends AbstractCrushingMenu {
 
     // Returns burn progress as a float 0-1
     public float getBurnProgress() {
-        int litTime = data.get(0);
+        int litTime     = data.get(0);
         int litDuration = data.get(1);
         return litDuration != 0 ? (float) litTime / (float) litDuration : 0;
     }
 
     // Returns crush progress as a float 0-1
     public float getCrushProgress() {
-        int progress = data.get(2);
+        int progress     = data.get(2);
         int maxProgress = data.get(3);
         return maxProgress != 0 ? (float) progress / (float) maxProgress : 0;
     }
 
     public int getScaledProgress() {
-        int progress = data.get(2);
+        int progress     = data.get(2);
         int maxProgress = data.get(3); // DATA_COOKING_TOTAL_TIME
         int progressArrowSize = 24; // Arrow width in pixels
 
@@ -88,12 +94,15 @@ public class CrusherMenu extends AbstractCrushingMenu {
     }
 
     public int getScaledFuelProgress() {
-        int litTime = data.get(0);
+        int litTime     = data.get(0);
         int litDuration = data.get(1); // DATA_LIT_DURATION
         int burnProgressSize = 14;
 
         return litDuration != 0 && litTime != 0 ? litTime * burnProgressSize / litDuration : 0;
     }
+
+
+
 
     // QuickMoveStack logic depends on indexes.
     // Order added: 3 Machine Slots (0-2), then 27 Player Inventory (3-29), then 9
@@ -107,31 +116,33 @@ public class CrusherMenu extends AbstractCrushingMenu {
     @Override
     public ItemStack quickMoveStack(Player playerIn, int pIndex) {
         Slot sourceSlot = slots.get(pIndex);
-        if (sourceSlot == null || !sourceSlot.hasItem())
-            return ItemStack.EMPTY;
+        if (sourceSlot == null || !sourceSlot.hasItem()) return ItemStack.EMPTY;
         ItemStack sourceStack = sourceSlot.getItem();
         ItemStack copyOfSourceStack = sourceStack.copy();
 
         if (pIndex < VANILLA_FIRST_SLOT_INDEX) {
-            if (!moveItemStackTo(sourceStack, VANILLA_FIRST_SLOT_INDEX, VANILLA_FIRST_SLOT_INDEX + VANILLA_SLOT_COUNT,
-                    true)) {
+            if (!moveItemStackTo(sourceStack, VANILLA_FIRST_SLOT_INDEX, VANILLA_FIRST_SLOT_INDEX + VANILLA_SLOT_COUNT, true)) {
                 return ItemStack.EMPTY;
             }
-        } else if (pIndex >= VANILLA_FIRST_SLOT_INDEX && pIndex < VANILLA_FIRST_SLOT_INDEX + VANILLA_SLOT_COUNT) {
-            if (!moveItemStackTo(sourceStack, TE_INVENTORY_FIRST_SLOT_INDEX,
-                    TE_INVENTORY_FIRST_SLOT_INDEX + TE_INVENTORY_SLOT_COUNT, false)) {
+        }
+        else if (pIndex >= VANILLA_FIRST_SLOT_INDEX && pIndex < VANILLA_FIRST_SLOT_INDEX + VANILLA_SLOT_COUNT) {
+            if (!moveItemStackTo(sourceStack, TE_INVENTORY_FIRST_SLOT_INDEX, TE_INVENTORY_FIRST_SLOT_INDEX + TE_INVENTORY_SLOT_COUNT, false)) {
                 return ItemStack.EMPTY;
             }
         }
 
         if (sourceStack.getCount() == 0) {
             sourceSlot.set(ItemStack.EMPTY);
-        } else {
+        }
+        else {
             sourceSlot.setChanged();
         }
         sourceSlot.onTake(playerIn, sourceStack);
         return copyOfSourceStack;
     }
+
+
+
 
     @Override
     public boolean stillValid(Player player) {

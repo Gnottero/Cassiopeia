@@ -3,6 +3,9 @@ package com.gnottero.cassiopeia.content.recipe;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeInput;
 
+
+
+
 /**
  * Recipe input for Alloy Kiln: holds 2 input ItemStacks.
  */

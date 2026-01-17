@@ -4,6 +4,7 @@ import com.gnottero.cassiopeia.structures.Structure;
 import com.gnottero.cassiopeia.structures.StructureManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -23,23 +24,32 @@ import org.joml.Vector3d;
 import java.util.List;
 import java.util.Optional;
 
+
+
+
 public abstract class AbstractControllerBlockEntity extends BlockEntity {
 
     private static final String STRUCTURE_ID_KEY = "structure_id";
     private String structureId = Strings.EMPTY;
 
-    public AbstractControllerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
+
+
+
+    protected AbstractControllerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
     }
+
 
     public void setStructureId(String id) {
         this.structureId = id;
         this.setChanged();
     }
 
+
     public String getStructureId() {
         return structureId;
     }
+
 
     @Override
     protected void saveAdditional(@NotNull ValueOutput output) {
@@ -49,22 +59,26 @@ public abstract class AbstractControllerBlockEntity extends BlockEntity {
         }
     }
 
+
     @Override
     protected void loadAdditional(@NotNull ValueInput input) {
         super.loadAdditional(input);
         this.structureId = input.getStringOr(STRUCTURE_ID_KEY, Strings.EMPTY);
     }
 
-    @Nullable
+
     @Override
-    public Packet<ClientGamePacketListener> getUpdatePacket() {
+    @SuppressWarnings("java:S2638")
+    public @Nullable Packet<ClientGamePacketListener> getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
     }
+
 
     @Override
     public @NotNull CompoundTag getUpdateTag(HolderLookup.@NotNull Provider registries) {
         return this.saveWithoutMetadata(registries);
     }
+
 
     public boolean verifyStructure(Level level, BlockPos pos) {
         if (structureId.isEmpty()) {
@@ -84,12 +98,13 @@ public abstract class AbstractControllerBlockEntity extends BlockEntity {
         if (blocks.size() == 1) {
             Structure.BlockEntry entry = blocks.get(0);
             Vector3d offset = entry.getOffset();
+
             // If the only block is at offset 0,0,0 - this is a single-block machine
             if (offset.get(0) == 0.0 && offset.get(1) == 0.0 && offset.get(2) == 0.0) {
+
                 // Just verify the controller block matches
                 String expectedBlockId = entry.getBlock();
-                String actualBlockId = net.minecraft.core.registries.BuiltInRegistries.BLOCK
-                        .getKey(level.getBlockState(pos).getBlock()).toString();
+                String actualBlockId = BuiltInRegistries.BLOCK.getKey(level.getBlockState(pos).getBlock()).toString();
                 return actualBlockId.equals(expectedBlockId);
             }
         }

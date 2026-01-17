@@ -19,7 +19,12 @@ import net.minecraft.network.chat.Component;
 
 
 public class CassiopeiaCommands {
+    private CassiopeiaCommands() {}
 
+
+
+
+    @SuppressWarnings("java:S1172") // Unused parameters
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher,
         CommandBuildContext registryAccess,
         Commands.CommandSelection selection
@@ -107,7 +112,8 @@ public class CassiopeiaCommands {
                 .withStyle(net.minecraft.ChatFormatting.GREEN),
             false);
             return 1;
-        } else {
+        }
+        else {
             ctx.getSource().sendSuccess(
                 () -> Component.translatable("command.cassiopeia.structure.mismatch")
                 .withStyle(net.minecraft.ChatFormatting.RED),

@@ -12,6 +12,9 @@ import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 
+
+
+
 /**
  * Recipe for the Alloy Kiln: 2 inputs → 1 output.
  */
@@ -23,8 +26,15 @@ public class AlloyingRecipe implements Recipe<AlloyingRecipeInput> {
     private final float experience;
     private final int alloyingTime;
 
-    public AlloyingRecipe(String group, Ingredient inputA, Ingredient inputB,
-            ItemStack result, float experience, int alloyingTime) {
+
+    public AlloyingRecipe(
+        String group,
+        Ingredient inputA,
+        Ingredient inputB,
+        ItemStack result,
+        float experience,
+        int alloyingTime
+    ) {
         this.group = group;
         this.inputA = inputA;
         this.inputB = inputB;
@@ -33,8 +43,12 @@ public class AlloyingRecipe implements Recipe<AlloyingRecipeInput> {
         this.alloyingTime = alloyingTime;
     }
 
+
+
+
     @Override
     public boolean matches(AlloyingRecipeInput input, Level level) {
+
         // Check if inputs match in either order
         boolean matchAB = inputA.test(input.getInputA()) && inputB.test(input.getInputB());
         boolean matchBA = inputA.test(input.getInputB()) && inputB.test(input.getInputA());

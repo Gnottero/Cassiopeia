@@ -27,6 +27,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
+
+
+
 /**
  * Machine handler for the Alloy Kiln.
  * 2 inputs + fuel → 1 output.
@@ -59,6 +62,9 @@ public class AlloyKilnMachineHandler implements MachineHandler {
     private static final int[] SLOTS_UP = { INPUT_SLOT_A, INPUT_SLOT_B };
     private static final int[] SLOTS_DOWN = { OUTPUT_SLOT, FUEL_SLOT };
     private static final int[] SLOTS_SIDES = { FUEL_SLOT };
+
+
+
 
     @Override
     public String getStructureId() {
@@ -116,6 +122,9 @@ public class AlloyKilnMachineHandler implements MachineHandler {
         return slot == OUTPUT_SLOT;
     }
 
+
+
+
     @Override
     public void serverTick(Level level, BlockPos pos, BlockState state, BasicControllerBlockEntity be) {
         if (!be.verifyStructure(level, pos)) {
@@ -125,9 +134,9 @@ public class AlloyKilnMachineHandler implements MachineHandler {
         NonNullList<ItemStack> items = be.getMachineItems();
         FuelValues fuelValues = level.fuelValues();
 
-        int litTime = be.getMachineData(DATA_LIT_TIME);
-        int litDuration = be.getMachineData(DATA_LIT_DURATION);
-        int alloyingProgress = be.getMachineData(DATA_ALLOYING_PROGRESS);
+        int litTime           = be.getMachineData(DATA_LIT_TIME);
+        int litDuration       = be.getMachineData(DATA_LIT_DURATION);
+        int alloyingProgress  = be.getMachineData(DATA_ALLOYING_PROGRESS);
         int alloyingTotalTime = be.getMachineData(DATA_ALLOYING_TOTAL_TIME);
 
         boolean changed = false;
@@ -174,26 +183,29 @@ public class AlloyKilnMachineHandler implements MachineHandler {
                     recordRecipeUsed(be, holder);
                 }
                 changed = true;
-            } else if (litTime <= 0 && alloyingProgress > 0) {
+            }
+            else if (litTime <= 0 && alloyingProgress > 0) {
                 alloyingProgress = Math.max(0, alloyingProgress - 2);
                 changed = true;
             }
-        } else {
-            if (alloyingProgress > 0) {
-                alloyingProgress = 0;
-                changed = true;
-            }
+        }
+        else if (alloyingProgress > 0) {
+            alloyingProgress = 0;
+            changed = true;
         }
 
-        be.setMachineData(DATA_LIT_TIME, litTime);
-        be.setMachineData(DATA_LIT_DURATION, litDuration);
-        be.setMachineData(DATA_ALLOYING_PROGRESS, alloyingProgress);
+        be.setMachineData(DATA_LIT_TIME,            litTime);
+        be.setMachineData(DATA_LIT_DURATION,        litDuration);
+        be.setMachineData(DATA_ALLOYING_PROGRESS,   alloyingProgress);
         be.setMachineData(DATA_ALLOYING_TOTAL_TIME, alloyingTotalTime);
 
         if (changed) {
             be.setChanged();
         }
     }
+
+
+
 
     private Optional<RecipeHolder<AlloyingRecipe>> getRecipe(Level level, ItemStack inputA, ItemStack inputB) {
         if (level == null || (inputA.isEmpty() && inputB.isEmpty()) || !(level instanceof ServerLevel serverLevel)) {
@@ -202,6 +214,9 @@ public class AlloyKilnMachineHandler implements MachineHandler {
         AlloyingRecipeInput recipeInput = new AlloyingRecipeInput(inputA, inputB);
         return serverLevel.recipeAccess().getRecipeFor(ModRecipes.ALLOYING_TYPE, recipeInput, serverLevel);
     }
+
+
+
 
     private boolean canProcess(NonNullList<ItemStack> items, AlloyingRecipe recipe) {
         ItemStack result = recipe.getResult();
@@ -215,6 +230,9 @@ public class AlloyKilnMachineHandler implements MachineHandler {
         }
         return outputSlot.getCount() + result.getCount() <= outputSlot.getMaxStackSize();
     }
+
+
+
 
     private void process(NonNullList<ItemStack> items, AlloyingRecipe recipe) {
         ItemStack inputA = items.get(INPUT_SLOT_A);
@@ -232,6 +250,9 @@ public class AlloyKilnMachineHandler implements MachineHandler {
         inputB.shrink(1);
     }
 
+
+
+
     private void consumeFuel(NonNullList<ItemStack> items) {
         ItemStack fuelStack = items.get(FUEL_SLOT);
         Item fuelItem = fuelStack.getItem();
@@ -242,6 +263,9 @@ public class AlloyKilnMachineHandler implements MachineHandler {
             items.set(FUEL_SLOT, remainder.isEmpty() ? ItemStack.EMPTY : remainder);
         }
     }
+
+
+
 
     private void recordRecipeUsed(BasicControllerBlockEntity be, RecipeHolder<AlloyingRecipe> holder) {
         String idStr = holder.id().toString();
@@ -255,19 +279,22 @@ public class AlloyKilnMachineHandler implements MachineHandler {
         }
     }
 
+
+
+
     @Override
     public void saveAdditional(ValueOutput output, BasicControllerBlockEntity be) {
-        output.putShort(KEY_LIT_TIME, (short) be.getMachineData(DATA_LIT_TIME));
-        output.putShort(KEY_LIT_DURATION, (short) be.getMachineData(DATA_LIT_DURATION));
-        output.putShort(KEY_ALLOYING_PROGRESS, (short) be.getMachineData(DATA_ALLOYING_PROGRESS));
+        output.putShort(KEY_LIT_TIME,            (short) be.getMachineData(DATA_LIT_TIME));
+        output.putShort(KEY_LIT_DURATION,        (short) be.getMachineData(DATA_LIT_DURATION));
+        output.putShort(KEY_ALLOYING_PROGRESS,   (short) be.getMachineData(DATA_ALLOYING_PROGRESS));
         output.putShort(KEY_ALLOYING_TOTAL_TIME, (short) be.getMachineData(DATA_ALLOYING_TOTAL_TIME));
     }
 
     @Override
     public void loadAdditional(ValueInput input, BasicControllerBlockEntity be) {
-        be.setMachineData(DATA_LIT_TIME, input.getShortOr(KEY_LIT_TIME, (short) 0));
-        be.setMachineData(DATA_LIT_DURATION, input.getShortOr(KEY_LIT_DURATION, (short) 0));
-        be.setMachineData(DATA_ALLOYING_PROGRESS, input.getShortOr(KEY_ALLOYING_PROGRESS, (short) 0));
+        be.setMachineData(DATA_LIT_TIME,            input.getShortOr(KEY_LIT_TIME,            (short) 0));
+        be.setMachineData(DATA_LIT_DURATION,        input.getShortOr(KEY_LIT_DURATION,        (short) 0));
+        be.setMachineData(DATA_ALLOYING_PROGRESS,   input.getShortOr(KEY_ALLOYING_PROGRESS,   (short) 0));
         be.setMachineData(DATA_ALLOYING_TOTAL_TIME, input.getShortOr(KEY_ALLOYING_TOTAL_TIME, (short) 0));
     }
 

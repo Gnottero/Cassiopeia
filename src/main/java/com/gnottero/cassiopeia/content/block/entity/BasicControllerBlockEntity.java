@@ -35,12 +35,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+
+
+
+
+
+
+
 /**
  * Basic Controller Block Entity.
  * Delegates machine behavior to MachineHandler implementations.
  */
-public class BasicControllerBlockEntity extends AbstractControllerBlockEntity
-        implements ExtendedScreenHandlerFactory<BlockPos>, WorldlyContainer {
+public class BasicControllerBlockEntity extends AbstractControllerBlockEntity implements ExtendedScreenHandlerFactory<BlockPos>, WorldlyContainer {
 
     private static final int MAX_SLOT_COUNT = 4;
     private static final int MAX_DATA_COUNT = 8;
@@ -53,12 +59,14 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity
     private final int[] machineData = new int[MAX_DATA_COUNT];
     private final Object2IntOpenHashMap<Identifier> recipesUsed = new Object2IntOpenHashMap<>();
 
+
+
+
     private final ContainerData containerData = new ContainerData() {
         @Override
         public int get(int index) {
-            if (index < 0 || index >= MAX_DATA_COUNT)
-                return 0;
-            return machineData[index];
+            if (index < 0 || index >= MAX_DATA_COUNT) return 0;
+            else return machineData[index];
         }
 
         @Override
@@ -74,22 +82,29 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity
         }
     };
 
+
     public BasicControllerBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.BASIC_CONTROLLER, pos, state);
     }
 
+
     private Optional<MachineHandler> getHandler() {
         String structureId = getStructureId();
-        if (structureId == null)
-            return Optional.empty();
-        return MachineHandlerRegistry.getHandler(structureId);
+        if (structureId == null) return Optional.empty();
+        else return MachineHandlerRegistry.getHandler(structureId);
     }
+
+
+
 
     // ==================== Server Tick ====================
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, BasicControllerBlockEntity be) {
         be.getHandler().ifPresent(handler -> handler.serverTick(level, pos, state, be));
     }
+
+
+
 
     // ==================== Machine Data Access ====================
 
@@ -98,9 +113,8 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity
     }
 
     public int getMachineData(int index) {
-        if (index < 0 || index >= MAX_DATA_COUNT)
-            return 0;
-        return machineData[index];
+        if (index < 0 || index >= MAX_DATA_COUNT) return 0;
+        else return machineData[index];
     }
 
     public void setMachineData(int index, int value) {
@@ -112,6 +126,9 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity
     public ContainerData getContainerData() {
         return containerData;
     }
+
+
+
 
     // ==================== WorldlyContainer Implementation ====================
 
@@ -129,6 +146,9 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity
     public boolean canTakeItemThroughFace(int index, @NotNull ItemStack stack, @NotNull Direction direction) {
         return getHandler().map(h -> h.canTakeItem(index, stack, direction)).orElse(false);
     }
+
+
+
 
     // ==================== Container Implementation ====================
 
@@ -151,30 +171,26 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity
     @Override
     public @NotNull ItemStack getItem(int slot) {
         int size = getContainerSize();
-        if (slot < 0 || slot >= size)
-            return ItemStack.EMPTY;
-        return machineItems.get(slot);
+        if (slot < 0 || slot >= size) return ItemStack.EMPTY;
+        else return machineItems.get(slot);
     }
 
     @Override
     public @NotNull ItemStack removeItem(int slot, int amount) {
-        if (getContainerSize() == 0)
-            return ItemStack.EMPTY;
-        return ContainerHelper.removeItem(machineItems, slot, amount);
+        if (getContainerSize() == 0) return ItemStack.EMPTY;
+        else return ContainerHelper.removeItem(machineItems, slot, amount);
     }
 
     @Override
     public @NotNull ItemStack removeItemNoUpdate(int slot) {
-        if (getContainerSize() == 0)
-            return ItemStack.EMPTY;
-        return ContainerHelper.takeItem(machineItems, slot);
+        if (getContainerSize() == 0) return ItemStack.EMPTY;
+        else return ContainerHelper.takeItem(machineItems, slot);
     }
 
     @Override
     public void setItem(int slot, @NotNull ItemStack stack) {
         int size = getContainerSize();
-        if (slot < 0 || slot >= size)
-            return;
+        if (slot < 0 || slot >= size) return;
 
         ItemStack existing = machineItems.get(slot);
         boolean sameItem = !stack.isEmpty() && ItemStack.isSameItemSameComponents(existing, stack);
@@ -211,6 +227,9 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity
         }
     }
 
+
+
+
     // ==================== NBT Serialization ====================
 
     @Override
@@ -226,6 +245,7 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity
         recipesUsed.forEach((id, count) -> recipesTag.putInt(id.toString(), count));
         output.store(TAG_RECIPES_USED, CompoundTag.CODEC, recipesTag);
     }
+
 
     @Override
     protected void loadAdditional(@NotNull ValueInput input) {
@@ -246,27 +266,31 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity
         }
     }
 
+
+
+
     // ==================== Menu Factory ====================
 
     @Override
     public @NotNull Component getDisplayName() {
         return getHandler().map(MachineHandler::getDisplayName)
-                .orElse(Component.translatable("container.cassiopeia.controller"));
+        .orElse(Component.translatable("container.cassiopeia.controller"));
     }
 
     @Nullable
     @Override
-    public AbstractContainerMenu createMenu(int containerId, @NotNull Inventory playerInventory,
-            @NotNull Player player) {
-        return getHandler()
-                .map(h -> h.createMenu(containerId, playerInventory, this, containerData))
-                .orElse(null);
+    public AbstractContainerMenu createMenu(int containerId, @NotNull Inventory playerInventory, @NotNull Player player) {
+        return getHandler().map(h -> h.createMenu(containerId, playerInventory, this, containerData))
+        .orElse(null);
     }
 
     @Override
     public BlockPos getScreenOpeningData(@NotNull ServerPlayer player) {
         return this.worldPosition;
     }
+
+
+
 
     // ==================== Recipe Tracking ====================
 

@@ -24,7 +24,6 @@ import java.io.Writer;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -33,6 +32,7 @@ import java.util.Set;
 
 
 public class StructureManager {
+    private StructureManager() {}
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Map<String, Structure> CACHE = new HashMap<>();
@@ -121,7 +121,7 @@ public class StructureManager {
                     }
 
                     // Calculate relative offset
-                    Vec3 delta = new Vec3(x - controllerPos.getX(), y - controllerPos.getY(), z - controllerPos.getZ());
+                    Vec3 delta = new Vec3((float)x - controllerPos.getX(), (float)y - controllerPos.getY(), (float)z - controllerPos.getZ());
 
                     double offFront = delta.dot(front);
                     double offUp = delta.dot(up);

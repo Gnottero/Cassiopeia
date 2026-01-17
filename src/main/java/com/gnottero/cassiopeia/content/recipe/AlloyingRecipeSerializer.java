@@ -10,29 +10,37 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 
+
+
+
 /**
  * Serializer for AlloyingRecipe.
  */
+@SuppressWarnings("java:S6548") // Singleton implementation
 public class AlloyingRecipeSerializer implements RecipeSerializer<AlloyingRecipe> {
     public static final AlloyingRecipeSerializer INSTANCE = new AlloyingRecipeSerializer();
 
+
     private static final MapCodec<AlloyingRecipe> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            Codec.STRING.optionalFieldOf("group", "").forGetter(AlloyingRecipe::group),
-            Ingredient.CODEC.fieldOf("input_a").forGetter(AlloyingRecipe::getInputA),
-            Ingredient.CODEC.fieldOf("input_b").forGetter(AlloyingRecipe::getInputB),
-            ItemStack.STRICT_CODEC.fieldOf("result").forGetter(AlloyingRecipe::getResult),
-            Codec.FLOAT.optionalFieldOf("experience", 0.0f).forGetter(AlloyingRecipe::getExperience),
-            Codec.INT.optionalFieldOf("alloying_time", 200).forGetter(AlloyingRecipe::getAlloyingTime))
-            .apply(instance, AlloyingRecipe::new));
+        Codec.STRING.optionalFieldOf("group", "")      .forGetter(AlloyingRecipe::group),
+        Ingredient.CODEC.fieldOf("input_a")            .forGetter(AlloyingRecipe::getInputA),
+        Ingredient.CODEC.fieldOf("input_b")            .forGetter(AlloyingRecipe::getInputB),
+        ItemStack.STRICT_CODEC.fieldOf("result")       .forGetter(AlloyingRecipe::getResult),
+        Codec.FLOAT.optionalFieldOf("experience", 0.0f).forGetter(AlloyingRecipe::getExperience),
+        Codec.INT.optionalFieldOf("alloying_time", 200).forGetter(AlloyingRecipe::getAlloyingTime)
+    ).apply(instance, AlloyingRecipe::new));
+
 
     private static final StreamCodec<RegistryFriendlyByteBuf, AlloyingRecipe> STREAM_CODEC = StreamCodec.composite(
-            ByteBufCodecs.STRING_UTF8, AlloyingRecipe::group,
-            Ingredient.CONTENTS_STREAM_CODEC, AlloyingRecipe::getInputA,
-            Ingredient.CONTENTS_STREAM_CODEC, AlloyingRecipe::getInputB,
-            ItemStack.STREAM_CODEC, AlloyingRecipe::getResult,
-            ByteBufCodecs.FLOAT, AlloyingRecipe::getExperience,
-            ByteBufCodecs.INT, AlloyingRecipe::getAlloyingTime,
-            AlloyingRecipe::new);
+        ByteBufCodecs.STRING_UTF8,        AlloyingRecipe::group,
+        Ingredient.CONTENTS_STREAM_CODEC, AlloyingRecipe::getInputA,
+        Ingredient.CONTENTS_STREAM_CODEC, AlloyingRecipe::getInputB,
+        ItemStack.STREAM_CODEC,           AlloyingRecipe::getResult,
+        ByteBufCodecs.FLOAT,              AlloyingRecipe::getExperience,
+        ByteBufCodecs.INT,                AlloyingRecipe::getAlloyingTime,
+        AlloyingRecipe::new
+    );
+
 
     private AlloyingRecipeSerializer() {
     }

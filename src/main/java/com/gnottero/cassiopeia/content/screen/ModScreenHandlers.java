@@ -12,20 +12,28 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.inventory.MenuType;
 
+
+
+
 public class ModScreenHandlers {
+    private ModScreenHandlers() {}
+
     private static final StreamCodec<FriendlyByteBuf, BlockPos> BLOCK_POS_CODEC = StreamCodec.of(
-            (buf, pos) -> buf.writeBlockPos(pos),
-            buf -> buf.readBlockPos());
+        (buf, pos) -> buf.writeBlockPos(pos),
+        buf -> buf.readBlockPos()
+    );
 
     public static final MenuType<CrusherMenu> CRUSHER = Registry.register(
-            BuiltInRegistries.MENU,
-            Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, "crusher"),
-            new ExtendedScreenHandlerType<>(CrusherMenu::new, BLOCK_POS_CODEC));
+        BuiltInRegistries.MENU,
+        Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, "crusher"),
+        new ExtendedScreenHandlerType<>(CrusherMenu::new, BLOCK_POS_CODEC)
+    );
 
     public static final MenuType<AlloyKilnMenu> ALLOY_KILN = Registry.register(
-            BuiltInRegistries.MENU,
-            Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, "alloy_kiln"),
-            new ExtendedScreenHandlerType<>(AlloyKilnMenu::new, BLOCK_POS_CODEC));
+        BuiltInRegistries.MENU,
+        Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, "alloy_kiln"),
+        new ExtendedScreenHandlerType<>(AlloyKilnMenu::new, BLOCK_POS_CODEC)
+    );
 
     public static void registerScreenHandlers() {
         Cassiopeia.LOGGER.info("Registering Screen Handlers for " + Cassiopeia.MOD_ID);
