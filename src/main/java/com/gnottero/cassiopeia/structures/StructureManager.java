@@ -13,6 +13,7 @@ import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.phys.Vec3;
 
 import org.jetbrains.annotations.NotNull;
+import org.joml.Vector3d;
 
 import java.io.File;
 import java.io.FileReader;
@@ -126,7 +127,7 @@ public class StructureManager {
                     double offUp = delta.dot(up);
                     double offRight = delta.dot(right);
 
-                    List<Double> offset = List.of(offFront, offUp, offRight);
+                    Vector3d offset = new Vector3d(offFront, offUp, offRight);
 
                     String blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
                     Map<String, String> properties = BlockUtils.processBlockProperties(state, controllerFacing);
@@ -184,7 +185,7 @@ public class StructureManager {
         Structure structure = new Structure();
         structure.setController(controllerId);
 
-        List<Double> offset = List.of(0.0, 0.0, 0.0);
+        Vector3d offset = new Vector3d(0d);
 
         // Add controller itself as the single block
         // Note: properties map can be empty to match any properties

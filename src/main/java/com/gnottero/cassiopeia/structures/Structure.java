@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.joml.Vector3d;
+
 
 public class Structure {
     private List<BlockEntry> blocks;
@@ -253,13 +255,13 @@ public class Structure {
 
     public static class BlockEntry {
         private String block;
-        private List<Double> offset; //TODO replace with a Vector3d?
+        private Vector3d offset;
         private Map<String, String> properties;
 
         private transient Block cachedBlock;
         private transient Map<Property<?>, Comparable<?>> cachedProperties;
 
-        public BlockEntry(String block, List<Double> offset, Map<String, String> properties) {
+        public BlockEntry(String block, Vector3d offset, Map<String, String> properties) {
             this.block = block;
             this.offset = offset;
             this.properties = properties;
@@ -288,7 +290,7 @@ public class Structure {
             return block;
         }
 
-        public List<Double> getOffset() {
+        public Vector3d getOffset() {
             return offset;
         }
 

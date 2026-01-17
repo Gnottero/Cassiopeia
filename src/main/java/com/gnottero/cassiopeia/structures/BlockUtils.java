@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.joml.Vector3d;
+
 public class BlockUtils {
 
     /**
@@ -137,7 +139,7 @@ public class BlockUtils {
      * Calculates the target position based on a controller position, an offset, and
      * a basis.
      */
-    public static BlockPos calculateTargetPos(BlockPos controllerPos, List<Double> offset, Basis basis) {
+    public static BlockPos calculateTargetPos(BlockPos controllerPos, Vector3d offset, Basis basis) {
         double offFront = offset.get(0);
         double offUp = offset.get(1);
         double offRight = offset.get(2);

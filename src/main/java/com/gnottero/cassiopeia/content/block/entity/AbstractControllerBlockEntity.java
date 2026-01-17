@@ -18,6 +18,7 @@ import net.minecraft.world.level.storage.ValueOutput;
 import org.apache.logging.log4j.util.Strings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3d;
 
 import java.util.List;
 import java.util.Optional;
@@ -82,7 +83,7 @@ public abstract class AbstractControllerBlockEntity extends BlockEntity {
         List<Structure.BlockEntry> blocks = structure.getBlocks();
         if (blocks.size() == 1) {
             Structure.BlockEntry entry = blocks.get(0);
-            List<Double> offset = entry.getOffset();
+            Vector3d offset = entry.getOffset();
             // If the only block is at offset 0,0,0 - this is a single-block machine
             if (offset.get(0) == 0.0 && offset.get(1) == 0.0 && offset.get(2) == 0.0) {
                 // Just verify the controller block matches
