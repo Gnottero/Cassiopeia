@@ -72,6 +72,9 @@ public class ModRecipes {
 
     public static void registerRecipes() {
         Cassiopeia.LOGGER.info("Registering Recipes for " + Cassiopeia.MOD_ID);
-        Class<?> _ = Categories.class; // Force load inner class
+
+        // Force load inner class
+        @SuppressWarnings("unused")
+        Class<?> __unused = Categories.class;
     }
 }

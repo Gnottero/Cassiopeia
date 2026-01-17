@@ -74,6 +74,7 @@ public class StructureHighlightRenderer {
      * Render ghost blocks using Fabric WorldRenderEvents.
      * Called during BEFORE_DEBUG_RENDER with proper view matrix applied.
      */
+    @SuppressWarnings("java:S7467")
     private static void renderGhostBlocks(WorldRenderContext context) {
         if (!hasHighlights())
             return;
@@ -114,7 +115,7 @@ public class StructureHighlightRenderer {
 
             try {
                 blockRenderer.renderSingleBlock(state, poseStack, ghostSource, 0xF000F0, OverlayTexture.NO_OVERLAY);
-            } catch (Exception _) {
+            } catch (Exception e) {
                 // Silently ignore render errors
             }
 

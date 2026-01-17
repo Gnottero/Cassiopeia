@@ -26,6 +26,7 @@ public record StructureHighlightPayload(List<Structure.StructureError> errors) i
     );
 
 
+    @SuppressWarnings("java:S7467")
     public static final StreamCodec<RegistryFriendlyByteBuf, StructureHighlightPayload> STREAM_CODEC = StreamCodec.of(
         (buf, payload) -> {
             buf.writeInt(payload.errors.size());
@@ -50,7 +51,7 @@ public record StructureHighlightPayload(List<Structure.StructureError> errors) i
                 if (!stateStr.isEmpty()) {
                     try {
                         state = BlockStateParser.parseForBlock(blockLookup, stateStr, false).blockState();
-                    } catch (Exception _) {
+                    } catch (Exception e) {
                         // Fallback: ignore parse errors
                     }
                 }

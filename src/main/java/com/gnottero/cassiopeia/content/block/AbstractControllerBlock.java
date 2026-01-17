@@ -280,6 +280,7 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
 
 
 
+    @SuppressWarnings("java:S7467")
     private MutableComponent getBlockComponent(String blockName) {
         try {
             Identifier id = Identifier.parse(blockName);
@@ -288,7 +289,8 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
             if (blockHolder.isPresent()) {
                 return Component.translatable(blockHolder.get().value().getDescriptionId());
             }
-        } catch (Exception _) {
+        }
+        catch (Exception e) {
             // ignore
         }
         return Component.literal(blockName);
