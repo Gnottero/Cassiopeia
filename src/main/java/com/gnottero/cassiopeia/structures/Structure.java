@@ -121,7 +121,8 @@ public class Structure {
      * @return true if the structure matches, false otherwise.
      */
     public boolean verify(Level level, BlockPos controllerPos) {
-        return validate(level, controllerPos, true).isEmpty();
+        // return validate(level, controllerPos, true).isEmpty();
+        return StructureValidator.validateStructure(level, controllerPos);
     }
 
 
@@ -132,63 +133,65 @@ public class Structure {
      * @return A List of StructureError objects.
      */
     public List<StructureError> getValidationErrors(Level level, BlockPos controllerPos) {
-        return validate(level, controllerPos, false);
+        // return validate(level, controllerPos, false);
+        //FIXME actually keep track of the broken blocks, or read this data from the runtime map
+        return new ArrayList<>();
     }
 
 
 
 
-    /**
-     * Core validation logic.
-     * @param level            The level to check.
-     * @param controllerPos    The position of the controller block.
-     * @param stopOnFirstError If true, returns immediately upon finding the first error (used for verification).
-     * @return A list of errors found. If stopOnFirstError is true, the list will contain at most one error.
-     */
-    private List<StructureError> validate(Level level, BlockPos controllerPos, boolean stopOnFirstError) {
-        if (level == null || controllerPos == null) {
-            return Collections.singletonList(new StructureError(controllerPos, StructureError.ErrorType.MISSING, "Invalid arguments", null, null));
-        }
-        ensureInitialized();
-        List<StructureError> errors = new ArrayList<>();
+    // /**
+    //  * Core validation logic.
+    //  * @param level            The level to check.
+    //  * @param controllerPos    The position of the controller block.
+    //  * @param stopOnFirstError If true, returns immediately upon finding the first error (used for verification).
+    //  * @return A list of errors found. If stopOnFirstError is true, the list will contain at most one error.
+    //  */
+    // private List<StructureError> validate(Level level, BlockPos controllerPos, boolean stopOnFirstError) {
+    //     if (level == null || controllerPos == null) {
+    //         return Collections.singletonList(new StructureError(controllerPos, StructureError.ErrorType.MISSING, "Invalid arguments", null, null));
+    //     }
+    //     ensureInitialized();
+    //     List<StructureError> errors = new ArrayList<>();
 
 
-        // Check Controller
-        BlockState controllerState = level.getBlockState(controllerPos);
-        if (cachedControllerBlock != null && !controllerState.is(cachedControllerBlock)) {
-            errors.add(new StructureError(controllerPos, StructureError.ErrorType.MISSING, controller, null, null));
-            if (stopOnFirstError) return errors;
-        }
+    //     // Check Controller
+    //     BlockState controllerState = level.getBlockState(controllerPos);
+    //     if (cachedControllerBlock != null && !controllerState.is(cachedControllerBlock)) {
+    //         errors.add(new StructureError(controllerPos, StructureError.ErrorType.MISSING, controller, null, null));
+    //         if (stopOnFirstError) return errors;
+    //     }
 
 
-        // Check blocks
-        if(!blocks.isEmpty()) {
-            Direction controllerFacing = getControllerFacing(controllerState);
-            BlockUtils.Basis basis = BlockUtils.getBasis(controllerFacing);
+    //     // Check blocks
+    //     if(!blocks.isEmpty()) {
+    //         Direction controllerFacing = getControllerFacing(controllerState);
+    //         BlockUtils.Basis basis = BlockUtils.getBasis(controllerFacing);
 
-            for (BlockEntry entry : blocks) {
-                BlockPos targetPos = BlockUtils.calculateTargetPos(controllerPos, entry.getOffset(), basis);
-                BlockState targetState = level.getBlockState(targetPos);
+    //         for (BlockEntry entry : blocks) {
+    //             BlockPos targetPos = BlockUtils.calculateTargetPos(controllerPos, entry.getOffset(), basis);
+    //             BlockState targetState = level.getBlockState(targetPos);
 
-                // 1. Check Block Type
-                if (!targetState.is(entry.cachedBlock)) {
-                    BlockState expectedStateForRender = buildDesiredBlockState(entry, controllerFacing);
-                    errors.add(new StructureError(targetPos, StructureError.ErrorType.MISSING, entry.getBlock(), null, expectedStateForRender));
-                    if (stopOnFirstError) return errors;
-                    else continue;
-                }
+    //             // 1. Check Block Type
+    //             if (!targetState.is(entry.cachedBlock)) {
+    //                 BlockState expectedStateForRender = buildDesiredBlockState(entry, controllerFacing);
+    //                 errors.add(new StructureError(targetPos, StructureError.ErrorType.MISSING, entry.getBlock(), null, expectedStateForRender));
+    //                 if (stopOnFirstError) return errors;
+    //                 else continue;
+    //             }
 
-                // 2. Check Properties
-                Map<String, String> mismatchedProps = checkProperties(targetState, entry, controllerFacing);
-                if (!mismatchedProps.isEmpty()) {
-                    BlockState expectedStateForRender = buildDesiredBlockState(entry, controllerFacing);
-                    errors.add(new StructureError(targetPos, StructureError.ErrorType.WRONG_STATE, entry.getBlock(), mismatchedProps, expectedStateForRender));
-                    if (stopOnFirstError) return errors;
-                }
-            }
-        }
-        return errors;
-    }
+    //             // 2. Check Properties
+    //             Map<String, String> mismatchedProps = checkProperties(targetState, entry, controllerFacing);
+    //             if (!mismatchedProps.isEmpty()) {
+    //                 BlockState expectedStateForRender = buildDesiredBlockState(entry, controllerFacing);
+    //                 errors.add(new StructureError(targetPos, StructureError.ErrorType.WRONG_STATE, entry.getBlock(), mismatchedProps, expectedStateForRender));
+    //                 if (stopOnFirstError) return errors;
+    //             }
+    //         }
+    //     }
+    //     return errors;
+    // }
 
 
 

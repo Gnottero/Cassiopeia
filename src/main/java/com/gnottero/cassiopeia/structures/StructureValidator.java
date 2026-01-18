@@ -291,7 +291,7 @@ public class StructureValidator {
 
 
 
-    public boolean validateStructure(final @NotNull Level level, final @NotNull BlockPos pos) {
+    public static boolean validateStructure(final @NotNull Level level, final @NotNull BlockPos pos) {
 
         // Find structure instance
         final Structure structure = getStructureFromController(level, pos);
