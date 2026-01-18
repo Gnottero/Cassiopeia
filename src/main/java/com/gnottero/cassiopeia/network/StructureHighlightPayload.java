@@ -20,13 +20,13 @@ import java.util.List;
 
 public record StructureHighlightPayload(List<Structure.StructureError> errors) implements CustomPacketPayload {
 
-    @SuppressWarnings("java:S1845")
+    @SuppressWarnings("java:S1845") // Confusing name "TYPE"
     public static final CustomPacketPayload.Type<StructureHighlightPayload> TYPE = new CustomPacketPayload.Type<>(
         Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, "structure_highlight")
     );
 
 
-    @SuppressWarnings("java:S7467")
+    @SuppressWarnings("java:S7467") // Unused exception e
     public static final StreamCodec<RegistryFriendlyByteBuf, StructureHighlightPayload> STREAM_CODEC = StreamCodec.of(
         (buf, payload) -> {
             buf.writeInt(payload.errors.size());

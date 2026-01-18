@@ -2,6 +2,7 @@ package com.gnottero.cassiopeia.structures;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.Level;
@@ -26,8 +27,28 @@ public class Structure {
     private List<BlockEntry> blocks;
     private String controller;
 
+    // Transient data
     private transient boolean initialized = false;
     private transient Block cachedControllerBlock;
+
+    // Cache corners for faster in-world operations. Updated whenever a new block is added
+    private transient BlockPos minCorner = new BlockPos(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE);
+    private transient BlockPos maxCorner = new BlockPos(Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
+
+    /**
+     * Returns the corner with the smallest coordinate values.
+     * The BlockPos represents the local coordinates relative to the controller and its direction.
+     */
+    public BlockPos getMinCorner() { return minCorner; }
+
+    /**
+     * Returns the corner with the largest  coordinate values.
+     * The BlockPos represents the local coordinates relative to the controller and its direction.
+     */
+    public BlockPos getMaxCorner() { return maxCorner; }
+
+
+
 
     public Structure() {
         this.blocks = new ArrayList<>();
@@ -52,9 +73,12 @@ public class Structure {
         return blocks;
     }
 
+
     public void addBlock(BlockEntry entry) {
         this.blocks.add(entry);
         this.initialized = false;
+
+        final BlockPos pos = entry.getOffset();
     }
 
 
@@ -155,7 +179,8 @@ public class Structure {
 
 
 
-    private Direction getControllerFacing(BlockState controllerState) {
+    //TODO this should prob be a public method in a utility class
+    public static Direction getControllerFacing(BlockState controllerState) {
         Property<?> facingProp = controllerState.getBlock().getStateDefinition().getProperty("facing");
         if (facingProp == null) {
             facingProp = controllerState.getBlock().getStateDefinition().getProperty("horizontal_facing");
