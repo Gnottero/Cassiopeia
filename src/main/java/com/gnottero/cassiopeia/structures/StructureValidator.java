@@ -7,20 +7,18 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.jetbrains.annotations.NotNull;
+import org.joml.Vector3i;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 import com.gnottero.cassiopeia.Cassiopeia;
 import com.gnottero.cassiopeia.content.block.entity.AbstractControllerBlockEntity;
-import com.gnottero.cassiopeia.structures.Structure.BlockEntry;
-import com.gnottero.cassiopeia.structures.Structure.StructureError;
+import com.gnottero.cassiopeia.utils.Pair;
+import com.gnottero.cassiopeia.utils.Utils;
 
 
 
@@ -37,10 +35,29 @@ public class StructureValidator {
 
 
 
-    /**
-     * A key that uniquely identifies a block in a level.
-     */
-    public record BlockKey(ResourceKey<Level> dimension, BlockPos pos) {}
+    /** A key that uniquely identifies a block in a level. */
+    public static record BlockKey(ResourceKey<Level> dimension, BlockPos pos) {}
+
+    /** A structure containing cached data of an existing controller block */
+    @SuppressWarnings("java:S1104")
+    public static class ControllerData {
+        public List<Pair<Boolean, BlockPos>> cachedBlocks;
+        public Vector3i min;
+        public Vector3i max;
+        public int valid;
+
+        public ControllerData(
+            final @NotNull List<Pair<Boolean, BlockPos>> cachedBlocks,
+            final @NotNull Vector3i min,
+            final @NotNull Vector3i max,
+            final @NotNull Integer valid
+        ) {
+            this.cachedBlocks = cachedBlocks;
+            this.min = min;
+            this.max = max;
+            this.valid = valid;
+        }
+    }
 
 
 
@@ -48,7 +65,9 @@ public class StructureValidator {
     // A map that associates each controller with the blocks that make up its multiblock structure.
     // The controller is identified by its level and coordinates.
     // The blocks are a static list whose elements are sorted by x, y, and z local coordinates relative to the controller to allow for O(1) access.
-    private static final Map<BlockKey, List<BlockState>> controllers = new HashMap<>();
+    // Each block also stores its state (valud/not valid) and its world coordinates.
+    private static final Map<BlockKey, ControllerData> controllers = new HashMap<>();
+
 
     // A map that associates each block that could be part of one or more structures to their controllers.
     // The block and its controllers are both identified by their level and coordinates.
@@ -70,16 +89,19 @@ public class StructureValidator {
      * @param level The level the controller is in.
      * @param pos The position of the controller to register.
      */
+    //TODO call this function when events are fired
     public static void registerController(final @NotNull Level level, final @NotNull BlockPos pos) {
 
         // If the controller is not registered
         final BlockKey key = new BlockKey(level.dimension(), pos);
         if(!controllers.containsKey(key)) {
 
-            // Scan the blocks and cache block data
+            // Scan the blocks and cache the data
             scanAllBlocks(level, pos);
         }
     }
+
+
 
 
     /**
@@ -88,18 +110,39 @@ public class StructureValidator {
      * This must be called each time a controller is removed from the world.
      * <p>
      * Calling this when a controller is unloaded is not necessary.
+     * <p>
+     * Calling this on a controller that's not registered has no effect.
      * @param level The level the controller is in.
      * @param pos The position of the controller to unregister.
      */
+    //TODO call this function when events are fired
     public static void unregisterController(final @NotNull Level level, final @NotNull BlockPos pos) {
+        final BlockKey controllerKey = new BlockKey(level.dimension(), pos);
 
+        // If the controller is registered
+        final ControllerData controllerData = controllers.get(controllerKey);
+        if(controllerData != null) {
+
+            // Remove controller from the list of controllers of each block
+            for(final var cachedBlock : controllerData.cachedBlocks) {
+                final BlockKey blockKey = new BlockKey(level.dimension(), cachedBlock.getSecond());
+                final var block = blocks.get(blockKey);
+                if(block == null) Cassiopeia.LOGGER.error("Controller to unregister not present in one of its block's list of controllers. This should never happen");
+                else block.remove(controllerKey);
+            }
+
+            // Remove controller from constrollers list
+            controllers.remove(controllerKey);
+        }
     }
 
 
+
+
     /**
-     * Scans all the blocks that make up the specified controller's structure.
+     * Scans all the blocks that make up the specified controller's structure, fully replacing the cached block data and block-controller references.
      * <p>
-     * This fully replaces the cached block data.
+     * This also adds the controller to each block's controllers, adding new blocks to the lookup map if needed.
      * <p>
      * This must be called when a controller is first registered (done automatically) and when its target structure is changed.
      * @param level The level the controller is in.
@@ -107,68 +150,155 @@ public class StructureValidator {
      */
     public static void scanAllBlocks(final @NotNull Level level, final @NotNull BlockPos pos) {
 
+        // Find structure instance
+        final Structure structure = getStructureFromController(level, pos);
+
+
         // Create or replace the list of associated blocks
-        final BlockKey key = new BlockKey(level.dimension(), pos);
-        final List<BlockState> controllerBlocks = controllers.compute(key, (k, v) -> { return new ArrayList<>(); });
+        final BlockKey controllerKey = new BlockKey(level.dimension(), pos);
+        final var controllerData = controllers.compute(controllerKey, (k, v) -> {
 
-        // Store the current state of the blocks
+            // Remove old block-controllers references if present
+            if(v != null) {
+                for(final var cachedBlock : v.cachedBlocks) {
+                    final BlockKey blockKey = new BlockKey(level.dimension(), cachedBlock.getSecond());
+                    final var blockControllers = blocks.get(blockKey);
+                    if(blockControllers != null) {
+                        blockControllers.remove(k);
+                    }
+                    else Cassiopeia.LOGGER.error("Old affected blocks list references a block that doesn't exist in the block lookup map");
+                }
+            }
 
+            // Create new ControllerData
+            return new ControllerData(
+                new ArrayList<>(structure.getBlocks().size()),
+                structure.getMinCorner(),
+                structure.getMaxCorner(),
+                0 // Start valid blocks at 0. Increase the amount while checking each block
+            );
+        });
+
+
+        // For each block in the controller's structure
+        final Direction direction = Structure.getControllerFacing(level.getBlockState(pos));
+        final Vector3i min = structure.getMinCorner();
+        final Vector3i max = structure.getMaxCorner();
+        for(int x = min.x; x <= max.x; ++x) {
+            for(int y = min.y; y <= max.y; ++y) {
+                for(int z = min.z; z <= max.z; ++z) {
+                    final Vector3i offset = new Vector3i(x, y, z);
+                    final BlockPos worldPos = Utils.localToGlobal(offset, pos, direction);
+
+                    // Store the current state of the block in the controller's block list
+                    final BlockState blockState = level.getBlockState(worldPos);
+                    final boolean isValid = structure.validateBlock(offset, blockState, direction);
+                    controllerData.cachedBlocks.add(Pair.from(isValid, worldPos));
+                    if(isValid) ++controllerData.valid;
+
+                    // Update the block lookup map
+                    final BlockKey blockKey = new BlockKey(level.dimension(), worldPos);
+                    final List<BlockKey> affectedControllers = blocks.computeIfAbsent(blockKey, k -> new ArrayList<>());
+                    affectedControllers.add(controllerKey);
+                }
+            }
+        }
     }
 
 
 
-    public static Structure getStructureFromController(final @NotNull Level level, final @NotNull BlockPos pos) {
+
+    /**
+     * //TODO
+     * @param level //TODO
+     * @param pos //TODO
+     * @return //TODO
+     */
+    //FIXME this might need to be cached in the controller data instead of gettting it every single time
+    private static @NotNull Structure getStructureFromController(final @NotNull Level level, final @NotNull BlockPos pos) {
 
         // Find structure id
-        final BlockEntity be = level.getBlockEntity(pos);
-        if(be instanceof AbstractControllerBlockEntity cbe) {
+        if(level.getBlockEntity(pos) instanceof AbstractControllerBlockEntity be) {
 
             // Find Structure instance (loaded and handled by the structure manager)
-            Optional<Structure> structureOpt = StructureManager.getStructure(cbe.getStructureId());
+            Optional<Structure> structureOpt = StructureManager.getStructure(be.getStructureId());
             if(structureOpt.isPresent()) {
 
-                // Store all the blocks
+                // Return structure value
+                return structureOpt.get();
+            }
+            else throw new RuntimeException("Structure instance not present");
+        }
+        else throw new RuntimeException("getStructureFromController called on a non-controller block");
+    }
 
-                final BlockState controllerState = be.getBlockState();
-                final Structure structure = structureOpt.get();
-                //TODO
-                // if(!structure. blocks.isEmpty()) {
-                //     Direction controllerFacing = Structure.getControllerFacing(controllerState);
-                //     BlockUtils.Basis basis = BlockUtils.getBasis(controllerFacing);
 
-                //     for (BlockEntry entry : blocks) {
-                //         BlockPos targetPos = BlockUtils.calculateTargetPos(controllerPos, entry.getOffset(), basis);
-                //         BlockState targetState = level.getBlockState(targetPos);
 
-                //         // 1. Check Block Type
-                //         if (!targetState.is(entry.cachedBlock)) {
-                //             BlockState expectedStateForRender = buildExpectedBlockState(entry, controllerFacing);
-                //             errors.add(new StructureError(targetPos, StructureError.ErrorType.MISSING, entry.getBlock(), null, expectedStateForRender));
-                //             if (stopOnFirstError) return errors;
-                //             else continue;
-                //         }
 
-                //         // 2. Check Properties
-                //         Map<String, String> mismatchedProps = checkProperties(targetState, entry, controllerFacing);
-                //         if (!mismatchedProps.isEmpty()) {
-                //             BlockState expectedStateForRender = buildExpectedBlockState(entry, controllerFacing);
-                //             errors.add(new StructureError(targetPos, StructureError.ErrorType.WRONG_STATE, entry.getBlock(), mismatchedProps, expectedStateForRender));
-                //             if (stopOnFirstError) return errors;
-                //         }
-                //     }
-                // }
+    public enum BlockChangeAction {
+        PLACE,
+        BREAK,
+        MODIFY
+    }
+
+    //TODO comment, implement and call
+    //TODO specify that this event must be called for any block, including controllers. cntrollers are recognized by the method and handles accordingly
+    public static void onBlockChange(final @NotNull Level level, final @NotNull BlockPos pos, final @NotNull BlockChangeAction action) {
+
+        // If the modified block is a controller, register/unregister/scan it based on the action
+        if(level.getBlockEntity(pos) instanceof AbstractControllerBlockEntity) {
+            switch(action) {
+                case PLACE:  { registerController  (level, pos); break; }
+                case BREAK:  { unregisterController(level, pos); break; }
+                case MODIFY: { scanAllBlocks       (level, pos); break; }
             }
         }
 
-    //     // Make sure the ID is there
-    //     final Optional<TagKey<Block>> structureId = level.getBlockState(pos)
-    // .getTags()
-    // .filter(tag -> tag.location().getPath().equals("structure_id"))
-    // .findFirst();
-    //     if (structureId.isEmpty()) {
-    //         return null;
-    //     }
+        // If the modified block is not a controller
+        else {
 
-        return null; //TODO remove
+            // If the block is part of a possible structure
+            final BlockKey blockKey = new BlockKey(level.dimension(), pos);
+            final var controllerKeys = blocks.get(blockKey);
+            if(controllerKeys != null) {
+
+                // For each controller of the structures the block is part of
+                for(final var controllerKey : controllerKeys) {
+
+                    // Get the controller's data
+                    final var controllerData = controllers.get(controllerKey);
+                    if(controllerData != null) {
+
+                        // Find structure instance
+                        final Structure structure = getStructureFromController(level, controllerKey.pos);
+
+                        // Update block validation flag and valid blocks count
+                        final Direction direction = Structure.getControllerFacing(level.getBlockState(controllerKey.pos)); //FIXME this might need to be cached in the controller data
+                        final Vector3i offset = Utils.globalToLocal(pos, controllerKey.pos, direction);
+                        final int index = structure.blockOffsetToIndex(offset);
+                        final var blockData = controllerData.cachedBlocks.get(index);
+                        if(blockData.getFirst().booleanValue()) --controllerData.valid;
+                        final boolean isValid = structure.validateBlock(offset, level.getBlockState(pos), direction);
+                        blockData.setFirst(isValid);
+                        if(isValid) ++controllerData.valid;
+                    }
+                    else throw new RuntimeException("A controller referenced by a tracked block is not present in the controllers map");
+                }
+            }
+        }
+    }
+
+
+
+
+    public boolean validateStructure(final @NotNull Level level, final @NotNull BlockPos pos) {
+
+        // Find structure instance
+        final Structure structure = getStructureFromController(level, pos);
+
+        // Get controller data and compare the number of valid blocks
+        final BlockKey controllerKey = new BlockKey(level.dimension(), pos);
+        final ControllerData controllerData = controllers.get(controllerKey);
+        return controllerData != null && controllerData.valid >= structure.getBlocks().size();
     }
 }
