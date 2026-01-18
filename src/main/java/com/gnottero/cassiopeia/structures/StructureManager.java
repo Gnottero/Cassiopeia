@@ -6,14 +6,14 @@ import com.google.gson.GsonBuilder;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
-import net.minecraft.world.phys.Vec3;
 
 import org.jetbrains.annotations.NotNull;
-import org.joml.Vector3d;
+import org.joml.Vector3i;
 
 import java.io.File;
 import java.io.FileReader;
@@ -99,9 +99,9 @@ public class StructureManager {
 
         // Coordinate system basis
         BlockUtils.Basis basis = BlockUtils.getBasis(controllerFacing);
-        Vec3 front = basis.front();
-        Vec3 up = basis.up();
-        Vec3 right = basis.right();
+        Vec3i front = basis.front();
+        Vec3i up    = basis.up();
+        Vec3i right = basis.right();
 
         Structure structure = new Structure();
         String controllerId = BuiltInRegistries.BLOCK.getKey(controllerState.getBlock()).toString();
@@ -121,13 +121,12 @@ public class StructureManager {
                     }
 
                     // Calculate relative offset
-                    Vec3 delta = new Vec3((float)x - controllerPos.getX(), (float)y - controllerPos.getY(), (float)z - controllerPos.getZ());
-
-                    double offFront = delta.dot(front);
-                    double offUp = delta.dot(up);
-                    double offRight = delta.dot(right);
-
-                    Vector3d offset = new Vector3d(offFront, offUp, offRight);
+                    Vector3i delta = new Vector3i(x - controllerPos.getX(), y - controllerPos.getY(), z - controllerPos.getZ());
+                    Vector3i offset = new Vector3i(
+                        delta.x * front.getX() + delta.y * front.getY() + delta.z * front.getZ(),
+                        delta.x * up   .getX() + delta.y * up   .getY() + delta.z * up   .getZ(),
+                        delta.x * right.getX() + delta.y * right.getY() + delta.z * right.getZ()
+                    );
 
                     String blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
                     Map<String, String> properties = BlockUtils.processBlockProperties(state, controllerFacing);
@@ -185,11 +184,9 @@ public class StructureManager {
         Structure structure = new Structure();
         structure.setController(controllerId);
 
-        Vector3d offset = new Vector3d(0d);
-
         // Add controller itself as the single block
         // Note: properties map can be empty to match any properties
-        structure.addBlock(new Structure.BlockEntry(controllerId, offset, new java.util.HashMap<>()));
+        structure.addBlock(new Structure.BlockEntry(controllerId, new Vector3i(0), new java.util.HashMap<>()));
 
         writeStructureToFile(structure, file);
     }

@@ -132,31 +132,31 @@ public class StructureValidator {
                 final BlockState controllerState = be.getBlockState();
                 final Structure structure = structureOpt.get();
                 //TODO
-                if(!structure. blocks.isEmpty()) {
-                    Direction controllerFacing = Structure.getControllerFacing(controllerState);
-                    BlockUtils.Basis basis = BlockUtils.getBasis(controllerFacing);
+                // if(!structure. blocks.isEmpty()) {
+                //     Direction controllerFacing = Structure.getControllerFacing(controllerState);
+                //     BlockUtils.Basis basis = BlockUtils.getBasis(controllerFacing);
 
-                    for (BlockEntry entry : blocks) {
-                        BlockPos targetPos = BlockUtils.calculateTargetPos(controllerPos, entry.getOffset(), basis);
-                        BlockState targetState = level.getBlockState(targetPos);
+                //     for (BlockEntry entry : blocks) {
+                //         BlockPos targetPos = BlockUtils.calculateTargetPos(controllerPos, entry.getOffset(), basis);
+                //         BlockState targetState = level.getBlockState(targetPos);
 
-                        // 1. Check Block Type
-                        if (!targetState.is(entry.cachedBlock)) {
-                            BlockState expectedStateForRender = buildExpectedBlockState(entry, controllerFacing);
-                            errors.add(new StructureError(targetPos, StructureError.ErrorType.MISSING, entry.getBlock(), null, expectedStateForRender));
-                            if (stopOnFirstError) return errors;
-                            else continue;
-                        }
+                //         // 1. Check Block Type
+                //         if (!targetState.is(entry.cachedBlock)) {
+                //             BlockState expectedStateForRender = buildExpectedBlockState(entry, controllerFacing);
+                //             errors.add(new StructureError(targetPos, StructureError.ErrorType.MISSING, entry.getBlock(), null, expectedStateForRender));
+                //             if (stopOnFirstError) return errors;
+                //             else continue;
+                //         }
 
-                        // 2. Check Properties
-                        Map<String, String> mismatchedProps = checkProperties(targetState, entry, controllerFacing);
-                        if (!mismatchedProps.isEmpty()) {
-                            BlockState expectedStateForRender = buildExpectedBlockState(entry, controllerFacing);
-                            errors.add(new StructureError(targetPos, StructureError.ErrorType.WRONG_STATE, entry.getBlock(), mismatchedProps, expectedStateForRender));
-                            if (stopOnFirstError) return errors;
-                        }
-                    }
-                }
+                //         // 2. Check Properties
+                //         Map<String, String> mismatchedProps = checkProperties(targetState, entry, controllerFacing);
+                //         if (!mismatchedProps.isEmpty()) {
+                //             BlockState expectedStateForRender = buildExpectedBlockState(entry, controllerFacing);
+                //             errors.add(new StructureError(targetPos, StructureError.ErrorType.WRONG_STATE, entry.getBlock(), mismatchedProps, expectedStateForRender));
+                //             if (stopOnFirstError) return errors;
+                //         }
+                //     }
+                // }
             }
         }
 
