@@ -212,10 +212,8 @@ public class Structure {
             // Handle Facing rotation
             if (property.getName().equals("facing") || property.getName().equals("horizontal_facing")) {
                 if (expectedValue instanceof Direction expectedDir) {
-                    // The expected value stored in the structure is "normalized" (relative to
-                    // NORTH).
-                    // We need to denormalize it to the actual world direction to compare with the
-                    // world state.
+                    // The expected value stored in the structure is "normalized" (relative to NORTH).
+                    // We need to denormalize it to the actual world direction to compare with the world state.
                     Direction expectedWorldDir = BlockUtils.denormalizeFacing(expectedDir, controllerFacing);
 
                     if (!targetState.getValue(property).equals(expectedWorldDir)) {
