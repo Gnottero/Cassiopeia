@@ -15,7 +15,6 @@ import org.jetbrains.annotations.Nullable;
  * @param <F> The type of the first value.
  * @param <S> The type of the second value.
  * @param <T> The type of the third value.
- * @author Ilaria (https://github.com/UwUSnek)
  */
 public class Triplet<F, S, T> {
 
