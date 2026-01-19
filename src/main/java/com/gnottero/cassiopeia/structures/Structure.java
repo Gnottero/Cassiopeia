@@ -16,6 +16,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.joml.Vector3d;
+
+
+
+
+@SuppressWarnings("java:S2065") // Transient members
 public class Structure {
     private List<BlockEntry> blocks;
     private String controller;
@@ -51,6 +57,7 @@ public class Structure {
         this.initialized = false;
     }
 
+
     private void ensureInitialized() {
         if (initialized)
             return;
@@ -68,10 +75,9 @@ public class Structure {
         initialized = true;
     }
 
+
     /**
-     * Verifies if the structure exists in the world at the given controller
-     * position.
-     *
+     * Verifies if the structure exists in the world at the given controller position.
      * @param level         The level to check.
      * @param controllerPos The position of the controller block.
      * @return true if the structure matches, false otherwise.
@@ -80,10 +86,9 @@ public class Structure {
         return validate(level, controllerPos, true).isEmpty();
     }
 
+
     /**
-     * Identifies missing blocks in the structure relative to the controller
-     * position.
-     *
+     * Identifies missing blocks in the structure relative to the controller position.
      * @param level         The level to check.
      * @param controllerPos The position of the controller block.
      * @return A List of StructureError objects.
@@ -92,35 +97,30 @@ public class Structure {
         return validate(level, controllerPos, false);
     }
 
+
+
+
     /**
      * Core validation logic.
-     *
      * @param level            The level to check.
      * @param controllerPos    The position of the controller block.
-     * @param stopOnFirstError If true, returns immediately upon finding the first
-     *                         error (used for verification).
-     * @return A list of errors found. If stopOnFirstError is true, the list will
-     *         contain at most one error.
+     * @param stopOnFirstError If true, returns immediately upon finding the first error (used for verification).
+     * @return A list of errors found. If stopOnFirstError is true, the list will contain at most one error.
      */
     private List<StructureError> validate(Level level, BlockPos controllerPos, boolean stopOnFirstError) {
         if (level == null || controllerPos == null) {
-            return Collections.singletonList(new StructureError(controllerPos, StructureError.ErrorType.MISSING,
-                    "Invalid arguments", null, null));
+            return Collections.singletonList(new StructureError(controllerPos, StructureError.ErrorType.MISSING, "Invalid arguments", null, null));
         }
-
         ensureInitialized();
 
-        BlockState controllerState = level.getBlockState(controllerPos);
-
         // Check Controller
+        BlockState controllerState = level.getBlockState(controllerPos);
         if (cachedControllerBlock != null && !controllerState.is(cachedControllerBlock)) {
-            if (stopOnFirstError)
-                return Collections.singletonList(
-                        new StructureError(controllerPos, StructureError.ErrorType.MISSING, controller, null, null));
-            // If we're getting errors, we probably want to report the controller is wrong
-            // first and foremost
-            return Collections.singletonList(
-                    new StructureError(controllerPos, StructureError.ErrorType.MISSING, controller, null, null));
+            if (stopOnFirstError) {
+
+                // If we're getting errors, we probably want to report the controller is wrong first and foremost
+                return Collections.singletonList(new StructureError(controllerPos, StructureError.ErrorType.MISSING, controller, null, null));
+            }
         }
 
         Direction controllerFacing = getControllerFacing(controllerState);
@@ -135,26 +135,25 @@ public class Structure {
             // 1. Check Block Type
             if (!targetState.is(entry.cachedBlock)) {
                 BlockState expectedStateForRender = buildExpectedBlockState(entry, controllerFacing);
-                errors.add(new StructureError(targetPos, StructureError.ErrorType.MISSING, entry.getBlock(), null,
-                        expectedStateForRender));
-                if (stopOnFirstError)
-                    return errors;
-                continue;
+                errors.add(new StructureError(targetPos, StructureError.ErrorType.MISSING, entry.getBlock(), null, expectedStateForRender));
+                if (stopOnFirstError) return errors;
+                else continue;
             }
 
             // 2. Check Properties
             Map<String, String> mismatchedProps = checkProperties(targetState, entry, controllerFacing);
             if (!mismatchedProps.isEmpty()) {
                 BlockState expectedStateForRender = buildExpectedBlockState(entry, controllerFacing);
-                errors.add(new StructureError(targetPos, StructureError.ErrorType.WRONG_STATE, entry.getBlock(),
-                        mismatchedProps, expectedStateForRender));
-                if (stopOnFirstError)
-                    return errors;
+                errors.add(new StructureError(targetPos, StructureError.ErrorType.WRONG_STATE, entry.getBlock(), mismatchedProps, expectedStateForRender));
+                if (stopOnFirstError) return errors;
             }
         }
 
         return errors;
     }
+
+
+
 
     private Direction getControllerFacing(BlockState controllerState) {
         Property<?> facingProp = controllerState.getBlock().getStateDefinition().getProperty("facing");
@@ -164,12 +163,15 @@ public class Structure {
 
         if (facingProp != null) {
             Object val = controllerState.getValue(facingProp);
-            if (val instanceof Direction) {
-                return (Direction) val;
+            if (val instanceof Direction direction) {
+                return direction;
             }
         }
         return Direction.NORTH;
     }
+
+
+
 
     private Map<String, String> checkProperties(BlockState targetState, BlockEntry entry, Direction controllerFacing) {
         if (entry.cachedProperties == null || entry.cachedProperties.isEmpty()) {
@@ -192,8 +194,7 @@ public class Structure {
                     Direction expectedWorldDir = BlockUtils.denormalizeFacing(expectedDir, controllerFacing);
 
                     if (!targetState.getValue(property).equals(expectedWorldDir)) {
-                        mismatched.put(property.getName(), expectedDir.getName()); // Return the normalized name as
-                                                                                   // expected
+                        mismatched.put(property.getName(), expectedDir.getName()); // Return the normalized name as expected
                     }
                     continue;
                 }
@@ -206,14 +207,19 @@ public class Structure {
         return mismatched;
     }
 
+
+
+
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private BlockState buildExpectedBlockState(BlockEntry entry, Direction controllerFacing) {
-        if (entry.cachedBlock == null)
+        if (entry.cachedBlock == null) {
             return null;
+        }
 
         BlockState state = entry.cachedBlock.defaultBlockState();
-        if (entry.cachedProperties == null)
+        if (entry.cachedProperties == null) {
             return state;
+        }
 
         for (Map.Entry<Property<?>, Comparable<?>> propEntry : entry.cachedProperties.entrySet()) {
             Property property = propEntry.getKey();
@@ -229,6 +235,9 @@ public class Structure {
         return state;
     }
 
+
+
+
     public static class StructureError {
         public enum ErrorType {
             MISSING,
@@ -241,8 +250,7 @@ public class Structure {
         public final Map<String, String> expectedState;
         public final BlockState expectedBlockState;
 
-        public StructureError(BlockPos pos, ErrorType type, String expectedBlockId, Map<String, String> expectedState,
-                BlockState expectedBlockState) {
+        public StructureError(BlockPos pos, ErrorType type, String expectedBlockId, Map<String, String> expectedState, BlockState expectedBlockState) {
             this.pos = pos;
             this.type = type;
             this.expectedBlockId = expectedBlockId;
@@ -251,15 +259,18 @@ public class Structure {
         }
     }
 
+
+
+
     public static class BlockEntry {
         private String block;
-        private List<Double> offset;
+        private Vector3d offset;
         private Map<String, String> properties;
 
         private transient Block cachedBlock;
         private transient Map<Property<?>, Comparable<?>> cachedProperties;
 
-        public BlockEntry(String block, List<Double> offset, Map<String, String> properties) {
+        public BlockEntry(String block, Vector3d offset, Map<String, String> properties) {
             this.block = block;
             this.offset = offset;
             this.properties = properties;
@@ -279,7 +290,8 @@ public class Structure {
                         val.ifPresent(comparable -> cachedProperties.put(prop, comparable));
                     }
                 }
-            } else {
+            }
+            else {
                 this.cachedProperties = Collections.emptyMap();
             }
         }
@@ -288,7 +300,7 @@ public class Structure {
             return block;
         }
 
-        public List<Double> getOffset() {
+        public Vector3d getOffset() {
             return offset;
         }
 

@@ -11,6 +11,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.item.crafting.PlacementInfo;
 import org.jetbrains.annotations.NotNull;
 
+
+
+
 public abstract class AbstractCrushingRecipe implements Recipe<SingleRecipeInput> {
     protected final RecipeType<? extends AbstractCrushingRecipe> type;
     protected final CrushingBookCategory category;
@@ -20,9 +23,16 @@ public abstract class AbstractCrushingRecipe implements Recipe<SingleRecipeInput
     protected final float experience;
     protected final int crushingTime;
 
-    public AbstractCrushingRecipe(RecipeType<? extends AbstractCrushingRecipe> type, String group,
-            CrushingBookCategory category,
-            Ingredient input, ItemStack output, float experience, int crushingTime) {
+
+    protected AbstractCrushingRecipe(
+        RecipeType<? extends AbstractCrushingRecipe> type,
+        String group,
+        CrushingBookCategory category,
+        Ingredient input,
+        ItemStack output,
+        float experience,
+        int crushingTime
+    ) {
         this.type = type;
         this.category = category;
         this.group = group;
@@ -31,6 +41,9 @@ public abstract class AbstractCrushingRecipe implements Recipe<SingleRecipeInput
         this.experience = experience;
         this.crushingTime = crushingTime;
     }
+
+
+
 
     @Override
     public boolean matches(SingleRecipeInput input, Level level) {
@@ -43,6 +56,7 @@ public abstract class AbstractCrushingRecipe implements Recipe<SingleRecipeInput
         return this.output.copy();
     }
 
+    @SuppressWarnings("java:S1172") // Unused parameters
     public boolean canCraftInDimensions(int width, int height) {
         return true;
     }
@@ -78,6 +92,7 @@ public abstract class AbstractCrushingRecipe implements Recipe<SingleRecipeInput
         return nonNullList;
     }
 
+    @SuppressWarnings("java:S1172") // Unused parameters
     public ItemStack getResultItem(HolderLookup.Provider provider) {
         return this.output;
     }

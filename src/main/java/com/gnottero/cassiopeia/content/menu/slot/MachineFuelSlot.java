@@ -6,6 +6,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 
+
+
+
 /**
  * A slot for fuel items in machines.
  * Uses level's fuel values when available.

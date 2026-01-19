@@ -6,16 +6,20 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.EnumMap;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+
+import org.joml.Vector3d;
+
+
+
 
 public class BlockUtils {
 
     /**
      * Extracts properties from a block state, normalizing the 'facing' property
      * relative to a controller facing.
-     *
      * @param state            The block state to process.
      * @param controllerFacing The facing direction of the controller block.
      * @return A map of property names to their values.
@@ -28,9 +32,9 @@ public class BlockUtils {
             Object rawValue = state.getValue(property);
             String value = rawValue.toString();
 
-            if ((key.equals("facing") || key.equals("horizontal_facing")) && rawValue instanceof Direction) {
+            if ((key.equals("facing") || key.equals("horizontal_facing")) && rawValue instanceof Direction blockFacing) {
+
                 // Normalize facing relative to controller
-                Direction blockFacing = (Direction) rawValue;
                 Direction normalizedFacing = normalizeFacing(blockFacing, controllerFacing);
                 value = normalizedFacing.getName();
             }
@@ -40,6 +44,7 @@ public class BlockUtils {
 
         return properties;
     }
+
 
     /**
      * Normalizes a facing direction relative to the controller's facing.
@@ -60,6 +65,7 @@ public class BlockUtils {
         return getHorizontalDirection(normalizedIndex);
     }
 
+
     public static Direction denormalizeFacing(Direction normalizedFacing, Direction controllerFacing) {
         if (normalizedFacing.getAxis().isVertical() || controllerFacing.getAxis().isVertical()) {
             return normalizedFacing;
@@ -76,35 +82,28 @@ public class BlockUtils {
         return getHorizontalDirection(actualIndex);
     }
 
+
     private static int getHorizontalIndex(Direction direction) {
-        switch (direction) {
-            case NORTH:
-                return 0;
-            case EAST:
-                return 1;
-            case SOUTH:
-                return 2;
-            case WEST:
-                return 3;
-            default:
-                return -1;
-        }
+        return switch (direction) {
+            case NORTH -> 0;
+            case EAST  -> 1;
+            case SOUTH -> 2;
+            case WEST  -> 3;
+            default    -> -1;
+        };
     }
 
+
     private static Direction getHorizontalDirection(int index) {
-        switch (index) {
-            case 0:
-                return Direction.NORTH;
-            case 1:
-                return Direction.EAST;
-            case 2:
-                return Direction.SOUTH;
-            case 3:
-                return Direction.WEST;
-            default:
-                return Direction.NORTH;
-        }
+        return switch (index) {
+            case 0  -> Direction.NORTH;
+            case 1  -> Direction.EAST;
+            case 2  -> Direction.SOUTH;
+            case 3  -> Direction.WEST;
+            default -> Direction.NORTH;
+        };
     }
+
 
     /**
      * Represents a coordinate system basis with front, up, and right vectors.
@@ -118,7 +117,10 @@ public class BlockUtils {
         }
     }
 
-    private static final Map<Direction, Basis> BASIS_CACHE = new HashMap<>();
+
+
+
+    private static final Map<Direction, Basis> BASIS_CACHE = new EnumMap<>(Direction.class);
 
     static {
         for (Direction dir : Direction.values()) {
@@ -137,17 +139,14 @@ public class BlockUtils {
      * Calculates the target position based on a controller position, an offset, and
      * a basis.
      */
-    public static BlockPos calculateTargetPos(BlockPos controllerPos, List<Double> offset, Basis basis) {
+    public static BlockPos calculateTargetPos(BlockPos controllerPos, Vector3d offset, Basis basis) {
         double offFront = offset.get(0);
-        double offUp = offset.get(1);
+        double offUp    = offset.get(1);
         double offRight = offset.get(2);
 
-        double targetX = controllerPos.getX() + offFront * basis.front.x + offUp * basis.up.x
-                + offRight * basis.right.x;
-        double targetY = controllerPos.getY() + offFront * basis.front.y + offUp * basis.up.y
-                + offRight * basis.right.y;
-        double targetZ = controllerPos.getZ() + offFront * basis.front.z + offUp * basis.up.z
-                + offRight * basis.right.z;
+        double targetX = controllerPos.getX() + offFront * basis.front.x + offUp * basis.up.x + offRight * basis.right.x;
+        double targetY = controllerPos.getY() + offFront * basis.front.y + offUp * basis.up.y + offRight * basis.right.y;
+        double targetZ = controllerPos.getZ() + offFront * basis.front.z + offUp * basis.up.z + offRight * basis.right.z;
 
         return new BlockPos((int) Math.round(targetX), (int) Math.round(targetY), (int) Math.round(targetZ));
     }

@@ -15,28 +15,33 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+
+
+
 public class BasicControllerBlock extends AbstractControllerBlock {
     public static final MapCodec<BasicControllerBlock> CODEC = simpleCodec(BasicControllerBlock::new);
+
 
     public BasicControllerBlock(Properties properties) {
         super(properties);
     }
+
 
     @Override
     protected @NotNull MapCodec<? extends BaseEntityBlock> codec() {
         return CODEC;
     }
 
-    @Nullable
+
     @Override
-    public BlockEntity newBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state) {
+    public @Nullable BlockEntity newBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state) {
         return new BasicControllerBlockEntity(pos, state);
     }
 
-    @Nullable
+
     @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(@NotNull Level level, @NotNull BlockState state,
-            @NotNull BlockEntityType<T> type) {
+    @SuppressWarnings("java:S2638")
+    public @Nullable <T extends BlockEntity> BlockEntityTicker<T> getTicker(@NotNull Level level, @NotNull BlockState state, @NotNull BlockEntityType<T> type) {
         if (level.isClientSide()) {
             return null;
         }
@@ -46,6 +51,7 @@ public class BasicControllerBlock extends AbstractControllerBlock {
             }
         };
     }
+
 
     @Override
     protected void openGui(Player player, AbstractControllerBlockEntity be) {

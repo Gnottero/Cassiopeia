@@ -39,38 +39,55 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
+
+
+
+
+
+
+
 public abstract class AbstractControllerBlock extends BaseEntityBlock {
 
     protected AbstractControllerBlock(Properties properties) {
         super(properties);
-        this.registerDefaultState(
-                this.stateDefinition.any().setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.NORTH));
+        this.registerDefaultState(this.stateDefinition.any().setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.NORTH));
     }
+
 
     @Override
     protected abstract MapCodec<? extends BaseEntityBlock> codec();
+
 
     @Override
     public @NotNull RenderShape getRenderShape(@NotNull BlockState state) {
         return RenderShape.MODEL;
     }
 
-    @Nullable
+
     @Override
-    public BlockState getStateForPlacement(@NotNull BlockPlaceContext context) {
-        return this.defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING,
-                context.getHorizontalDirection().getOpposite());
+    public @Nullable BlockState getStateForPlacement(@NotNull BlockPlaceContext context) {
+        return this.defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING, context.getHorizontalDirection().getOpposite());
     }
+
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.@NotNull Builder<Block, BlockState> builder) {
         builder.add(BlockStateProperties.HORIZONTAL_FACING);
     }
 
+
+
+
     @Override
-    protected @NotNull InteractionResult useItemOn(@NotNull ItemStack stack, @NotNull BlockState state,
-            @NotNull Level level, @NotNull BlockPos pos, @NotNull Player player, @NotNull InteractionHand hand,
-            @NotNull BlockHitResult hitResult) {
+    protected @NotNull InteractionResult useItemOn(
+        @NotNull ItemStack stack,
+        @NotNull BlockState state,
+        @NotNull Level level,
+        @NotNull BlockPos pos,
+        @NotNull Player player,
+        @NotNull InteractionHand hand,
+        @NotNull BlockHitResult hitResult
+    ) {
         if (level.isClientSide()) {
             return InteractionResult.SUCCESS;
         }
@@ -82,8 +99,10 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
         return InteractionResult.PASS;
     }
 
-    private InteractionResult handleStructureInteraction(Level level, BlockPos pos, Player player,
-            AbstractControllerBlockEntity controllerBE) {
+
+
+
+    private InteractionResult handleStructureInteraction(Level level, BlockPos pos, Player player, AbstractControllerBlockEntity controllerBE) {
         String structureId = controllerBE.getStructureId();
 
         if (structureId == null || structureId.isEmpty()) {
@@ -109,9 +128,15 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
         return InteractionResult.SUCCESS;
     }
 
+
+
+
     private void handleValidationSuccess(Player player, AbstractControllerBlockEntity controllerBE) {
         openGui(player, controllerBE);
     }
+
+
+
 
     private void handleValidationFailure(Player player, String structureId, List<StructureError> errors) {
         sendHighlightPacket(player, errors);
@@ -119,35 +144,43 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
         player.displayClientMessage(msg, false);
     }
 
+
+
+
     private void sendHighlightPacket(Player player, List<StructureError> errors) {
         if (player instanceof ServerPlayer serverPlayer) {
-            ServerPlayNetworking.send(serverPlayer,
-                    new StructureHighlightPayload(errors));
+            ServerPlayNetworking.send(serverPlayer, new StructureHighlightPayload(errors));
         }
     }
 
+
+
+
     private void sendErrorMessage(Player player, String message) {
-        player.displayClientMessage(
-                Component.literal(message).withStyle(ChatFormatting.RED),
-                false);
+        player.displayClientMessage(Component.literal(message).withStyle(ChatFormatting.RED), false);
     }
+
+
+
 
     private MutableComponent buildFailureMessage(String structureId,
             List<StructureError> errors) {
         String titleCaseName = formatStructureName(structureId);
 
         MutableComponent msg = Component
-                .literal("Structure ").withStyle(ChatFormatting.RED)
-                .append(Component.literal(titleCaseName)
-                        .withStyle(ChatFormatting.GOLD))
-                .append(Component.literal(" incomplete.")
-                        .withStyle(ChatFormatting.RED));
+            .literal("Structure ").withStyle(ChatFormatting.RED)
+            .append(Component.literal(titleCaseName).withStyle(ChatFormatting.GOLD))
+            .append(Component.literal(" incomplete.").withStyle(ChatFormatting.RED))
+        ;
 
         appendMissingBlocks(msg, errors);
         appendMismatchedStates(msg, errors);
 
         return msg;
     }
+
+
+
 
     private String formatStructureName(String structureId) {
         StringBuilder nameBuilder = new StringBuilder();
@@ -168,6 +201,9 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
         return nameBuilder.toString();
     }
 
+
+
+
     private void appendMissingBlocks(MutableComponent msg, List<StructureError> errors) {
         Map<String, Integer> missingCounts = new HashMap<>();
         for (StructureError error : errors) {
@@ -177,8 +213,7 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
         }
 
         if (!missingCounts.isEmpty()) {
-            msg.append(Component.literal("\n\nMissing Blocks:")
-                    .withStyle(ChatFormatting.RED, ChatFormatting.UNDERLINE));
+            msg.append(Component.literal("\n\nMissing Blocks:").withStyle(ChatFormatting.RED, ChatFormatting.UNDERLINE));
 
             for (Map.Entry<String, Integer> entry : missingCounts.entrySet()) {
                 addErrorLine(msg, entry.getValue(), getBlockComponent(entry.getKey()));
@@ -186,35 +221,36 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
         }
     }
 
+
+
+
     private void appendMismatchedStates(MutableComponent msg, List<StructureError> errors) {
         Map<String, Map<String, Integer>> wrongStateCounts = new HashMap<>();
 
         for (StructureError error : errors) {
             if (error.type != StructureError.ErrorType.MISSING) {
                 String stateDesc = formatStateDescription(error.expectedState);
-                wrongStateCounts.computeIfAbsent(error.expectedBlockId, k -> new HashMap<>())
-                        .merge(stateDesc, 1, Integer::sum);
+                wrongStateCounts.computeIfAbsent(error.expectedBlockId, k -> new HashMap<>()).merge(stateDesc, 1, Integer::sum);
             }
         }
 
         if (!wrongStateCounts.isEmpty()) {
-            msg.append(Component.literal("\n\nIncorrect States:")
-                    .withStyle(ChatFormatting.RED, ChatFormatting.UNDERLINE));
+            msg.append(Component.literal("\n\nIncorrect States:").withStyle(ChatFormatting.RED, ChatFormatting.UNDERLINE));
 
             for (Map.Entry<String, Map<String, Integer>> blockEntry : wrongStateCounts.entrySet()) {
                 MutableComponent blockComponent = getBlockComponent(blockEntry.getKey());
                 for (Map.Entry<String, Integer> stateEntry : blockEntry.getValue().entrySet()) {
                     addErrorLine(msg, stateEntry.getValue(), blockComponent.copy());
                     if (!stateEntry.getKey().isEmpty()) {
-                        msg.append(Component
-                                .literal(" (Expected: " + stateEntry.getKey() + ")")
-                                .withStyle(ChatFormatting.DARK_GRAY,
-                                        ChatFormatting.ITALIC));
+                        msg.append(Component.literal(" (Expected: " + stateEntry.getKey() + ")").withStyle(ChatFormatting.DARK_GRAY,ChatFormatting.ITALIC));
                     }
                 }
             }
         }
     }
+
+
+
 
     private String formatStateDescription(Map<String, String> expectedState) {
         if (expectedState == null || expectedState.isEmpty()) {
@@ -224,33 +260,37 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
         Collections.sort(props);
         StringBuilder sb = new StringBuilder();
         for (String key : props) {
-            if (sb.length() > 0)
+            if (sb.isEmpty()) {
                 sb.append(", ");
+            }
             sb.append(key).append("=").append(expectedState.get(key));
         }
         return sb.toString();
     }
 
-    private void addErrorLine(MutableComponent msg, int count,
-            MutableComponent content) {
-        msg.append(Component.literal("\n • ")
-                .withStyle(ChatFormatting.RED));
-        msg.append(Component.literal(count + "x ")
-                .withStyle(ChatFormatting.GOLD));
+
+
+
+    private void addErrorLine(MutableComponent msg, int count, MutableComponent content) {
+        msg.append(Component.literal("\n • ").withStyle(ChatFormatting.RED));
+        msg.append(Component.literal(count + "x ").withStyle(ChatFormatting.GOLD));
         msg.append(content.withStyle(ChatFormatting.GRAY));
     }
 
+
+
+
+    @SuppressWarnings("java:S7467")
     private MutableComponent getBlockComponent(String blockName) {
         try {
             Identifier id = Identifier.parse(blockName);
-            Optional<Holder.Reference<Block>> blockHolder = BuiltInRegistries.BLOCK
-                    .get(id);
+            Optional<Holder.Reference<Block>> blockHolder = BuiltInRegistries.BLOCK.get(id);
 
             if (blockHolder.isPresent()) {
-                return Component
-                        .translatable(blockHolder.get().value().getDescriptionId());
+                return Component.translatable(blockHolder.get().value().getDescriptionId());
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             // ignore
         }
         return Component.literal(blockName);

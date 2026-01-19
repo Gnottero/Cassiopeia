@@ -10,17 +10,21 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
 
+
+
+
 public class ModItemGroups {
+    private ModItemGroups() {}
+
     public static final CreativeModeTab CASSIOPEIA_GROUP = Registry.register(
-            BuiltInRegistries.CREATIVE_MODE_TAB,
-            Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, "general"),
-            FabricItemGroup.builder()
-                    .title(Component.literal("Cassiopeia"))
-                    .icon(() -> new ItemStack(ModBlocks.BASIC_CONTROLLER))
-                    .displayItems((displayContext, entries) -> {
-                        entries.accept(ModBlocks.BASIC_CONTROLLER);
-                    })
-                    .build());
+        BuiltInRegistries.CREATIVE_MODE_TAB,
+        Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, "general"),
+        FabricItemGroup.builder()
+            .title(Component.literal("Cassiopeia"))
+            .icon(() -> new ItemStack(ModBlocks.BASIC_CONTROLLER))
+            .displayItems((displayContext, entries) -> { entries.accept(ModBlocks.BASIC_CONTROLLER); })
+        .build()
+    );
 
     public static void registerItemGroups() {
         Cassiopeia.LOGGER.info("Registering Item Groups for " + Cassiopeia.MOD_ID);
