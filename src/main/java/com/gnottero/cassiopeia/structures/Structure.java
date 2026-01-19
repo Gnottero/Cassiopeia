@@ -86,7 +86,7 @@ public class Structure {
     }
 
 
-    private void ensureInitialized() {
+    public void ensureInitialized() {
         if (initialized) return;
 
         // Initialize controller
@@ -231,6 +231,27 @@ public class Structure {
         // Calculate index from min corner offsets
         return x_offset * (ySize * zSize) + y_offset * zSize + z_offset;
     }
+
+
+
+
+    public @NotNull Vector3i blockIndexToOffset(final int index) {
+        final int ySize = maxCorner.y - minCorner.y + 1;
+        final int zSize = maxCorner.z - minCorner.z + 1;
+
+        // Extract offsets from the index
+        final int x_offset =  index / (ySize * zSize);
+        final int y_offset = (index % (ySize * zSize)) / zSize;
+        final int z_offset =  index %          zSize;
+
+        // Convert offsets back to local offset
+        return new Vector3i(
+            x_offset + minCorner.x,
+            y_offset + minCorner.y,
+            z_offset + minCorner.z
+        );
+    }
+
 
 
 

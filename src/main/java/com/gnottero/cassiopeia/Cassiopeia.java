@@ -12,6 +12,7 @@ import com.gnottero.cassiopeia.content.machine.MachineHandlerRegistry;
 import com.gnottero.cassiopeia.content.recipe.ModRecipes;
 import com.gnottero.cassiopeia.content.screen.ModScreenHandlers;
 import com.gnottero.cassiopeia.network.StructureHighlightPayload;
+import com.gnottero.cassiopeia.structures.StructureValidatorEvents;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,5 +48,6 @@ public class Cassiopeia implements ModInitializer {
         ModScreenHandlers.registerScreenHandlers();
         ModRecipes.registerRecipes();
         MachineHandlerRegistry.init();
+        StructureValidatorEvents.registerEvents();
     }
 }

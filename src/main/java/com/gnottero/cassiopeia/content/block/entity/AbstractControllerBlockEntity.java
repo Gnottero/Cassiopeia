@@ -2,6 +2,8 @@ package com.gnottero.cassiopeia.content.block.entity;
 
 import com.gnottero.cassiopeia.structures.Structure;
 import com.gnottero.cassiopeia.structures.StructureManager;
+import com.gnottero.cassiopeia.structures.StructureValidator;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -79,19 +81,20 @@ public abstract class AbstractControllerBlockEntity extends BlockEntity {
 
     public boolean verifyStructure(Level level, BlockPos pos) {
 
-        // Make sure the ID is there
-        if (structureId.isEmpty()) {
-            return false;
-        }
+        return StructureValidator.validateStructure(level, pos);
+        // // Make sure the ID is there
+        // if (structureId.isEmpty()) {
+        //     return false;
+        // }
 
-        // Make sure the structure is loaded
-        Optional<Structure> structureOpt = StructureManager.getStructure(structureId);
-        if (structureOpt.isEmpty()) {
-            return false;
-        }
+        // // Make sure the specified structure exists
+        // Optional<Structure> structureOpt = StructureManager.getStructure(structureId);
+        // if (structureOpt.isEmpty()) {
+        //     return false;
+        // }
 
-        // Check in-world controller and blocks
-        Structure structure = structureOpt.get();
-        return structure.verify(level, pos);
+        // // Check in-world controller and blocks
+        // Structure structure = structureOpt.get();
+        // return structure.verify(level, pos);
     }
 }
