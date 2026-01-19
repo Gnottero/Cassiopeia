@@ -27,13 +27,13 @@ public class StructureValidatorEvents {
      */
     public static void registerEvents() {
 
-        // Listen for block breaks
-        PlayerBlockBreakEvents.BEFORE.register((level, player, pos, state, blockEntity) -> {
-            if (!level.isClientSide()) {
-                StructureValidator.onBlockChange(level, pos, BlockChangeAction.BREAK);
-            }
-            return true;
-        });
+        // // Listen for block breaks
+        // PlayerBlockBreakEvents.BEFORE.register((level, player, pos, state, blockEntity) -> {
+        //     if (!level.isClientSide()) {
+        //         StructureValidator.onBlockChange(level, pos, BlockChangeAction.BREAK);
+        //     }
+        //     return true;
+        // });
 
         // Listen for chunk loads to register controllers
         ServerChunkEvents.CHUNK_LOAD.register((level, chunk) -> {
@@ -48,18 +48,18 @@ public class StructureValidatorEvents {
 
 
 
-    /**
-     * Must be called when a block is placed.
-     */
-    public static void onBlockPlaced(Level level, BlockPos pos) {
-        if (!level.isClientSide()) {
-            StructureValidator.onBlockChange(level, pos, BlockChangeAction.PLACE);
-        }
-    }
+    // /**
+    //  * Must be called when a block is placed.
+    //  */
+    // public static void onBlockPlaced(Level level, BlockPos pos) {
+    //     if (!level.isClientSide()) {
+    //         StructureValidator.onBlockChange(level, pos, BlockChangeAction.PLACE);
+    //     }
+    // }
 
     /**
      * Must be called when a controller's structure id is changed.
-     */
+     */ //TODO check if this is covered by the mixin
     public static void onControllerModified(Level level, BlockPos pos) {
         if (!level.isClientSide()) {
             StructureValidator.onBlockChange(level, pos, BlockChangeAction.MODIFY);
