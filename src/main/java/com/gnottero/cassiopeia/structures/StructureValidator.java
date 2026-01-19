@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3i;
 
+import net.fabricmc.fabric.api.resource.v1.reloader.ResourceReloaderKeys.Server;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceKey;
@@ -80,13 +81,14 @@ public class StructureValidator {
 
 
 
-
+static int n = 0; //TODO remove
     /**
      * Registers a controller. Registered controllers keep track of their blocks in the world.
      * <p>
      * This method also adds the controller to each block's controllers, adding new blocks to the lookup map if needed.
      * <p>
      * This must be called each time a controller is loaded or added to the world or modified.
+     * NOTICE: DO NOT CALL THIS WHILE THE CHUNK IS LOADING. That would cause Minecraft to hang. Use lazy registration instead.
      * <p>
      * Registering a controller that's already registered will replace the old data (and update the references).
      * @param level The level the controller is in.
@@ -94,6 +96,7 @@ public class StructureValidator {
      */
     //TODO call this function when events are fired
     public static void registerController(final @NotNull Level level, final @NotNull BlockPos pos) {
+        System.out.println("" + (++n) + " - registered controllers: " + controllers.size());
 
         // Find structure instance. Return if it can't be found
         final Structure structure = getStructureFromController(level, pos);

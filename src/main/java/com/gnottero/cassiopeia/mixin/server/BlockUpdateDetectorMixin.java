@@ -20,16 +20,16 @@ import com.gnottero.cassiopeia.structures.StructureValidator.BlockChangeAction;
  * A mixin that detects all block changes in a server and runs block removal / placement / change callbacks of the structure validator.
  */
 @Mixin(LevelChunk.class)
-public class BlockPlacementDetectorMixin {
+public class BlockUpdateDetectorMixin {
 
 
 
 
     @Inject(
-        method = "setBlockState(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;II)Lnet/minecraft/world/level/block/state/BlockState;",
+        method = "setBlockState(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Lnet/minecraft/world/level/block/state/BlockState;",
         at = @At(value = "RETURN")
     )
-    private void onBlockStateSet(BlockPos pos, BlockState newState, int flags, int recursionLeft, CallbackInfoReturnable<BlockState> cir) {
+    private void onBlockStateSet(BlockPos pos, BlockState newState, int flags, CallbackInfoReturnable<BlockState> cir) {
         final LevelChunk chunk = (LevelChunk)(Object)this;
         final Level level = chunk.getLevel();
 

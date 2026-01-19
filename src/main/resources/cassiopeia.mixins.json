@@ -3,7 +3,7 @@
 	"package": "com.gnottero.cassiopeia.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
-		"server.BlockPlacementDetectorMixin"
+		"server.BlockUpdateDetectorMixin"
 	],
 	"client": [
 		"client.LevelRendererMixin",

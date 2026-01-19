@@ -35,14 +35,14 @@ public class StructureValidatorEvents {
         //     return true;
         // });
 
-        // Listen for chunk loads to register controllers
-        ServerChunkEvents.CHUNK_LOAD.register((level, chunk) -> {
-            chunk.getBlockEntities().forEach((pos, blockEntity) -> {
-                if (blockEntity instanceof AbstractControllerBlockEntity) {
-                    StructureValidator.registerController(level, pos);
-                }
-            });
-        });
+        // // Listen for chunk loads to register controllers
+        // ServerChunkEvents.CHUNK_LOAD.register((level, chunk) -> {
+        //     chunk.getBlockEntities().forEach((pos, blockEntity) -> {
+        //         if (blockEntity instanceof AbstractControllerBlockEntity) {
+        //             StructureValidator.registerController(level, pos);
+        //         }
+        //     });
+        // });
     }
 
 
@@ -66,3 +66,5 @@ public class StructureValidatorEvents {
         }
     }
 }
+
+//TODO remove class completely if onControllerModified isn't needed

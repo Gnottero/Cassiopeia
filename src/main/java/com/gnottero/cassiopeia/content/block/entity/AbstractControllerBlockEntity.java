@@ -80,7 +80,7 @@ public abstract class AbstractControllerBlockEntity extends BlockEntity {
 
 
     public boolean verifyStructure(Level level, BlockPos pos) {
-
+        ensureRegistered(); //! Lazy controller registration
         return StructureValidator.validateStructure(level, pos);
         // // Make sure the ID is there
         // if (structureId.isEmpty()) {
@@ -96,5 +96,14 @@ public abstract class AbstractControllerBlockEntity extends BlockEntity {
         // // Check in-world controller and blocks
         // Structure structure = structureOpt.get();
         // return structure.verify(level, pos);
+    }
+
+    private boolean registered = false;
+
+    public void ensureRegistered() {
+        if(!registered && level != null && !level.isClientSide()) {
+            StructureValidator.registerController(level, getBlockPos());
+            registered = true;
+        }
     }
 }
