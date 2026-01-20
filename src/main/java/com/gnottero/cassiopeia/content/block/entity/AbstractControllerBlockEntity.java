@@ -106,4 +106,7 @@ public abstract class AbstractControllerBlockEntity extends BlockEntity {
             registered = true;
         }
     }
+    public void invalidateStructureCache() {
+        registered = false;
+    }
 }

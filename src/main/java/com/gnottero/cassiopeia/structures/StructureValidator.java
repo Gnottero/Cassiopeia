@@ -228,7 +228,7 @@ static int n = 0; //TODO remove
     public enum BlockChangeAction {
         PLACE,
         BREAK,
-        MODIFY
+        MODIFY,
     }
 
     //TODO comment, implement and call

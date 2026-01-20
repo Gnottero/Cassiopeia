@@ -48,6 +48,5 @@ public class Cassiopeia implements ModInitializer {
         ModScreenHandlers.registerScreenHandlers();
         ModRecipes.registerRecipes();
         MachineHandlerRegistry.init();
-        StructureValidatorEvents.registerEvents();
     }
 }
