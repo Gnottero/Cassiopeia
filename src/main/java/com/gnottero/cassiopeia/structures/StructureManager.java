@@ -1,6 +1,7 @@
 package com.gnottero.cassiopeia.structures;
 
 import com.gnottero.cassiopeia.content.block.ModBlocks;
+import com.gnottero.cassiopeia.utils.Utils;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.fabricmc.loader.api.FabricLoader;
@@ -95,42 +96,31 @@ public class StructureManager {
             throw new RuntimeException("Controller block must have a facing property");
         }
 
+        // For each block
         Direction controllerFacing = (Direction) facingVal;
-
-        // Coordinate system basis
-        BlockUtils.Basis basis = BlockUtils.getBasis(controllerFacing);
-        Vec3i front = basis.front();
-        Vec3i up    = basis.up();
-        Vec3i right = basis.right();
-
         Structure structure = new Structure();
         String controllerId = BuiltInRegistries.BLOCK.getKey(controllerState.getBlock()).toString();
         structure.setController(controllerId);
-
         for (int x = minX; x <= maxX; x++) {
             for (int y = minY; y <= maxY; y++) {
                 for (int z = minZ; z <= maxZ; z++) {
+
+                    // Skip controller
                     BlockPos pos = new BlockPos(x, y, z);
                     BlockState state = level.getBlockState(pos);
                     if(state.getBlock() == ModBlocks.BASIC_CONTROLLER && !pos.equals(controllerPos)) {
                         throw new InvalidStructureException("The structure contains more than one controller");
                     }
 
+                    // Skip air if required
                     if (state.isAir() && !keepAir) {
                         continue;
                     }
 
-                    // Calculate relative offset
-                    Vector3i delta = new Vector3i(x - controllerPos.getX(), y - controllerPos.getY(), z - controllerPos.getZ());
-                    Vector3i offset = new Vector3i(
-                        delta.x * front.getX() + delta.y * front.getY() + delta.z * front.getZ(),
-                        delta.x * up   .getX() + delta.y * up   .getY() + delta.z * up   .getZ(),
-                        delta.x * right.getX() + delta.y * right.getY() + delta.z * right.getZ()
-                    );
-
+                    // Calculate relative offset and add the block to the structure
+                    Vector3i offset = Utils.globalToLocal(pos, controllerPos, controllerFacing);
                     String blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
                     Map<String, String> properties = BlockUtils.processBlockProperties(state, controllerFacing);
-
                     structure.addBlock(new Structure.BlockEntry(blockId, offset, properties));
                 }
             }
@@ -139,14 +129,13 @@ public class StructureManager {
         // Save to file
         File file = new File(STRUCTURE_DIR, identifier + ".json");
         writeStructureToFile(structure, file);
-        CACHE.remove(identifier); // Validate cache
+        CACHE.put(identifier, structure); // Update cache
     }
 
 
 
 
-    @NotNull
-    public static Optional<Structure> getStructure(@NotNull String identifier) {
+    public static @NotNull Optional<Structure> getStructure(@NotNull String identifier) {
         if (CACHE.containsKey(identifier)) {
             return Optional.ofNullable(CACHE.get(identifier));
         }

@@ -78,11 +78,6 @@ public class Structure {
     public void addBlock(BlockEntry entry) {
         this.blocks.add(entry);
         this.initialized = false;
-
-        // Update corners
-        final Vector3i pos = entry.getOffset();
-        minCorner.min(pos);
-        maxCorner.max(pos);
     }
 
 
@@ -97,9 +92,11 @@ public class Structure {
             }
         }
 
-        // Initialize all the blocks
+        // Initialize all the blocks and calculate the corners
         for (BlockEntry entry : blocks) {
             entry.initialize();
+            minCorner.min(entry.getOffset());
+            maxCorner.max(entry.getOffset());
         }
 
         // Sort list of blocks to match the xyz order.
