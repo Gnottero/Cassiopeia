@@ -97,7 +97,7 @@ public abstract class AbstractControllerBlockEntity extends BlockEntity {
         // Structure structure = structureOpt.get();
         // return structure.verify(level, pos);
     }
-
+//TODO clean up the code
     private boolean registered = false;
 
     public void ensureRegistered() {

@@ -48,12 +48,12 @@ public class Utils {
         final int z = coords.z;
 
         return switch(facing) {
-            case NORTH -> new Vector3i(+x, +y, +z);  // No rotation (default)
-            case SOUTH -> new Vector3i(-x, +y, -z);  // 180° around Y
-            case EAST  -> new Vector3i(-z, +y, +x);  // 90° CW around Y
-            case WEST  -> new Vector3i(+z, +y, -x);  // 90° CCW around Y
-            case UP    -> new Vector3i(+x, -z, +y);  // 90° around X
-            case DOWN  -> new Vector3i(+x, +z, -y);  // -90° around X
+            case NORTH -> new Vector3i(+x, +y, -z);  // 0° - no rotation
+            case EAST  -> new Vector3i(+z, +y, -x);  // 90° CW around Y (from north to east)
+            case SOUTH -> new Vector3i(-x, +y, +z);  // 180° around Y
+            case WEST  -> new Vector3i(-z, +y, +x);  // 270° CW around Y (or 90° CCW)
+            case UP    -> new Vector3i(+x, -z, +y);  // 90° around X axis
+            case DOWN  -> new Vector3i(+x, +z, -y);  // -90° around X axis
         };
     }
 
@@ -66,12 +66,12 @@ public class Utils {
         final int z = coords.z;
 
         return switch(facing) {
-            case NORTH -> new Vector3i(+x, +y, +z);  // No rotation (default)
-            case SOUTH -> new Vector3i(-x, +y, -z);  // 180° around Y (same as forward)
-            case EAST  -> new Vector3i(+z, +y, -x);  // 90° CCW around Y (inverse of CW)
-            case WEST  -> new Vector3i(-z, +y, +x);  // 90° CW around Y (inverse of CCW)
-            case UP    -> new Vector3i(+x, +z, -y);  // -90° around X (inverse)
-            case DOWN  -> new Vector3i(+x, -y, +z);  // 90° around X (inverse)
+            case NORTH -> new Vector3i(+x, +y, -z);  // 0° - no rotation
+            case EAST  -> new Vector3i(-z, +y, +x);  // 90° CCW around Y (inverse of 90° CW)
+            case SOUTH -> new Vector3i(-x, +y, +z);  // 180° around Y (self-inverse)
+            case WEST  -> new Vector3i(+z, +y, -x);  // 90° CW around Y (inverse of 270° CW)
+            case UP    -> new Vector3i(+x, +z, -y);  // -90° around X axis (inverse)
+            case DOWN  -> new Vector3i(+x, -z, +y);  // 90° around X axis (inverse)
         };
     }
 }

@@ -10,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3i;
 
-import net.fabricmc.fabric.api.resource.v1.reloader.ResourceReloaderKeys.Server;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceKey;
@@ -22,7 +21,10 @@ import com.gnottero.cassiopeia.content.block.entity.AbstractControllerBlockEntit
 import com.gnottero.cassiopeia.utils.Utils;
 
 
-
+//FIXME RESET MAPS WHEN THE WORLD LOADS
+//FIXME RESET MAPS WHEN THE WORLD LOADS
+//FIXME RESET MAPS WHEN THE WORLD LOADS
+//FIXME RESET MAPS WHEN THE WORLD LOADS
 
 
 
@@ -200,6 +202,9 @@ static int n = 0; //TODO remove
      * @param pos //TODO
      * @return The Structure instance, or null if the ID doesn't correspond to any known structure.
      */
+    //TODO REMOVE METHOD
+    //TODO REMOVE METHOD
+    //TODO REMOVE METHOD
     private static @Nullable Structure getStructureFromController(final @NotNull Level level, final @NotNull BlockPos pos) {
 
         // Find structure id
