@@ -80,7 +80,7 @@ public abstract class AbstractControllerBlockEntity extends BlockEntity {
 
     public boolean verifyStructure() {
         //! ensureRegistered is called by validateStructure
-        return StructureValidator.validateStructure(level, getBlockPos());
+        return StructureValidator.validateStructure(level, getBlockPos(), this);
     }
 
     public void ensureRegistered() {
@@ -91,6 +91,9 @@ public abstract class AbstractControllerBlockEntity extends BlockEntity {
     }
 
     public void invalidateStructureCache() {
-        registered = false;
+        if(registered) {
+            StructureValidator.unregisterController(level, getBlockPos());
+            registered = false;
+        }
     }
 }

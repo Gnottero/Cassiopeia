@@ -24,7 +24,7 @@ public class ControllerUpdateDetectorMixin {
 
     @Inject(
         method = "loadWithComponents",
-        at = @At("RETURN")
+        at = @At("HEAD")
     )
     private void onLoadWithComponents(ValueInput valueInput, CallbackInfo ci) {
         BlockEntity blockEntity = (BlockEntity)(Object)this;

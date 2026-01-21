@@ -46,6 +46,7 @@ public class StructureManager {
 
 
 
+
     //FIXME fix keepAir. structures should contain this parameter and store air instead of skipping air blocks on saves.
     //FIXME This allows the new structure verification to work well. check this parameter when verifying air
 
@@ -138,8 +139,15 @@ public class StructureManager {
         // Save to file
         File file = new File(STRUCTURE_DIR, identifier + ".json");
         writeStructureToFile(structure, file);
-        CACHE.put(identifier, structure); // Update cache
+
+        // Update cache and refresh validation structures of all active controllers
+        StructureValidator.unregisterMatching(identifier);
+        CACHE.put(identifier, structure);
     }
+
+
+
+
 
 
 

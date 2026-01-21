@@ -121,7 +121,7 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
         }
 
         // Check if the structure is intact, proceed accordingly
-        List<StructureError> errors = StructureValidator.computeValidationErrors(level, pos);
+        List<StructureError> errors = StructureValidator.computeValidationErrors(level, pos, controllerBE);
         if (errors.isEmpty()) {
             handleValidationSuccess(player, controllerBE);
         } else {

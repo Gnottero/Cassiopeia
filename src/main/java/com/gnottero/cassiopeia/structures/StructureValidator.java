@@ -3,16 +3,21 @@ package com.gnottero.cassiopeia.structures;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3i;
 
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -441,4 +446,42 @@ public class StructureValidator {
         return state;
     }
 
+
+
+
+
+
+
+
+    /**
+     * Unregisters all controllers whose structure ID matches the specified identifier.
+     * <p>
+     * This allows them to re-read the data from the Structure instance when needed.
+     * <p>
+     * Notice:
+     *     This method should be called BEFORE a structure is changed.
+     *     Doing so after it's changed will break the validation data.
+     * @param identifier The identifier to check for.
+     */
+    public static void unregisterMatching(final @NotNull String identifier) {
+
+        // For each registered controller
+        //! Use a copy of the keys as invalidateStructureCache() calls unregisterController which removes controllers from the map
+        for(final var key : new ArrayList<>(controllers.keySet())) {
+
+            // Retrieve server, level and block entity
+            final Level level = Cassiopeia.getServer().getLevel(key.dimension);
+            if(level instanceof ServerLevel serverLevel) {
+                final BlockEntity be = serverLevel.getBlockEntity(key.pos);
+
+                // If the block entity is a controller and its ID matches the provided identifier
+                if(be instanceof AbstractControllerBlockEntity cbe && cbe.getStructureId().equals(identifier)) {
+
+                    // Invalidate the block entity's structure cache
+                    cbe.invalidateStructureCache();
+                    //! unregisterController is called by invalidateStructureCache()
+                }
+            }
+        }
+    }
 }
