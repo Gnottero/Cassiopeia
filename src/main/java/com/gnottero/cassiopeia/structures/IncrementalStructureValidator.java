@@ -107,6 +107,8 @@ public class IncrementalStructureValidator {
      * @param pos The position of the controller to register.
      */
     public static void registerController(final @NotNull Level level, final @NotNull BlockPos pos) {
+        if(level.isClientSide()) return;
+
 
         // Find structure instance. Return if it can't be found
         final BlockEntity be = level.getBlockEntity(pos);
@@ -189,6 +191,7 @@ public class IncrementalStructureValidator {
      * @param pos The position of the controller to unregister.
      */
     public static void unregisterController(final @NotNull Level level, final @NotNull BlockPos pos) {
+        if(level.isClientSide()) return;
         final BlockKey controllerKey = new BlockKey(level.dimension(), pos);
 
         // If the controller is registered
@@ -234,10 +237,12 @@ public class IncrementalStructureValidator {
         final @NotNull BlockState oldState, final @NotNull BlockState newState,
         final @NotNull BlockChangeAction action
     ) {
+        if(level.isClientSide()) return;
+
 
         // If the modified block is a controller, register/unregister/scan it based on the action
         //TODO this might need to check a controller tag or something, if we add more controller types in the future. "basic controller" suggests non basic types will be a thing
-        /**/ if(action == BlockChangeAction.PLACE && newState.is(ModBlocks.BASIC_CONTROLLER)) registerController  (level, pos);
+        if     (action == BlockChangeAction.PLACE && newState.is(ModBlocks.BASIC_CONTROLLER)) registerController  (level, pos);
         else if(action == BlockChangeAction.BREAK && oldState.is(ModBlocks.BASIC_CONTROLLER)) unregisterController(level, pos);
 
 
@@ -305,6 +310,7 @@ public class IncrementalStructureValidator {
      * @return True if the structure is valid, false otherwise
      */
     public static boolean validateStructure(final @NotNull Level level, final @NotNull BlockPos pos, final BlockEntity blockEntity) {
+        if(level.isClientSide()) return false;
 
         // Lazy controller registration
         if(!(blockEntity instanceof AbstractControllerBlockEntity cbe)) return false; //TODO this might need to be an exception/error log
@@ -349,6 +355,8 @@ public class IncrementalStructureValidator {
      */
     public static List<StructureError> computeValidationErrors(final @NotNull Level level, final @NotNull BlockPos pos, final BlockEntity blockEntity) {
         final List<StructureError> errors = new ArrayList<>();
+        if(level.isClientSide()) return errors;
+
 
         // Lazy controller registration
         if(!(blockEntity instanceof AbstractControllerBlockEntity cbe)) return errors; //TODO this might need to be an exception/error log
