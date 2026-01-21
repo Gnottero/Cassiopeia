@@ -7,13 +7,13 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3i;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 import com.gnottero.cassiopeia.Cassiopeia;
@@ -31,6 +31,11 @@ import com.gnottero.cassiopeia.utils.Utils;
 
 /**
  * A class used for event-driven structure validation.
+ * <p>
+ * This keeps track of all the blocks in a world that are part of a multiblock structure.
+ * <p>
+ * Every time any block is changed, it's tested against the structures it could be part of and the result is cached.
+ * This allows for structure validation in O(1) time.
  */
 public class StructureValidator {
     private StructureValidator() {}
@@ -83,7 +88,6 @@ public class StructureValidator {
 
 
 
-static int n = 0; //TODO remove
     /**
      * Registers a controller. Registered controllers keep track of their blocks in the world.
      * <p>
@@ -96,14 +100,17 @@ static int n = 0; //TODO remove
      * @param level The level the controller is in.
      * @param pos The position of the controller to register.
      */
-    //TODO call this function when events are fired
     public static void registerController(final @NotNull Level level, final @NotNull BlockPos pos) {
-        System.out.println("" + (++n) + " - registered controllers: " + controllers.size());
 
         // Find structure instance. Return if it can't be found
-        final Structure structure = getStructureFromController(level, pos);
+        final BlockEntity be = level.getBlockEntity(pos);
+        if(!(be instanceof AbstractControllerBlockEntity cbe)) return;
+        final Optional<Structure> structureOpt = StructureManager.getStructure(cbe.getStructureId());
+        if(structureOpt.isEmpty()) return;
+        final Structure structure = structureOpt.get();
         if(structure == null) return;
         structure.ensureInitialized();
+
 
         // Create or replace the list of associated blocks
         final BlockKey controllerKey = new BlockKey(level.dimension(), pos);
@@ -160,6 +167,10 @@ static int n = 0; //TODO remove
 
 
 
+
+
+
+
     /**
      * Unregisters a controller.
      * <p>
@@ -171,7 +182,6 @@ static int n = 0; //TODO remove
      * @param level The level the controller is in.
      * @param pos The position of the controller to unregister.
      */
-    //TODO call this function when events are fired
     public static void unregisterController(final @NotNull Level level, final @NotNull BlockPos pos) {
         final BlockKey controllerKey = new BlockKey(level.dimension(), pos);
 
@@ -196,53 +206,25 @@ static int n = 0; //TODO remove
 
 
 
+    public enum BlockChangeAction { PLACE, BREAK }
     /**
-     * Returns the Structure instance referened by the controller at the specified position.
-     * @param level //TODO
-     * @param pos //TODO
-     * @return The Structure instance, or null if the ID doesn't correspond to any known structure.
+     * Callback method for block changes. It keeps track of matching blocks in active structures.
+     * <p>
+     * This should be called each time a block is changed anywhere in the server for any reason.
+     * @param level The level the changed block is in.
+     * @param pos The position of the changed block.
+     * @param action The action. This should be PLACE when a non-air block replaces air, BREAK when air replaces non-air.
+     *     Replacing a non-air block with another non-air block should be treated as a BREAK and then a PLACE.
+     *     In this case, this method should be called twice in order to correctly track changes.
      */
-    //TODO REMOVE METHOD
-    //TODO REMOVE METHOD
-    //TODO REMOVE METHOD
-    private static @Nullable Structure getStructureFromController(final @NotNull Level level, final @NotNull BlockPos pos) {
-
-        // Find structure id
-        if(level.getBlockEntity(pos) instanceof final AbstractControllerBlockEntity be) {
-
-            // Find Structure instance (loaded and handled by the structure manager)
-            final Optional<Structure> structureOpt = StructureManager.getStructure(be.getStructureId());
-            if(structureOpt.isPresent()) {
-
-                // Return structure value
-                return structureOpt.get();
-            }
-            return null;
-        }
-        else throw new RuntimeException("getStructureFromController called on a non-controller block");
-    }
-
-
-
-
-    public enum BlockChangeAction {
-        PLACE,
-        BREAK,
-        MODIFY,
-    }
-
-    //TODO comment, implement and call
-    //TODO specify that this event must be called for any block, including controllers. cntrollers are recognized by the method and handles accordingly
     public static void onBlockChange(final @NotNull Level level, final @NotNull BlockPos pos, final @NotNull BlockChangeAction action) {
 
         // If the modified block is a controller, register/unregister/scan it based on the action
         if(level.getBlockEntity(pos) instanceof AbstractControllerBlockEntity) {
-            switch(action) {
-                case PLACE:  { registerController  (level, pos); break; }
-                case BREAK:  { unregisterController(level, pos); break; }
-                case MODIFY: { registerController  (level, pos); break; }
-            }
+            if(action == BlockChangeAction.PLACE) registerController  (level, pos);
+            else                                  unregisterController(level, pos);
         }
+
 
         // If the modified block is not a controller
         else {
@@ -259,8 +241,7 @@ static int n = 0; //TODO remove
                     final var controllerData = controllers.get(controllerKey);
                     if(controllerData != null) {
 
-                        // Find structure instance
-                        // Update block validation flag and valid blocks count
+                        // Find structure instance, then update the block validation flag and valid blocks count
                         final Vector3i offset = Utils.globalToLocal(pos, controllerKey.pos, controllerData.direction);
                         final int index = controllerData.structure.blockOffsetToIndex(offset);
                         final var blockData = controllerData.cachedBlocks;
@@ -278,6 +259,16 @@ static int n = 0; //TODO remove
 
 
 
+    /**
+     * Checks if a structure is valid.
+     * <p>
+     * This uses cached data for O(1) validation time.
+     * <p>
+     * The cache is updated when relevant events are detected.
+     * @param level The level the controller is in.
+     * @param pos The position of the controller.
+     * @return //TODO
+     */
     public static boolean validateStructure(final @NotNull Level level, final @NotNull BlockPos pos) {
 
         // Get controller data

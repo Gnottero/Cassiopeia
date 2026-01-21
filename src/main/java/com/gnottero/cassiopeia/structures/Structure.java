@@ -4,7 +4,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
-import net.minecraft.server.commands.data.DataCommands;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -66,7 +65,6 @@ public class Structure {
         this.initialized = false;
     }
 
-    @SuppressWarnings("null")
     public String getController() {
         return controller;
     }
@@ -119,7 +117,6 @@ public class Structure {
      * @return true if the structure matches, false otherwise.
      */
     public boolean verify(Level level, BlockPos controllerPos) {
-        // return validate(level, controllerPos, true).isEmpty();
         return StructureValidator.validateStructure(level, controllerPos);
     }
 
@@ -301,34 +298,6 @@ public class Structure {
             }
         }
         return mismatched;
-    }
-
-
-
-
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    private BlockState buildDesiredBlockState(BlockEntry entry, Direction controllerFacing) {
-        if (entry.cachedBlock == null) {
-            return null;
-        }
-
-        BlockState state = entry.cachedBlock.defaultBlockState();
-        if (entry.cachedProperties == null) {
-            return state;
-        }
-
-        for (Map.Entry<Property<?>, Comparable<?>> propEntry : entry.cachedProperties.entrySet()) {
-            Property property = propEntry.getKey();
-            Comparable value = propEntry.getValue();
-
-            if (property.getName().equals("facing") || property.getName().equals("horizontal_facing")) {
-                if (value instanceof Direction dir) {
-                    value = BlockUtils.denormalizeFacing(dir, controllerFacing);
-                }
-            }
-            state = state.setValue(property, value);
-        }
-        return state;
     }
 
 
