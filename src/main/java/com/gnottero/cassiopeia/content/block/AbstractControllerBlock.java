@@ -5,7 +5,7 @@ import com.gnottero.cassiopeia.network.StructureHighlightPayload;
 import com.gnottero.cassiopeia.structures.Structure;
 import com.gnottero.cassiopeia.structures.Structure.StructureError;
 import com.gnottero.cassiopeia.structures.StructureManager;
-import com.gnottero.cassiopeia.structures.StructureValidator;
+import com.gnottero.cassiopeia.structures.IncrementalStructureValidator;
 import com.mojang.serialization.MapCodec;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -121,7 +121,7 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
         }
 
         // Check if the structure is intact, proceed accordingly
-        List<StructureError> errors = StructureValidator.computeValidationErrors(level, pos, controllerBE);
+        List<StructureError> errors = IncrementalStructureValidator.computeValidationErrors(level, pos, controllerBE);
         if (errors.isEmpty()) {
             handleValidationSuccess(player, controllerBE);
         } else {

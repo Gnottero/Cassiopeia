@@ -5,7 +5,7 @@ import java.util.Optional;
 import com.gnottero.cassiopeia.structures.InvalidStructureException;
 import com.gnottero.cassiopeia.structures.Structure;
 import com.gnottero.cassiopeia.structures.StructureManager;
-import com.gnottero.cassiopeia.structures.StructureValidator;
+import com.gnottero.cassiopeia.structures.IncrementalStructureValidator;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -121,7 +121,7 @@ public class CassiopeiaCommands {
 
 
         // If the structure is valid, send the player the success message
-        boolean matches = StructureValidator.validateStructure(ctx.getSource().getLevel(), controller);
+        boolean matches = IncrementalStructureValidator.validateStructure(ctx.getSource().getLevel(), controller);
         if (matches) {
             ctx.getSource().sendSuccess(
                 () -> Component.translatable("command.cassiopeia.structure.verified")

@@ -1,6 +1,6 @@
 package com.gnottero.cassiopeia.content.block.entity;
 
-import com.gnottero.cassiopeia.structures.StructureValidator;
+import com.gnottero.cassiopeia.structures.IncrementalStructureValidator;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -8,7 +8,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -80,19 +79,19 @@ public abstract class AbstractControllerBlockEntity extends BlockEntity {
 
     public boolean verifyStructure() {
         //! ensureRegistered is called by validateStructure
-        return StructureValidator.validateStructure(level, getBlockPos(), this);
+        return IncrementalStructureValidator.validateStructure(level, getBlockPos(), this);
     }
 
     public void ensureRegistered() {
         if(!registered && level != null && !level.isClientSide()) {
-            StructureValidator.registerController(level, getBlockPos());
+            IncrementalStructureValidator.registerController(level, getBlockPos());
             registered = true;
         }
     }
 
     public void invalidateStructureCache() {
         if(registered) {
-            StructureValidator.unregisterController(level, getBlockPos());
+            IncrementalStructureValidator.unregisterController(level, getBlockPos());
             registered = false;
         }
     }

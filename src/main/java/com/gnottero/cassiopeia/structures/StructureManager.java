@@ -141,7 +141,7 @@ public class StructureManager {
         writeStructureToFile(structure, file);
 
         // Update cache and refresh validation structures of all active controllers
-        StructureValidator.unregisterMatching(identifier);
+        IncrementalStructureValidator.unregisterMatching(identifier);
         CACHE.put(identifier, structure);
     }
 

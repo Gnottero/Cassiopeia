@@ -10,8 +10,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
-import com.gnottero.cassiopeia.structures.StructureValidator;
-import com.gnottero.cassiopeia.structures.StructureValidator.BlockChangeAction;
+import com.gnottero.cassiopeia.structures.IncrementalStructureValidator;
+import com.gnottero.cassiopeia.structures.IncrementalStructureValidator.BlockChangeAction;
 
 
 
@@ -36,17 +36,17 @@ public class BlockUpdateDetectorMixin {
         if(!level.isClientSide()) {
             if(oldState.isAir()) {
                 if(!newState.isAir()) {
-                    StructureValidator.onBlockChange(level, pos, oldState, newState, BlockChangeAction.PLACE);
+                    IncrementalStructureValidator.onBlockChange(level, pos, oldState, newState, BlockChangeAction.PLACE);
                 }
                 //! else return
             }
             else if(newState.isAir()) {
-                StructureValidator.onBlockChange(level, pos, oldState, newState, BlockChangeAction.BREAK);
+                IncrementalStructureValidator.onBlockChange(level, pos, oldState, newState, BlockChangeAction.BREAK);
             }
             else {
                 final BlockState airState = Blocks.AIR.defaultBlockState();
-                StructureValidator.onBlockChange(level, pos, oldState, airState, BlockChangeAction.BREAK);
-                StructureValidator.onBlockChange(level, pos, airState, newState, BlockChangeAction.PLACE);
+                IncrementalStructureValidator.onBlockChange(level, pos, oldState, airState, BlockChangeAction.BREAK);
+                IncrementalStructureValidator.onBlockChange(level, pos, airState, newState, BlockChangeAction.PLACE);
             }
         }
     }
