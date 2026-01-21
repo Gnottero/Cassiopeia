@@ -19,6 +19,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 
 import com.gnottero.cassiopeia.Cassiopeia;
+import com.gnottero.cassiopeia.content.block.ModBlocks;
 import com.gnottero.cassiopeia.content.block.entity.AbstractControllerBlockEntity;
 import com.gnottero.cassiopeia.structures.Structure.BlockEntry;
 import com.gnottero.cassiopeia.structures.Structure.StructureError;
@@ -284,9 +285,29 @@ public class StructureValidator {
      * The cache is updated when relevant events are detected.
      * @param level The level the controller is in.
      * @param pos The position of the controller.
-     * @return //TODO
+     * @param blockEntity The block entity instance. This is found automatically if omitted.
+     * @return True if the structure is valid, false otherwise
      */
     public static boolean validateStructure(final @NotNull Level level, final @NotNull BlockPos pos) {
+        return validateStructure(level, pos, level.getBlockEntity(pos));
+    }
+
+
+    /**
+     * Checks if a structure is valid.
+     * <p>
+     * This uses cached data for O(1) validation time.
+     * <p>
+     * The cache is updated when relevant events are detected.
+     * @param level The level the controller is in.
+     * @param pos The position of the controller.
+     * @return True if the structure is valid, false otherwise
+     */
+    public static boolean validateStructure(final @NotNull Level level, final @NotNull BlockPos pos, final BlockEntity blockEntity) {
+
+        // Lazy controller registration
+        if(!(blockEntity instanceof AbstractControllerBlockEntity cbe)) return false; //TODO this might need to be an exception/error log
+        cbe.ensureRegistered();
 
         // Get controller data
         final BlockKey controllerKey = new BlockKey(level.dimension(), pos);
@@ -312,13 +333,34 @@ public class StructureValidator {
      * @return A List of {@link StructureError} objects, one for each incorrect block.
      */
     public static List<StructureError> computeValidationErrors(final @NotNull Level level, final @NotNull BlockPos pos) {
+        return computeValidationErrors(level, pos, level.getBlockEntity(pos));
+    }
+
+
+    /**
+     * Identifies missing blocks in the structure relative to the controller's position.
+     * <p>
+     * Calling this on a single-block structure will always return an empty list.
+     * @param level The level the controller is in.
+     * @param pos The position of the controller.
+     * @param blockEntity The block entity instance. This is found automatically if omitted.
+     * @return A List of {@link StructureError} objects, one for each incorrect block.
+     */
+    public static List<StructureError> computeValidationErrors(final @NotNull Level level, final @NotNull BlockPos pos, final BlockEntity blockEntity) {
         final List<StructureError> errors = new ArrayList<>();
+
+        // Lazy controller registration
+        if(!(blockEntity instanceof AbstractControllerBlockEntity cbe)) return errors; //TODO this might need to be an exception/error log
+        cbe.ensureRegistered();
+
 
         // Get controller data
         final BlockKey controllerKey = new BlockKey(level.dimension(), pos);
         final ControllerData controllerData = controllers.get(controllerKey);
         final Direction direction = controllerData.direction;
 
+
+        // For each block in the block entry list
         for(final BlockEntry entry : controllerData.structure.getBlocks()) {
             final BlockPos worldPos = Utils.localToGlobal(entry.getOffset(), pos, direction);
             final BlockState currentState = level.getBlockState(worldPos);

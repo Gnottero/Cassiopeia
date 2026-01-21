@@ -127,7 +127,7 @@ public class AlloyKilnMachineHandler implements MachineHandler {
 
     @Override
     public void serverTick(Level level, BlockPos pos, BlockState state, BasicControllerBlockEntity be) {
-        if (!be.verifyStructure(level, pos)) {
+        if (!be.verifyStructure()) {
             return;
         }
 

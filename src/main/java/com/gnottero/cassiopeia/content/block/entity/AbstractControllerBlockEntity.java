@@ -78,9 +78,9 @@ public abstract class AbstractControllerBlockEntity extends BlockEntity {
 
 
 
-    public boolean verifyStructure(Level level, BlockPos pos) {
-        ensureRegistered(); //! Lazy controller registration
-        return StructureValidator.validateStructure(level, pos);
+    public boolean verifyStructure() {
+        //! ensureRegistered is called by validateStructure
+        return StructureValidator.validateStructure(level, getBlockPos());
     }
 
     public void ensureRegistered() {
