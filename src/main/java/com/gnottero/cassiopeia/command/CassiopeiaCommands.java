@@ -28,9 +28,9 @@ public class CassiopeiaCommands {
 
 
     @SuppressWarnings("java:S1172") // Unused parameters
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher,
-        CommandBuildContext registryAccess,
-        Commands.CommandSelection selection
+    public static void register(final CommandDispatcher<CommandSourceStack> dispatcher,
+        final CommandBuildContext registryAccess,
+        final Commands.CommandSelection selection
     ) {
         dispatcher.register(Commands.literal("cassiopeia")
             .then(Commands.literal("save")
@@ -60,7 +60,7 @@ public class CassiopeiaCommands {
 
 
     private static final com.mojang.brigadier.suggestion.SuggestionProvider<CommandSourceStack> SUGGEST_STRUCTURES = (ctx, builder) -> {
-        for(String s : StructureManager.getAvailableStructures()) {
+        for(final String s : StructureManager.getAvailableStructures()) {
             builder.suggest(s);
         }
         return builder.buildFuture();
@@ -75,10 +75,10 @@ public class CassiopeiaCommands {
      * @param keepAir Whether to keep air blocks in the structure or ignore them.
      * @return 1 if the command succeeded, 0 otherwise.
      */
-    private static int executeSave(CommandContext<CommandSourceStack> ctx, boolean keepAir) throws CommandSyntaxException {
-        BlockPos from = BlockPosArgument.getLoadedBlockPos(ctx, "from");
-        BlockPos to = BlockPosArgument.getLoadedBlockPos(ctx, "to");
-        String identifier = StringArgumentType.getString(ctx, "identifier");
+    private static int executeSave(final CommandContext<CommandSourceStack> ctx, final boolean keepAir) throws CommandSyntaxException {
+        final BlockPos from = BlockPosArgument.getLoadedBlockPos(ctx, "from");
+        final BlockPos to = BlockPosArgument.getLoadedBlockPos(ctx, "to");
+        final String identifier = StringArgumentType.getString(ctx, "identifier");
 
         try {
             StructureManager.saveStructure(ctx.getSource().getLevel(), from, to, identifier, keepAir);
@@ -88,11 +88,11 @@ public class CassiopeiaCommands {
             false);
             return 1;
         }
-        catch(InvalidStructureException e) {
+        catch(final InvalidStructureException e) {
             ctx.getSource().sendFailure(Component.translatable("command.cassiopeia.structure.save.failed", e.getMessage()));
             return 0;
         }
-        catch(Exception e) {
+        catch(final Exception e) {
             ctx.getSource().sendFailure(Component.translatable("command.cassiopeia.structure.save.failed", e.getMessage()));
             e.printStackTrace();
             return 0;
@@ -107,13 +107,13 @@ public class CassiopeiaCommands {
      * @param ctx The command context.
      * @return 1 if the command succeeded, 0 otherwise.
      */
-    private static int executeVerify(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
-        BlockPos controller = BlockPosArgument.getLoadedBlockPos(ctx, "controller");
-        String identifier = StringArgumentType.getString(ctx, "identifier");
+    private static int executeVerify(final CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        final BlockPos controller = BlockPosArgument.getLoadedBlockPos(ctx, "controller");
+        final String identifier = StringArgumentType.getString(ctx, "identifier");
 
 
         // Check if the structure exists
-        Optional<Structure> structureOpt = StructureManager.getStructure(identifier);
+        final Optional<Structure> structureOpt = StructureManager.getStructure(identifier);
         if(structureOpt.isPresent()) {
             ctx.getSource().sendFailure(Component.translatable("command.cassiopeia.structure.not_found", identifier));
             return 0;
@@ -121,7 +121,7 @@ public class CassiopeiaCommands {
 
 
         // If the structure is valid, send the player the success message
-        boolean matches = IncrementalStructureValidator.validateStructure(ctx.getSource().getLevel(), controller);
+        final boolean matches = IncrementalStructureValidator.validateStructure(ctx.getSource().getLevel(), controller);
         if(matches) {
             ctx.getSource().sendSuccess(
                 () -> Component.translatable("command.cassiopeia.structure.verified")

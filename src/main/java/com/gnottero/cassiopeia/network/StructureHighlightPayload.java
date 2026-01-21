@@ -30,28 +30,28 @@ public record StructureHighlightPayload(List<Structure.StructureError> errors) i
     public static final StreamCodec<RegistryFriendlyByteBuf, StructureHighlightPayload> STREAM_CODEC = StreamCodec.of(
         (buf, payload) -> {
             buf.writeInt(payload.errors.size());
-            for(Structure.StructureError error : payload.errors) {
+            for(final Structure.StructureError error : payload.errors) {
                 buf.writeBlockPos(error.pos);
                 buf.writeEnum(error.type);
 
                 // Serialize BlockState as string
-                String stateStr = error.expectedBlockState != null ? BlockStateParser.serialize(error.expectedBlockState) : "";
+                final String stateStr = error.expectedBlockState != null ? BlockStateParser.serialize(error.expectedBlockState) : "";
                 buf.writeUtf(stateStr);
             }
         },
         buf -> {
-            int size = buf.readInt();
-            List<Structure.StructureError> errors = new ArrayList<>(size);
-            HolderLookup<net.minecraft.world.level.block.Block> blockLookup = BuiltInRegistries.BLOCK;
+            final int size = buf.readInt();
+            final List<Structure.StructureError> errors = new ArrayList<>(size);
+            final HolderLookup<net.minecraft.world.level.block.Block> blockLookup = BuiltInRegistries.BLOCK;
             for(int i = 0; i < size; i++) {
-                BlockPos pos = buf.readBlockPos();
-                Structure.StructureError.ErrorType type = buf.readEnum(Structure.StructureError.ErrorType.class);
-                String stateStr = buf.readUtf();
+                final BlockPos pos = buf.readBlockPos();
+                final Structure.StructureError.ErrorType type = buf.readEnum(Structure.StructureError.ErrorType.class);
+                final String stateStr = buf.readUtf();
                 BlockState state = null;
                 if(!stateStr.isEmpty()) {
                     try {
                         state = BlockStateParser.parseForBlock(blockLookup, stateStr, false).blockState();
-                    } catch(Exception e) {
+                    } catch(final Exception e) {
                         // Fallback: ignore parse errors
                     }
                 }

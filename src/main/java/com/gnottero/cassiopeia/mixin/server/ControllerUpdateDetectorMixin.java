@@ -26,11 +26,11 @@ public class ControllerUpdateDetectorMixin {
         method = "loadWithComponents",
         at = @At("HEAD")
     )
-    private void onLoadWithComponents(ValueInput valueInput, CallbackInfo ci) {
-        BlockEntity blockEntity = (BlockEntity)(Object)this;
-        Level level = blockEntity.getLevel();
+    private void onLoadWithComponents(final ValueInput valueInput, final CallbackInfo ci) {
+        final BlockEntity blockEntity = (BlockEntity)(Object)this;
+        final Level level = blockEntity.getLevel();
 
-        if(level instanceof ServerLevel && blockEntity instanceof AbstractControllerBlockEntity c) {
+        if(level instanceof ServerLevel && blockEntity instanceof final AbstractControllerBlockEntity c) {
             c.invalidateStructureCache();
         }
     }

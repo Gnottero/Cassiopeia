@@ -19,7 +19,7 @@ public class MachineHandlerRegistry {
      * Register a machine handler.
      * @param handler The handler to register.
      */
-    public static void register(MachineHandler handler) {
+    public static void register(final MachineHandler handler) {
         HANDLERS.put(handler.getStructureId(), handler);
     }
 
@@ -28,7 +28,7 @@ public class MachineHandlerRegistry {
      * @param structureId The ID of the structure.
      * @return The handler, or an empty Optional if a handler with the provided ID doesn't exist.
      */
-    public static Optional<MachineHandler> getHandler(String structureId) {
+    public static Optional<MachineHandler> getHandler(final String structureId) {
         return Optional.ofNullable(HANDLERS.get(structureId));
     }
 
@@ -37,7 +37,7 @@ public class MachineHandlerRegistry {
      * @param structureId The ID of the structure.
      * @return True if the handler exists, false otherwise.
      */
-    public static boolean hasHandler(String structureId) {
+    public static boolean hasHandler(final String structureId) {
         return HANDLERS.containsKey(structureId);
     }
 

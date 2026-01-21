@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class LevelRendererMixin {
 
     @Inject(method = "collectPerFrameGizmos", at = @At("TAIL"))
-    private void cassiopeia$addStructureHighlightGizmos(CallbackInfoReturnable<GizmoCollector> cir) {
+    private void cassiopeia$addStructureHighlightGizmos(final CallbackInfoReturnable<GizmoCollector> cir) {
         // Emit gizmo outlines for block highlighting
         StructureHighlightRenderer.emitGizmos();
     }

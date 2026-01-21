@@ -13,7 +13,7 @@ public enum CrushingBookCategory implements StringRepresentable {
     public static final StringRepresentable.EnumCodec<CrushingBookCategory> CODEC = StringRepresentable.fromEnum(CrushingBookCategory::values);
     private final String name;
 
-    private CrushingBookCategory(String name) {
+    private CrushingBookCategory(final String name) {
         this.name = name;
     }
 

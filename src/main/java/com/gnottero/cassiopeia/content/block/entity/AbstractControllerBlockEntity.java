@@ -30,12 +30,12 @@ public abstract class AbstractControllerBlockEntity extends BlockEntity {
 
 
 
-    protected AbstractControllerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
+    protected AbstractControllerBlockEntity(final BlockEntityType<?> type, final BlockPos pos, final BlockState state) {
         super(type, pos, state);
     }
 
 
-    public void setStructureId(String id) {
+    public void setStructureId(final String id) {
         this.structureId = id;
         this.setChanged();
     }
@@ -47,7 +47,7 @@ public abstract class AbstractControllerBlockEntity extends BlockEntity {
 
 
     @Override
-    protected void saveAdditional(@NotNull ValueOutput output) {
+    protected void saveAdditional(@NotNull final ValueOutput output) {
         super.saveAdditional(output);
         if(!structureId.isEmpty()) {
             output.putString(STRUCTURE_ID_KEY, structureId);
@@ -56,7 +56,7 @@ public abstract class AbstractControllerBlockEntity extends BlockEntity {
 
 
     @Override
-    protected void loadAdditional(@NotNull ValueInput input) {
+    protected void loadAdditional(@NotNull final ValueInput input) {
         super.loadAdditional(input);
         this.structureId = input.getStringOr(STRUCTURE_ID_KEY, Strings.EMPTY);
     }
@@ -70,7 +70,7 @@ public abstract class AbstractControllerBlockEntity extends BlockEntity {
 
 
     @Override
-    public @NotNull CompoundTag getUpdateTag(HolderLookup.@NotNull Provider registries) {
+    public @NotNull CompoundTag getUpdateTag(final HolderLookup.@NotNull Provider registries) {
         return this.saveWithoutMetadata(registries);
     }
 

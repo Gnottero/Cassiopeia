@@ -12,7 +12,7 @@ import net.minecraft.world.item.crafting.RecipeInput;
 public record AlloyingRecipeInput(ItemStack inputA, ItemStack inputB) implements RecipeInput {
 
     @Override
-    public ItemStack getItem(int index) {
+    public ItemStack getItem(final int index) {
         return switch(index) {
             case 0 -> inputA;
             case 1 -> inputB;

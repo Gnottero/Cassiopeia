@@ -25,13 +25,13 @@ public abstract class AbstractCrushingRecipe implements Recipe<SingleRecipeInput
 
 
     protected AbstractCrushingRecipe(
-        RecipeType<? extends AbstractCrushingRecipe> type,
-        String group,
-        CrushingBookCategory category,
-        Ingredient input,
-        ItemStack output,
-        float experience,
-        int crushingTime
+        final RecipeType<? extends AbstractCrushingRecipe> type,
+        final String group,
+        final CrushingBookCategory category,
+        final Ingredient input,
+        final ItemStack output,
+        final float experience,
+        final int crushingTime
     ) {
         this.type = type;
         this.category = category;
@@ -46,18 +46,18 @@ public abstract class AbstractCrushingRecipe implements Recipe<SingleRecipeInput
 
 
     @Override
-    public boolean matches(SingleRecipeInput input, Level level) {
+    public boolean matches(final SingleRecipeInput input, final Level level) {
         return this.input.test(input.item());
     }
 
     @Override
-    public @NotNull ItemStack assemble(SingleRecipeInput input,
-            HolderLookup.Provider provider) {
+    public @NotNull ItemStack assemble(final SingleRecipeInput input,
+            final HolderLookup.Provider provider) {
         return this.output.copy();
     }
 
     @SuppressWarnings("java:S1172") // Unused parameters
-    public boolean canCraftInDimensions(int width, int height) {
+    public boolean canCraftInDimensions(final int width, final int height) {
         return true;
     }
 
@@ -87,13 +87,13 @@ public abstract class AbstractCrushingRecipe implements Recipe<SingleRecipeInput
     }
 
     public NonNullList<Ingredient> getIngredients() {
-        NonNullList<Ingredient> nonNullList = NonNullList.create();
+        final NonNullList<Ingredient> nonNullList = NonNullList.create();
         nonNullList.add(this.input);
         return nonNullList;
     }
 
     @SuppressWarnings("java:S1172") // Unused parameters
-    public ItemStack getResultItem(HolderLookup.Provider provider) {
+    public ItemStack getResultItem(final HolderLookup.Provider provider) {
         return this.output;
     }
 

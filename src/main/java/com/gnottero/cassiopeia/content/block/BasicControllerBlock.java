@@ -22,7 +22,7 @@ public class BasicControllerBlock extends AbstractControllerBlock {
     public static final MapCodec<BasicControllerBlock> CODEC = simpleCodec(BasicControllerBlock::new);
 
 
-    public BasicControllerBlock(Properties properties) {
+    public BasicControllerBlock(final Properties properties) {
         super(properties);
     }
 
@@ -34,19 +34,19 @@ public class BasicControllerBlock extends AbstractControllerBlock {
 
 
     @Override
-    public @Nullable BlockEntity newBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state) {
+    public @Nullable BlockEntity newBlockEntity(@NotNull final BlockPos pos, @NotNull final BlockState state) {
         return new BasicControllerBlockEntity(pos, state);
     }
 
 
     @Override
     @SuppressWarnings("java:S2638")
-    public @Nullable <T extends BlockEntity> BlockEntityTicker<T> getTicker(@NotNull Level level, @NotNull BlockState state, @NotNull BlockEntityType<T> type) {
+    public @Nullable <T extends BlockEntity> BlockEntityTicker<T> getTicker(@NotNull final Level level, @NotNull final BlockState state, @NotNull final BlockEntityType<T> type) {
         if(level.isClientSide()) {
             return null;
         }
         return (lvl, pos, st, be) -> {
-            if(be instanceof BasicControllerBlockEntity controllerBE) {
+            if(be instanceof final BasicControllerBlockEntity controllerBE) {
                 BasicControllerBlockEntity.serverTick(lvl, pos, st, controllerBE);
             }
         };
@@ -54,11 +54,11 @@ public class BasicControllerBlock extends AbstractControllerBlock {
 
 
     @Override
-    protected void openGui(Player player, AbstractControllerBlockEntity be) {
-        String structureId = be.getStructureId();
+    protected void openGui(final Player player, final AbstractControllerBlockEntity be) {
+        final String structureId = be.getStructureId();
 
         // Check if this is a machine with a registered handler
-        if(structureId != null && be instanceof BasicControllerBlockEntity machineBE) {
+        if(structureId != null && be instanceof final BasicControllerBlockEntity machineBE) {
             if(MachineHandlerRegistry.hasHandler(structureId)) {
                 player.openMenu(machineBE);
             }

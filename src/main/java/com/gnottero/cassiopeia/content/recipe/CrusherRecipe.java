@@ -11,12 +11,12 @@ import net.minecraft.world.item.crafting.RecipeBookCategory;
 
 public class CrusherRecipe extends AbstractCrushingRecipe {
     public CrusherRecipe(
-        String group,
-        CrushingBookCategory category,
-        Ingredient input,
-        ItemStack output,
-        float experience,
-        int crushingTime
+        final String group,
+        final CrushingBookCategory category,
+        final Ingredient input,
+        final ItemStack output,
+        final float experience,
+        final int crushingTime
     ) {
         super(ModRecipes.CRUSHER_TYPE, group, category, input, output, experience, crushingTime);
     }

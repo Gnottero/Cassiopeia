@@ -31,7 +31,7 @@ public class AlloyKilnScreen extends AbstractContainerScreen<AlloyKilnMenu> {
 
 
 
-    public AlloyKilnScreen(AlloyKilnMenu menu, Inventory playerInventory, Component title) {
+    public AlloyKilnScreen(final AlloyKilnMenu menu, final Inventory playerInventory, final Component title) {
         super(menu, playerInventory, title);
     }
 
@@ -44,16 +44,16 @@ public class AlloyKilnScreen extends AbstractContainerScreen<AlloyKilnMenu> {
 
 
     @Override
-    protected void renderLabels(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY) {
+    protected void renderLabels(@NotNull final GuiGraphics guiGraphics, final int mouseX, final int mouseY) {
         guiGraphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, this.titleLabelColor, false);
         guiGraphics.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, this.inventoryLabelColor, false);
     }
 
 
     @Override
-    protected void renderBg(@NotNull GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
-        int x = this.leftPos;
-        int y = this.topPos;
+    protected void renderBg(@NotNull final GuiGraphics guiGraphics, final float partialTick, final int mouseX, final int mouseY) {
+        final int x = this.leftPos;
+        final int y = this.topPos;
 
         // Draw main background
         guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE,
@@ -65,11 +65,11 @@ public class AlloyKilnScreen extends AbstractContainerScreen<AlloyKilnMenu> {
 
         // Draw burn indicator (flame) - sprite is 14x14
         if(this.menu.isBurning()) {
-            float burnProgress = this.menu.getBurnProgress();
-            int burnHeight = (int) Math.ceil(14 * burnProgress);
+            final float burnProgress = this.menu.getBurnProgress();
+            final int burnHeight = (int) Math.ceil(14 * burnProgress);
             if(burnHeight > 0) {
-                int flameX = x + 38;
-                int flameY = y + 36 + 14 - burnHeight;
+                final int flameX = x + 38;
+                final int flameY = y + 36 + 14 - burnHeight;
 
                 guiGraphics.blit(RenderPipelines.GUI_TEXTURED, LIT_PROGRESS_SPRITE,
                     flameX, flameY,       // dest x, y
@@ -81,8 +81,8 @@ public class AlloyKilnScreen extends AbstractContainerScreen<AlloyKilnMenu> {
         }
 
         // Draw progress arrow - 24x17
-        float alloyProgress = this.menu.getAlloyProgress();
-        int progressWidth = (int) Math.ceil(24 * alloyProgress);
+        final float alloyProgress = this.menu.getAlloyProgress();
+        final int progressWidth = (int) Math.ceil(24 * alloyProgress);
         if(progressWidth > 0) {
             guiGraphics.blit(RenderPipelines.GUI_TEXTURED, ALLOY_PROGRESS_SPRITE,
                 x + 79, y + 34,     // dest x, y
@@ -95,18 +95,18 @@ public class AlloyKilnScreen extends AbstractContainerScreen<AlloyKilnMenu> {
 
 
     @Override
-    public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    public void render(@NotNull final GuiGraphics guiGraphics, final int mouseX, final int mouseY, final float partialTick) {
         super.render(guiGraphics, mouseX, mouseY, partialTick);
         this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
 
 
-    public void setTitleLabelColor(int color) {
+    public void setTitleLabelColor(final int color) {
         this.titleLabelColor = color;
     }
 
 
-    public void setInventoryLabelColor(int color) {
+    public void setInventoryLabelColor(final int color) {
         this.inventoryLabelColor = color;
     }
 }

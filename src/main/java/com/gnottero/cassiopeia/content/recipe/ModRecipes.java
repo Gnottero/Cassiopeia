@@ -75,6 +75,7 @@ public class ModRecipes {
 
         // Force load inner class
         @SuppressWarnings("unused")
+        final
         Class<?> __unused = Categories.class;
     }
 }

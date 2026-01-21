@@ -29,8 +29,8 @@ public class BlockUpdateDetectorMixin {
         method = "setBlocksDirty(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockState;)V",
         at = @At("HEAD")
     )
-    private void onSetBlocksDirty(BlockPos pos, BlockState oldState, BlockState newState, CallbackInfo ci) {
-        Level level = (Level)(Object)this;
+    private void onSetBlocksDirty(final BlockPos pos, final BlockState oldState, final BlockState newState, final CallbackInfo ci) {
+        final Level level = (Level)(Object)this;
 
 
         if(!level.isClientSide()) {

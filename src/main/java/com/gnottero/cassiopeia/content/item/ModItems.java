@@ -12,7 +12,7 @@ import net.minecraft.world.item.Item;
 public class ModItems {
     private ModItems() {}
 
-    private static Item registerItem(String name, Item item) {
+    private static Item registerItem(final String name, final Item item) {
         return Registry.register(
             BuiltInRegistries.ITEM,
             Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, name),

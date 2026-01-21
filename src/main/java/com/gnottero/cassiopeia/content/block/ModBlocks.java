@@ -36,7 +36,7 @@ public class ModBlocks {
         )
     );
 
-    private static Block registerBlock(String name, Block block) {
+    private static Block registerBlock(final String name, final Block block) {
         registerBlockItem(name, block);
         return Registry.register(
             BuiltInRegistries.BLOCK,
@@ -45,8 +45,8 @@ public class ModBlocks {
         );
     }
 
-    private static Item registerBlockItem(String name, Block block) {
-        ResourceKey<Item> itemKey = ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, name));
+    private static Item registerBlockItem(final String name, final Block block) {
+        final ResourceKey<Item> itemKey = ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, name));
         return Registry.register(
             BuiltInRegistries.ITEM,
             Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, name),

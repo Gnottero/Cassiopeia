@@ -27,10 +27,8 @@ import com.gnottero.cassiopeia.structures.Structure.StructureError;
 import com.gnottero.cassiopeia.utils.Utils;
 
 
-//FIXME RESET MAPS WHEN THE WORLD LOADS
-//FIXME RESET MAPS WHEN THE WORLD LOADS
-//FIXME RESET MAPS WHEN THE WORLD LOADS
-//FIXME RESET MAPS WHEN THE WORLD LOADS
+
+
 
 
 
@@ -112,7 +110,7 @@ public class IncrementalStructureValidator {
 
         // Find structure instance. Return if it can't be found
         final BlockEntity be = level.getBlockEntity(pos);
-        if(!(be instanceof AbstractControllerBlockEntity cbe)) return;
+        if(!(be instanceof final AbstractControllerBlockEntity cbe)) return;
         final Optional<Structure> structureOpt = StructureManager.getStructure(cbe.getStructureId());
         if(structureOpt.isEmpty()) return;
         final Structure structure = structureOpt.get();
@@ -313,7 +311,7 @@ public class IncrementalStructureValidator {
         if(level.isClientSide()) return false;
 
         // Lazy controller registration
-        if(!(blockEntity instanceof AbstractControllerBlockEntity cbe)) return false; //TODO this might need to be an exception/error log
+        if(!(blockEntity instanceof final AbstractControllerBlockEntity cbe)) return false; //TODO this might need to be an exception/error log
         cbe.ensureRegistered();
 
         // Get controller data
@@ -359,7 +357,7 @@ public class IncrementalStructureValidator {
 
 
         // Lazy controller registration
-        if(!(blockEntity instanceof AbstractControllerBlockEntity cbe)) return errors; //TODO this might need to be an exception/error log
+        if(!(blockEntity instanceof final AbstractControllerBlockEntity cbe)) return errors; //TODO this might need to be an exception/error log
         cbe.ensureRegistered();
 
 
@@ -376,15 +374,15 @@ public class IncrementalStructureValidator {
 
             // Check Block Type (incorrect state)
             if(!currentState.is(entry.getCachedBlock())) {
-                BlockState expectedStateForRender = buildDesiredBlockState(entry, direction);
+                final BlockState expectedStateForRender = buildDesiredBlockState(entry, direction);
                 errors.add(new StructureError(worldPos, StructureError.ErrorType.MISSING, entry.getBlock(), null, expectedStateForRender));
                 continue;
             }
 
             // Check Properties (wrong block)
-            Map<String, String> mismatchedProps = checkProperties(currentState, entry, direction);
+            final Map<String, String> mismatchedProps = checkProperties(currentState, entry, direction);
             if(!mismatchedProps.isEmpty()) {
-                BlockState expectedStateForRender = buildDesiredBlockState(entry, direction);
+                final BlockState expectedStateForRender = buildDesiredBlockState(entry, direction);
                 errors.add(new StructureError(worldPos, StructureError.ErrorType.WRONG_STATE, entry.getBlock(), mismatchedProps, expectedStateForRender));
                 //! continue
             }
@@ -393,23 +391,23 @@ public class IncrementalStructureValidator {
     }
 
 
-    private static Map<String, String> checkProperties(BlockState currentState, BlockEntry entry, Direction controllerFacing) {
+    private static Map<String, String> checkProperties(final BlockState currentState, final BlockEntry entry, final Direction controllerFacing) {
         if(entry.getCachedProperties() == null || entry.getCachedProperties().isEmpty()) {
             return Collections.emptyMap();
         }
 
-        Map<String, String> mismatched = new HashMap<>();
-        for(Map.Entry<Property<?>, Comparable<?>> propEntry : entry.getCachedProperties().entrySet()) {
-            Property<?> property = propEntry.getKey();
-            Comparable<?> desiredValue = propEntry.getValue();
+        final Map<String, String> mismatched = new HashMap<>();
+        for(final Map.Entry<Property<?>, Comparable<?>> propEntry : entry.getCachedProperties().entrySet()) {
+            final Property<?> property = propEntry.getKey();
+            final Comparable<?> desiredValue = propEntry.getValue();
 
             // Handle Facing rotation
             if(property.getName().equals("facing") || property.getName().equals("horizontal_facing")) {
-                if(desiredValue instanceof Direction desiredDir) {
+                if(desiredValue instanceof final Direction desiredDir) {
 
                     // The desired value stored in the structure is "normalized" (relative to NORTH).
                     // We need to denormalize it to the actual world direction to compare with the world state.
-                    Direction desiredWorldDir = BlockUtils.denormalizeFacing(desiredDir, controllerFacing);
+                    final Direction desiredWorldDir = BlockUtils.denormalizeFacing(desiredDir, controllerFacing);
                     if(!currentState.getValue(property).equals(desiredWorldDir)) {
                         mismatched.put(property.getName(), desiredDir.getName()); // Return the normalized name as expected
                     }
@@ -426,7 +424,7 @@ public class IncrementalStructureValidator {
 
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    private static BlockState buildDesiredBlockState(BlockEntry entry, Direction controllerFacing) {
+    private static BlockState buildDesiredBlockState(final BlockEntry entry, final Direction controllerFacing) {
         if(entry.getCachedBlock() == null) {
             return null;
         }
@@ -436,12 +434,12 @@ public class IncrementalStructureValidator {
             return state;
         }
 
-        for(Map.Entry<Property<?>, Comparable<?>> propEntry : entry.getCachedProperties().entrySet()) {
-            Property property = propEntry.getKey();
+        for(final Map.Entry<Property<?>, Comparable<?>> propEntry : entry.getCachedProperties().entrySet()) {
+            final Property property = propEntry.getKey();
             Comparable value = propEntry.getValue();
 
             if(property.getName().equals("facing") || property.getName().equals("horizontal_facing")) {
-                if(value instanceof Direction dir) {
+                if(value instanceof final Direction dir) {
                     value = BlockUtils.denormalizeFacing(dir, controllerFacing);
                 }
             }
@@ -475,11 +473,11 @@ public class IncrementalStructureValidator {
 
             // Retrieve server, level and block entity
             final Level level = Cassiopeia.getServer().getLevel(key.dimension);
-            if(level instanceof ServerLevel serverLevel) {
+            if(level instanceof final ServerLevel serverLevel) {
                 final BlockEntity be = serverLevel.getBlockEntity(key.pos);
 
                 // If the block entity is a controller and its ID matches the provided identifier
-                if(be instanceof AbstractControllerBlockEntity cbe && cbe.getStructureId().equals(identifier)) {
+                if(be instanceof final AbstractControllerBlockEntity cbe && cbe.getStructureId().equals(identifier)) {
 
                     // Invalidate the block entity's structure cache
                     cbe.invalidateStructureCache();

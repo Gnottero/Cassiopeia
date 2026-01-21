@@ -50,7 +50,7 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class AbstractControllerBlock extends BaseEntityBlock {
 
-    protected AbstractControllerBlock(Properties properties) {
+    protected AbstractControllerBlock(final Properties properties) {
         super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.NORTH));
     }
@@ -61,19 +61,19 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
 
 
     @Override
-    public @NotNull RenderShape getRenderShape(@NotNull BlockState state) {
+    public @NotNull RenderShape getRenderShape(@NotNull final BlockState state) {
         return RenderShape.MODEL;
     }
 
 
     @Override
-    public @Nullable BlockState getStateForPlacement(@NotNull BlockPlaceContext context) {
+    public @Nullable BlockState getStateForPlacement(@NotNull final BlockPlaceContext context) {
         return this.defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING, context.getHorizontalDirection().getOpposite());
     }
 
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.@NotNull Builder<Block, BlockState> builder) {
+    protected void createBlockStateDefinition(final StateDefinition.@NotNull Builder<Block, BlockState> builder) {
         builder.add(BlockStateProperties.HORIZONTAL_FACING);
     }
 
@@ -82,20 +82,20 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
 
     @Override
     protected @NotNull InteractionResult useItemOn(
-        @NotNull ItemStack stack,
-        @NotNull BlockState state,
-        @NotNull Level level,
-        @NotNull BlockPos pos,
-        @NotNull Player player,
-        @NotNull InteractionHand hand,
-        @NotNull BlockHitResult hitResult
+        @NotNull final ItemStack stack,
+        @NotNull final BlockState state,
+        @NotNull final Level level,
+        @NotNull final BlockPos pos,
+        @NotNull final Player player,
+        @NotNull final InteractionHand hand,
+        @NotNull final BlockHitResult hitResult
     ) {
         if(level.isClientSide()) {
             return InteractionResult.SUCCESS;
         }
 
-        BlockEntity be = level.getBlockEntity(pos);
-        if(be instanceof AbstractControllerBlockEntity controllerBE) {
+        final BlockEntity be = level.getBlockEntity(pos);
+        if(be instanceof final AbstractControllerBlockEntity controllerBE) {
             return handleStructureInteraction(level, pos, player, controllerBE);
         }
         return InteractionResult.PASS;
@@ -104,8 +104,8 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
 
 
 
-    private InteractionResult handleStructureInteraction(Level level, BlockPos pos, Player player, AbstractControllerBlockEntity controllerBE) {
-        String structureId = controllerBE.getStructureId();
+    private InteractionResult handleStructureInteraction(final Level level, final BlockPos pos, final Player player, final AbstractControllerBlockEntity controllerBE) {
+        final String structureId = controllerBE.getStructureId();
 
         // Make sure the structure ID is set
         if(structureId == null || structureId.isEmpty()) {
@@ -114,14 +114,14 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
         }
 
         // Make sure the referenced structure exists
-        Optional<Structure> structureOpt = StructureManager.getStructure(structureId);
+        final Optional<Structure> structureOpt = StructureManager.getStructure(structureId);
         if(structureOpt.isEmpty()) {
             sendErrorMessage(player, "Structure definition not found: " + structureId);
             return InteractionResult.SUCCESS;
         }
 
         // Check if the structure is intact, proceed accordingly
-        List<StructureError> errors = IncrementalStructureValidator.computeValidationErrors(level, pos, controllerBE);
+        final List<StructureError> errors = IncrementalStructureValidator.computeValidationErrors(level, pos, controllerBE);
         if(errors.isEmpty()) {
             handleValidationSuccess(player, controllerBE);
         } else {
@@ -140,7 +140,7 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
      * @param player The player.
      * @param controllerBE The controller block entity.
      */
-    private void handleValidationSuccess(Player player, AbstractControllerBlockEntity controllerBE) {
+    private void handleValidationSuccess(final Player player, final AbstractControllerBlockEntity controllerBE) {
         openGui(player, controllerBE);
     }
 
@@ -155,9 +155,9 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
      * @param structureId The ID of the structure.
      * @param errors A list of errors, one for each incorrect block.
      */
-    private void handleValidationFailure(Player player, String structureId, List<StructureError> errors) {
+    private void handleValidationFailure(final Player player, final String structureId, final List<StructureError> errors) {
         sendHighlightPacket(player, errors);
-        MutableComponent msg = buildFailureMessage(structureId, errors);
+        final MutableComponent msg = buildFailureMessage(structureId, errors);
         player.displayClientMessage(msg, false);
     }
 
@@ -169,8 +169,8 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
      * @param player The player.
      * @param errors A list of errors, one for each incorrect block.
      */
-    private void sendHighlightPacket(Player player, List<StructureError> errors) {
-        if(player instanceof ServerPlayer serverPlayer) {
+    private void sendHighlightPacket(final Player player, final List<StructureError> errors) {
+        if(player instanceof final ServerPlayer serverPlayer) {
             ServerPlayNetworking.send(serverPlayer, new StructureHighlightPayload(errors));
         }
     }
@@ -183,7 +183,7 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
      * @param player The player.
      * @param message The message to show.
      */
-    private void sendErrorMessage(Player player, String message) {
+    private void sendErrorMessage(final Player player, final String message) {
         player.displayClientMessage(Component.literal(message).withStyle(ChatFormatting.RED), false);
     }
 
@@ -196,10 +196,10 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
      * @param errors A list of errors, one for each incorrect block.
      * @return The generated error message.
      */
-    private MutableComponent buildFailureMessage(String structureId, List<StructureError> errors) {
-        String titleCaseName = formatStructureName(structureId);
+    private MutableComponent buildFailureMessage(final String structureId, final List<StructureError> errors) {
+        final String titleCaseName = formatStructureName(structureId);
 
-        MutableComponent msg = Component
+        final MutableComponent msg = Component
             .literal("Structure ").withStyle(ChatFormatting.RED)
             .append(Component.literal(titleCaseName).withStyle(ChatFormatting.GOLD))
             .append(Component.literal(" incomplete.").withStyle(ChatFormatting.RED))
@@ -214,10 +214,10 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
 
 
 
-    private String formatStructureName(String structureId) {
-        StringBuilder nameBuilder = new StringBuilder();
+    private String formatStructureName(final String structureId) {
+        final StringBuilder nameBuilder = new StringBuilder();
         boolean capitalizeNext = true;
-        for(char c : structureId.toCharArray()) {
+        for(final char c : structureId.toCharArray()) {
             if(c == '_') {
                 nameBuilder.append(' ');
                 capitalizeNext = true;
@@ -236,9 +236,9 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
 
 
 
-    private void appendMissingBlocks(MutableComponent msg, List<StructureError> errors) {
-        Map<String, Integer> missingCounts = new HashMap<>();
-        for(StructureError error : errors) {
+    private void appendMissingBlocks(final MutableComponent msg, final List<StructureError> errors) {
+        final Map<String, Integer> missingCounts = new HashMap<>();
+        for(final StructureError error : errors) {
             if(error.type == StructureError.ErrorType.MISSING) {
                 missingCounts.merge(error.expectedBlockId, 1, Integer::sum);
             }
@@ -247,7 +247,7 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
         if(!missingCounts.isEmpty()) {
             msg.append(Component.literal("\n\nMissing Blocks:").withStyle(ChatFormatting.RED, ChatFormatting.UNDERLINE));
 
-            for(Map.Entry<String, Integer> entry : missingCounts.entrySet()) {
+            for(final Map.Entry<String, Integer> entry : missingCounts.entrySet()) {
                 addErrorLine(msg, entry.getValue(), getBlockComponent(entry.getKey()));
             }
         }
@@ -256,12 +256,12 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
 
 
 
-    private void appendMismatchedStates(MutableComponent msg, List<StructureError> errors) {
-        Map<String, Map<String, Integer>> wrongStateCounts = new HashMap<>();
+    private void appendMismatchedStates(final MutableComponent msg, final List<StructureError> errors) {
+        final Map<String, Map<String, Integer>> wrongStateCounts = new HashMap<>();
 
-        for(StructureError error : errors) {
+        for(final StructureError error : errors) {
             if(error.type != StructureError.ErrorType.MISSING) {
-                String stateDesc = formatStateDescription(error.expectedState);
+                final String stateDesc = formatStateDescription(error.expectedState);
                 wrongStateCounts.computeIfAbsent(error.expectedBlockId, k -> new HashMap<>()).merge(stateDesc, 1, Integer::sum);
             }
         }
@@ -269,9 +269,9 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
         if(!wrongStateCounts.isEmpty()) {
             msg.append(Component.literal("\n\nIncorrect States:").withStyle(ChatFormatting.RED, ChatFormatting.UNDERLINE));
 
-            for(Map.Entry<String, Map<String, Integer>> blockEntry : wrongStateCounts.entrySet()) {
-                MutableComponent blockComponent = getBlockComponent(blockEntry.getKey());
-                for(Map.Entry<String, Integer> stateEntry : blockEntry.getValue().entrySet()) {
+            for(final Map.Entry<String, Map<String, Integer>> blockEntry : wrongStateCounts.entrySet()) {
+                final MutableComponent blockComponent = getBlockComponent(blockEntry.getKey());
+                for(final Map.Entry<String, Integer> stateEntry : blockEntry.getValue().entrySet()) {
                     addErrorLine(msg, stateEntry.getValue(), blockComponent.copy());
                     if(!stateEntry.getKey().isEmpty()) {
                         msg.append(Component.literal(" (Expected: " + stateEntry.getKey() + ")").withStyle(ChatFormatting.DARK_GRAY,ChatFormatting.ITALIC));
@@ -284,14 +284,14 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
 
 
 
-    private String formatStateDescription(Map<String, String> expectedState) {
+    private String formatStateDescription(final Map<String, String> expectedState) {
         if(expectedState == null || expectedState.isEmpty()) {
             return "";
         }
-        List<String> props = new ArrayList<>(expectedState.keySet());
+        final List<String> props = new ArrayList<>(expectedState.keySet());
         Collections.sort(props);
-        StringBuilder sb = new StringBuilder();
-        for(String key : props) {
+        final StringBuilder sb = new StringBuilder();
+        for(final String key : props) {
             if(sb.isEmpty()) {
                 sb.append(", ");
             }
@@ -303,7 +303,7 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
 
 
 
-    private void addErrorLine(MutableComponent msg, int count, MutableComponent content) {
+    private void addErrorLine(final MutableComponent msg, final int count, final MutableComponent content) {
         msg.append(Component.literal("\n • ").withStyle(ChatFormatting.RED));
         msg.append(Component.literal(count + "x ").withStyle(ChatFormatting.GOLD));
         msg.append(content.withStyle(ChatFormatting.GRAY));
@@ -313,16 +313,16 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
 
 
     @SuppressWarnings("java:S7467")
-    private MutableComponent getBlockComponent(String blockName) {
+    private MutableComponent getBlockComponent(final String blockName) {
         try {
-            Identifier id = Identifier.parse(blockName);
-            Optional<Holder.Reference<Block>> blockHolderOpt = BuiltInRegistries.BLOCK.get(id);
+            final Identifier id = Identifier.parse(blockName);
+            final Optional<Holder.Reference<Block>> blockHolderOpt = BuiltInRegistries.BLOCK.get(id);
 
             if(blockHolderOpt.isPresent()) {
                 return Component.translatable(blockHolderOpt.get().value().getDescriptionId());
             }
         }
-        catch(Exception e) {
+        catch(final Exception e) {
             // ignore
         }
         return Component.literal(blockName);
