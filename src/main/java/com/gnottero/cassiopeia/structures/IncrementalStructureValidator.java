@@ -407,7 +407,7 @@ public class IncrementalStructureValidator {
 
                     // The desired value stored in the structure is "normalized" (relative to NORTH).
                     // We need to denormalize it to the actual world direction to compare with the world state.
-                    final Direction desiredWorldDir = BlockUtils.denormalizeFacing(desiredDir, controllerFacing);
+                    final Direction desiredWorldDir = Utils.denormalizeFacing(desiredDir, controllerFacing);
                     if(!currentState.getValue(property).equals(desiredWorldDir)) {
                         mismatched.put(property.getName(), desiredDir.getName()); // Return the normalized name as expected
                     }
@@ -440,7 +440,7 @@ public class IncrementalStructureValidator {
 
             if(property.getName().equals("facing") || property.getName().equals("horizontal_facing")) {
                 if(value instanceof final Direction dir) {
-                    value = BlockUtils.denormalizeFacing(dir, controllerFacing);
+                    value = Utils.denormalizeFacing(dir, controllerFacing);
                 }
             }
             state = state.setValue(property, value);

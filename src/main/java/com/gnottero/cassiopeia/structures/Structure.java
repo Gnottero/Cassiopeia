@@ -19,6 +19,8 @@ import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3i;
 
+import com.gnottero.cassiopeia.utils.Utils;
+
 
 
 
@@ -205,7 +207,7 @@ public class Structure {
 
                     // The desired value stored in the structure is "normalized" (relative to NORTH).
                     // We need to denormalize it to the actual world direction to compare with the world state.
-                    final Direction desiredWorldDir = BlockUtils.denormalizeFacing(desiredDir, controllerFacing);
+                    final Direction desiredWorldDir = Utils.denormalizeFacing(desiredDir, controllerFacing);
                     if(!currentState.getValue(property).equals(desiredWorldDir)) {
                         mismatched.put(property.getName(), desiredDir.getName()); // Return the normalized name as expected
                     }

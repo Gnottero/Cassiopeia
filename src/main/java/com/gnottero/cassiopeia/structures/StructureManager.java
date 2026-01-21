@@ -130,7 +130,7 @@ public class StructureManager {
                     // Calculate relative offset and add the block to the structure
                     final Vector3i offset = Utils.globalToLocal(pos, controllerPos, controllerFacing);
                     final String blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
-                    final Map<String, String> properties = BlockUtils.processBlockProperties(state, controllerFacing);
+                    final Map<String, String> properties = Utils.processBlockProperties(state, controllerFacing);
                     structure.addBlock(new Structure.BlockEntry(blockId, offset, properties));
                 }
             }
