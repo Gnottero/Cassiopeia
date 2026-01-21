@@ -221,17 +221,22 @@ public class StructureValidator {
      * This should be called each time a block is changed anywhere in the server for any reason.
      * @param level The level the changed block is in.
      * @param pos The position of the changed block.
+     * @param oldState The block state of the previous block.
+     * @param newState The block state of the current block.
      * @param action The action. This should be PLACE when a non-air block replaces air, BREAK when air replaces non-air.
      *     Replacing a non-air block with another non-air block should be treated as a BREAK and then a PLACE.
      *     In this case, this method should be called twice in order to correctly track changes.
      */
-    public static void onBlockChange(final @NotNull Level level, final @NotNull BlockPos pos, final @NotNull BlockChangeAction action) {
+    public static void onBlockChange(
+        final @NotNull Level level, final @NotNull BlockPos pos,
+        final @NotNull BlockState oldState, final @NotNull BlockState newState,
+        final @NotNull BlockChangeAction action
+    ) {
 
         // If the modified block is a controller, register/unregister/scan it based on the action
-        if(level.getBlockEntity(pos) instanceof AbstractControllerBlockEntity) {
-            if(action == BlockChangeAction.PLACE) registerController  (level, pos);
-            else                                  unregisterController(level, pos);
-        }
+        //TODO this might need to check a controller tag or something, if we add more controller types in the future. "basic controller" suggests non basic types will be a thing
+        /**/ if(action == BlockChangeAction.PLACE && newState.is(ModBlocks.BASIC_CONTROLLER)) registerController  (level, pos);
+        else if(action == BlockChangeAction.BREAK && oldState.is(ModBlocks.BASIC_CONTROLLER)) unregisterController(level, pos);
 
 
         // If the modified block is not a controller

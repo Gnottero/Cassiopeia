@@ -70,7 +70,7 @@ public class CassiopeiaCommands {
 
 
     /**
-     * Executes the verify command.
+     * Executes the save command.
      * @param ctx The command context.
      * @param keepAir Whether to keep air blocks in the structure or ignore them.
      * @return 1 if the command succeeded, 0 otherwise.
