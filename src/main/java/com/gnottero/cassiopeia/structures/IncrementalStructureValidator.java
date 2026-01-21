@@ -3,17 +3,13 @@ package com.gnottero.cassiopeia.structures;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3i;
 
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceKey;
@@ -40,15 +36,15 @@ import com.gnottero.cassiopeia.utils.Utils;
 
 
 /**
- * A class used for event-driven structure validation.
+ * A class for event-driven incremental structure validation.
  * <p>
  * This keeps track of all the blocks in a world that are part of a multiblock structure.
  * <p>
  * Every time any block is changed, it's tested against the structures it could be part of and the result is cached.
  * This allows for structure validation in O(1) time.
  */
-public class StructureValidator {
-    private StructureValidator() {}
+public class IncrementalStructureValidator {
+    private IncrementalStructureValidator() {}
 
 
 
