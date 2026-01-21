@@ -1,5 +1,6 @@
 package com.gnottero.cassiopeia.structures;
 
+import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.Remove;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -107,30 +108,6 @@ public class Structure {
         );
 
         initialized = true;
-    }
-
-
-    /**
-     * Verifies if the structure exists in the world at the given controller position.
-     * @param level         The level to check.
-     * @param controllerPos The position of the controller block.
-     * @return true if the structure matches, false otherwise.
-     */
-    public boolean verify(Level level, BlockPos controllerPos) {
-        return StructureValidator.validateStructure(level, controllerPos);
-    }
-
-
-    /**
-     * Identifies missing blocks in the structure relative to the controller position.
-     * @param level         The level to check.
-     * @param controllerPos The position of the controller block.
-     * @return A List of StructureError objects.
-     */
-    public List<StructureError> getValidationErrors(Level level, BlockPos controllerPos) {
-        // return validate(level, controllerPos, false);
-        //FIXME actually keep track of the broken blocks, or read this data from the runtime map
-        return new ArrayList<>();
     }
 
 
@@ -303,6 +280,11 @@ public class Structure {
 
 
 
+    /**
+     * A class that describes the issues of an incorrect block in a multiblock structure.
+     * <p>
+     * It contains the block's position, its block ID, its expected data, and its expected block state.
+     */
     public static class StructureError {
         public enum ErrorType {
             MISSING,
@@ -341,6 +323,9 @@ public class Structure {
             this.properties = properties;
         }
 
+        /**
+         * Initializes the block entry.
+         */
         public void initialize() {
             Identifier id = Identifier.tryParse(block);
             if (id != null) {
@@ -371,6 +356,14 @@ public class Structure {
 
         public Map<String, String> getProperties() {
             return properties;
+        }
+
+        public Block getCachedBlock() {
+            return cachedBlock;
+        }
+
+        public Map<Property<?>, Comparable<?>> getCachedProperties() {
+            return cachedProperties;
         }
     }
 }

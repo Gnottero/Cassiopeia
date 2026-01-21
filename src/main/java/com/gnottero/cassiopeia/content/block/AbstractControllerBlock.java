@@ -5,6 +5,7 @@ import com.gnottero.cassiopeia.network.StructureHighlightPayload;
 import com.gnottero.cassiopeia.structures.Structure;
 import com.gnottero.cassiopeia.structures.Structure.StructureError;
 import com.gnottero.cassiopeia.structures.StructureManager;
+import com.gnottero.cassiopeia.structures.StructureValidator;
 import com.mojang.serialization.MapCodec;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -105,20 +106,21 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
     private InteractionResult handleStructureInteraction(Level level, BlockPos pos, Player player, AbstractControllerBlockEntity controllerBE) {
         String structureId = controllerBE.getStructureId();
 
+        // Make sure the structure ID is set
         if (structureId == null || structureId.isEmpty()) {
             sendErrorMessage(player, "No structure ID set for this controller.");
             return InteractionResult.SUCCESS;
         }
 
+        // Make sure the referenced structure exists
         Optional<Structure> structureOpt = StructureManager.getStructure(structureId);
         if (structureOpt.isEmpty()) {
             sendErrorMessage(player, "Structure definition not found: " + structureId);
             return InteractionResult.SUCCESS;
         }
 
-        Structure structure = structureOpt.get();
-        List<StructureError> errors = structure.getValidationErrors(level, pos);
-
+        // Check if the structure is intact, proceed accordingly
+        List<StructureError> errors = StructureValidator.computeValidationErrors(level, pos);
         if (errors.isEmpty()) {
             handleValidationSuccess(player, controllerBE);
         } else {
@@ -131,6 +133,12 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
 
 
 
+    /**
+     * Opens the controller's GUI.
+     * This should be called after the player interacts with a valid structure.
+     * @param player The player.
+     * @param controllerBE The controller block entity.
+     */
     private void handleValidationSuccess(Player player, AbstractControllerBlockEntity controllerBE) {
         openGui(player, controllerBE);
     }
@@ -138,6 +146,14 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
 
 
 
+    /**
+     * Shows a list of missing and mismatched blocks to the player and displays the expected structure as a hologram.
+     * <p>
+     * This should be called afte rthe player interacts with a valid but incomplete structure.
+     * @param player The player.
+     * @param structureId The ID of the structure.
+     * @param errors A list of errors, one for each incorrect block.
+     */
     private void handleValidationFailure(Player player, String structureId, List<StructureError> errors) {
         sendHighlightPacket(player, errors);
         MutableComponent msg = buildFailureMessage(structureId, errors);
@@ -147,6 +163,11 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
 
 
 
+    /**
+     * Shows the player the incorrect blocks as holograms.
+     * @param player The player.
+     * @param errors A list of errors, one for each incorrect block.
+     */
     private void sendHighlightPacket(Player player, List<StructureError> errors) {
         if (player instanceof ServerPlayer serverPlayer) {
             ServerPlayNetworking.send(serverPlayer, new StructureHighlightPayload(errors));
@@ -156,6 +177,11 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
 
 
 
+    /**
+     * Shows an error message to the player.
+     * @param player The player.
+     * @param message The message to show.
+     */
     private void sendErrorMessage(Player player, String message) {
         player.displayClientMessage(Component.literal(message).withStyle(ChatFormatting.RED), false);
     }
@@ -163,8 +189,13 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
 
 
 
-    private MutableComponent buildFailureMessage(String structureId,
-            List<StructureError> errors) {
+    /**
+     * Creates the error message for an incomplete structure based on the provided errors.
+     * @param structureId The ID of the structure.
+     * @param errors A list of errors, one for each incorrect block.
+     * @return The generated error message.
+     */
+    private MutableComponent buildFailureMessage(String structureId, List<StructureError> errors) {
         String titleCaseName = formatStructureName(structureId);
 
         MutableComponent msg = Component

@@ -1,6 +1,7 @@
 package com.gnottero.cassiopeia.structures;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,9 +16,12 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.Property;
 
 import com.gnottero.cassiopeia.Cassiopeia;
 import com.gnottero.cassiopeia.content.block.entity.AbstractControllerBlockEntity;
+import com.gnottero.cassiopeia.structures.Structure.BlockEntry;
+import com.gnottero.cassiopeia.structures.Structure.StructureError;
 import com.gnottero.cassiopeia.utils.Utils;
 
 
@@ -206,6 +210,10 @@ public class StructureValidator {
 
 
 
+
+
+
+
     public enum BlockChangeAction { PLACE, BREAK }
     /**
      * Callback method for block changes. It keeps track of matching blocks in active structures.
@@ -259,6 +267,10 @@ public class StructureValidator {
 
 
 
+
+
+
+
     /**
      * Checks if a structure is valid.
      * <p>
@@ -278,4 +290,108 @@ public class StructureValidator {
         // Compare the number of valid blocks
         return controllerData != null && controllerData.valid >= controllerData.structure.getBlocks().size();
     }
+
+
+
+
+
+
+
+
+    /**
+     * Identifies missing blocks in the structure relative to the controller's position.
+     * <p>
+     * Calling this on a single-block structure will always return an empty list.
+     * @param level The level the controller is in.
+     * @param pos The position of the controller.
+     * @return A List of {@link StructureError} objects, one for each incorrect block.
+     */
+    public static List<StructureError> computeValidationErrors(final @NotNull Level level, final @NotNull BlockPos pos) {
+        final List<StructureError> errors = new ArrayList<>();
+
+        // Get controller data
+        final BlockKey controllerKey = new BlockKey(level.dimension(), pos);
+        final ControllerData controllerData = controllers.get(controllerKey);
+        final Direction direction = controllerData.direction;
+
+        for(final BlockEntry entry : controllerData.structure.getBlocks()) {
+            final BlockPos worldPos = Utils.localToGlobal(entry.getOffset(), pos, direction);
+            final BlockState currentState = level.getBlockState(worldPos);
+
+            // Check Block Type (incorrect state)
+            if (!currentState.is(entry.getCachedBlock())) {
+                BlockState expectedStateForRender = buildDesiredBlockState(entry, direction);
+                errors.add(new StructureError(worldPos, StructureError.ErrorType.MISSING, entry.getBlock(), null, expectedStateForRender));
+                continue;
+            }
+
+            // Check Properties (wrong block)
+            Map<String, String> mismatchedProps = checkProperties(currentState, entry, direction);
+            if (!mismatchedProps.isEmpty()) {
+                BlockState expectedStateForRender = buildDesiredBlockState(entry, direction);
+                errors.add(new StructureError(worldPos, StructureError.ErrorType.WRONG_STATE, entry.getBlock(), mismatchedProps, expectedStateForRender));
+                //! continue
+            }
+        }
+        return errors;
+    }
+
+
+    private static Map<String, String> checkProperties(BlockState currentState, BlockEntry entry, Direction controllerFacing) {
+        if (entry.getCachedProperties() == null || entry.getCachedProperties().isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        Map<String, String> mismatched = new HashMap<>();
+        for (Map.Entry<Property<?>, Comparable<?>> propEntry : entry.getCachedProperties().entrySet()) {
+            Property<?> property = propEntry.getKey();
+            Comparable<?> desiredValue = propEntry.getValue();
+
+            // Handle Facing rotation
+            if (property.getName().equals("facing") || property.getName().equals("horizontal_facing")) {
+                if (desiredValue instanceof Direction desiredDir) {
+
+                    // The desired value stored in the structure is "normalized" (relative to NORTH).
+                    // We need to denormalize it to the actual world direction to compare with the world state.
+                    Direction desiredWorldDir = BlockUtils.denormalizeFacing(desiredDir, controllerFacing);
+                    if (!currentState.getValue(property).equals(desiredWorldDir)) {
+                        mismatched.put(property.getName(), desiredDir.getName()); // Return the normalized name as expected
+                    }
+                    continue;
+                }
+            }
+
+            if (!currentState.getValue(property).equals(desiredValue)) {
+                mismatched.put(property.getName(), desiredValue.toString());
+            }
+        }
+        return mismatched;
+    }
+
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private static BlockState buildDesiredBlockState(BlockEntry entry, Direction controllerFacing) {
+        if (entry.getCachedBlock() == null) {
+            return null;
+        }
+
+        BlockState state = entry.getCachedBlock().defaultBlockState();
+        if (entry.getCachedProperties() == null) {
+            return state;
+        }
+
+        for (Map.Entry<Property<?>, Comparable<?>> propEntry : entry.getCachedProperties().entrySet()) {
+            Property property = propEntry.getKey();
+            Comparable value = propEntry.getValue();
+
+            if (property.getName().equals("facing") || property.getName().equals("horizontal_facing")) {
+                if (value instanceof Direction dir) {
+                    value = BlockUtils.denormalizeFacing(dir, controllerFacing);
+                }
+            }
+            state = state.setValue(property, value);
+        }
+        return state;
+    }
+
 }

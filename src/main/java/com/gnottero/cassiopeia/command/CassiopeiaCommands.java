@@ -3,6 +3,7 @@ package com.gnottero.cassiopeia.command;
 import com.gnottero.cassiopeia.structures.InvalidStructureException;
 import com.gnottero.cassiopeia.structures.Structure;
 import com.gnottero.cassiopeia.structures.StructureManager;
+import com.gnottero.cassiopeia.structures.StructureValidator;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -104,7 +105,7 @@ public class CassiopeiaCommands {
             return 0;
         }
 
-        boolean matches = structureOpt.get().verify(ctx.getSource().getLevel(), controller);
+        boolean matches = StructureValidator.validateStructure(ctx.getSource().getLevel(), controller);
 
         if (matches) {
             ctx.getSource().sendSuccess(
