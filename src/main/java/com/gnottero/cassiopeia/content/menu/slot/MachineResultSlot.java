@@ -18,37 +18,37 @@ public class MachineResultSlot extends Slot {
     private final Player player;
     private int removeCount;
 
-    public MachineResultSlot(Player player, Container container, int slot, int x, int y) {
+    public MachineResultSlot(final Player player, final Container container, final int slot, final int x, final int y) {
         super(container, slot, x, y);
         this.player = player;
     }
 
     @Override
-    public boolean mayPlace(ItemStack itemStack) {
+    public boolean mayPlace(final ItemStack itemStack) {
         return false;
     }
 
     @Override
-    public ItemStack remove(int amount) {
-        if (this.hasItem()) {
+    public ItemStack remove(final int amount) {
+        if(this.hasItem()) {
             this.removeCount += Math.min(amount, this.getItem().getCount());
         }
         return super.remove(amount);
     }
 
     @Override
-    public void onTake(Player player, ItemStack itemStack) {
+    public void onTake(final Player player, final ItemStack itemStack) {
         this.checkTakeAchievements(itemStack);
         super.onTake(player, itemStack);
     }
 
     @Override
-    protected void onQuickCraft(ItemStack itemStack, int count) {
+    protected void onQuickCraft(final ItemStack itemStack, final int count) {
         this.removeCount += count;
         this.checkTakeAchievements(itemStack);
     }
     @Override
-    protected void checkTakeAchievements(ItemStack itemStack) {
+    protected void checkTakeAchievements(final ItemStack itemStack) {
         itemStack.onCraftedBy(this.player, this.removeCount);
         awardRecipesIfApplicable();
         this.removeCount = 0;
@@ -59,8 +59,8 @@ public class MachineResultSlot extends Slot {
      * BasicControllerBlockEntity.
      */
     private void awardRecipesIfApplicable() {
-        if (this.player instanceof ServerPlayer serverPlayer
-                && this.container instanceof BasicControllerBlockEntity controllerEntity) {
+        if(this.player instanceof final ServerPlayer serverPlayer
+                && this.container instanceof final BasicControllerBlockEntity controllerEntity) {
             controllerEntity.awardUsedRecipes(serverPlayer, java.util.Collections.emptyList());
         }
     }

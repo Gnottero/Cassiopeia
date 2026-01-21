@@ -64,14 +64,14 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity im
 
     private final ContainerData containerData = new ContainerData() {
         @Override
-        public int get(int index) {
-            if (index < 0 || index >= MAX_DATA_COUNT) return 0;
+        public int get(final int index) {
+            if(index < 0 || index >= MAX_DATA_COUNT) return 0;
             else return machineData[index];
         }
 
         @Override
-        public void set(int index, int value) {
-            if (index >= 0 && index < MAX_DATA_COUNT) {
+        public void set(final int index, final int value) {
+            if(index >= 0 && index < MAX_DATA_COUNT) {
                 machineData[index] = value;
             }
         }
@@ -83,14 +83,14 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity im
     };
 
 
-    public BasicControllerBlockEntity(BlockPos pos, BlockState state) {
+    public BasicControllerBlockEntity(final BlockPos pos, final BlockState state) {
         super(ModBlockEntities.BASIC_CONTROLLER, pos, state);
     }
 
 
     private Optional<MachineHandler> getHandler() {
-        String structureId = getStructureId();
-        if (structureId == null) return Optional.empty();
+        final String structureId = getStructureId();
+        if(structureId == null) return Optional.empty();
         else return MachineHandlerRegistry.getHandler(structureId);
     }
 
@@ -99,7 +99,7 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity im
 
     // ==================== Server Tick ====================
 
-    public static void serverTick(Level level, BlockPos pos, BlockState state, BasicControllerBlockEntity be) {
+    public static void serverTick(final Level level, final BlockPos pos, final BlockState state, final BasicControllerBlockEntity be) {
         be.getHandler().ifPresent(handler -> handler.serverTick(level, pos, state, be));
     }
 
@@ -112,13 +112,13 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity im
         return machineItems;
     }
 
-    public int getMachineData(int index) {
-        if (index < 0 || index >= MAX_DATA_COUNT) return 0;
+    public int getMachineData(final int index) {
+        if(index < 0 || index >= MAX_DATA_COUNT) return 0;
         else return machineData[index];
     }
 
-    public void setMachineData(int index, int value) {
-        if (index >= 0 && index < MAX_DATA_COUNT) {
+    public void setMachineData(final int index, final int value) {
+        if(index >= 0 && index < MAX_DATA_COUNT) {
             machineData[index] = value;
         }
     }
@@ -133,17 +133,17 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity im
     // ==================== WorldlyContainer Implementation ====================
 
     @Override
-    public int @NotNull [] getSlotsForFace(@NotNull Direction side) {
+    public int @NotNull [] getSlotsForFace(@NotNull final Direction side) {
         return getHandler().map(h -> h.getSlotsForFace(side)).orElse(NO_SLOTS);
     }
 
     @Override
-    public boolean canPlaceItemThroughFace(int index, @NotNull ItemStack stack, @Nullable Direction direction) {
+    public boolean canPlaceItemThroughFace(final int index, @NotNull final ItemStack stack, @Nullable final Direction direction) {
         return getHandler().map(h -> h.canPlaceItem(this, index, stack)).orElse(false);
     }
 
     @Override
-    public boolean canTakeItemThroughFace(int index, @NotNull ItemStack stack, @NotNull Direction direction) {
+    public boolean canTakeItemThroughFace(final int index, @NotNull final ItemStack stack, @NotNull final Direction direction) {
         return getHandler().map(h -> h.canTakeItem(index, stack, direction)).orElse(false);
     }
 
@@ -159,9 +159,9 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity im
 
     @Override
     public boolean isEmpty() {
-        int size = getContainerSize();
-        for (int i = 0; i < size; i++) {
-            if (!machineItems.get(i).isEmpty()) {
+        final int size = getContainerSize();
+        for(int i = 0; i < size; i++) {
+            if(!machineItems.get(i).isEmpty()) {
                 return false;
             }
         }
@@ -169,40 +169,40 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity im
     }
 
     @Override
-    public @NotNull ItemStack getItem(int slot) {
-        int size = getContainerSize();
-        if (slot < 0 || slot >= size) return ItemStack.EMPTY;
+    public @NotNull ItemStack getItem(final int slot) {
+        final int size = getContainerSize();
+        if(slot < 0 || slot >= size) return ItemStack.EMPTY;
         else return machineItems.get(slot);
     }
 
     @Override
-    public @NotNull ItemStack removeItem(int slot, int amount) {
-        if (getContainerSize() == 0) return ItemStack.EMPTY;
+    public @NotNull ItemStack removeItem(final int slot, final int amount) {
+        if(getContainerSize() == 0) return ItemStack.EMPTY;
         else return ContainerHelper.removeItem(machineItems, slot, amount);
     }
 
     @Override
-    public @NotNull ItemStack removeItemNoUpdate(int slot) {
-        if (getContainerSize() == 0) return ItemStack.EMPTY;
+    public @NotNull ItemStack removeItemNoUpdate(final int slot) {
+        if(getContainerSize() == 0) return ItemStack.EMPTY;
         else return ContainerHelper.takeItem(machineItems, slot);
     }
 
     @Override
-    public void setItem(int slot, @NotNull ItemStack stack) {
-        int size = getContainerSize();
-        if (slot < 0 || slot >= size) return;
+    public void setItem(final int slot, @NotNull final ItemStack stack) {
+        final int size = getContainerSize();
+        if(slot < 0 || slot >= size) return;
 
-        ItemStack existing = machineItems.get(slot);
-        boolean sameItem = !stack.isEmpty() && ItemStack.isSameItemSameComponents(existing, stack);
+        final ItemStack existing = machineItems.get(slot);
+        final boolean sameItem = !stack.isEmpty() && ItemStack.isSameItemSameComponents(existing, stack);
         machineItems.set(slot, stack);
 
-        if (stack.getCount() > getMaxStackSize()) {
+        if(stack.getCount() > getMaxStackSize()) {
             stack.setCount(getMaxStackSize());
         }
 
         // Reset cooking progress when input changes (not fuel time!)
         getHandler().ifPresent(handler -> {
-            if (slot == handler.getInputSlotIndex() && !sameItem) {
+            if(slot == handler.getInputSlotIndex() && !sameItem) {
                 setMachineData(handler.getProcessProgressIndex(), 0);
                 setChanged();
             }
@@ -210,19 +210,19 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity im
     }
 
     @Override
-    public boolean canPlaceItem(int index, @NotNull ItemStack stack) {
+    public boolean canPlaceItem(final int index, @NotNull final ItemStack stack) {
         return getHandler().map(h -> h.canPlaceItem(this, index, stack)).orElse(false);
     }
 
     @Override
-    public boolean stillValid(@NotNull Player player) {
+    public boolean stillValid(@NotNull final Player player) {
         return Container.stillValidBlockEntity(this, player);
     }
 
     @Override
     public void clearContent() {
-        int size = getContainerSize();
-        for (int i = 0; i < size; i++) {
+        final int size = getContainerSize();
+        for(int i = 0; i < size; i++) {
             machineItems.set(i, ItemStack.EMPTY);
         }
     }
@@ -233,7 +233,7 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity im
     // ==================== NBT Serialization ====================
 
     @Override
-    protected void saveAdditional(@NotNull ValueOutput output) {
+    protected void saveAdditional(@NotNull final ValueOutput output) {
         super.saveAdditional(output);
 
         ContainerHelper.saveAllItems(output, machineItems, true);
@@ -241,14 +241,14 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity im
         getHandler().ifPresent(handler -> handler.saveAdditional(output, this));
 
         // Save recipes used
-        CompoundTag recipesTag = new CompoundTag();
+        final CompoundTag recipesTag = new CompoundTag();
         recipesUsed.forEach((id, count) -> recipesTag.putInt(id.toString(), count));
         output.store(TAG_RECIPES_USED, CompoundTag.CODEC, recipesTag);
     }
 
 
     @Override
-    protected void loadAdditional(@NotNull ValueInput input) {
+    protected void loadAdditional(@NotNull final ValueInput input) {
         super.loadAdditional(input);
 
         ContainerHelper.loadAllItems(input, machineItems);
@@ -256,12 +256,12 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity im
         getHandler().ifPresent(handler -> handler.loadAdditional(input, this));
 
         // Load recipes used
-        CompoundTag recipesTag = input.read(TAG_RECIPES_USED, CompoundTag.CODEC).orElse(new CompoundTag());
+        final CompoundTag recipesTag = input.read(TAG_RECIPES_USED, CompoundTag.CODEC).orElse(new CompoundTag());
         recipesUsed.clear();
-        for (String key : recipesTag.keySet()) {
-            Identifier id = Identifier.tryParse(key);
-            if (id != null) {
-                recipesUsed.put(id, recipesTag.getInt(key).orElse(0));
+        for(final String key : recipesTag.keySet()) {
+            final Identifier id = Identifier.tryParse(key);
+            if(id != null) {
+                recipesUsed.put(id, recipesTag.getIntOr(key, 0));
             }
         }
     }
@@ -279,13 +279,13 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity im
 
     @Nullable
     @Override
-    public AbstractContainerMenu createMenu(int containerId, @NotNull Inventory playerInventory, @NotNull Player player) {
+    public AbstractContainerMenu createMenu(final int containerId, @NotNull final Inventory playerInventory, @NotNull final Player player) {
         return getHandler().map(h -> h.createMenu(containerId, playerInventory, this, containerData))
         .orElse(null);
     }
 
     @Override
-    public BlockPos getScreenOpeningData(@NotNull ServerPlayer player) {
+    public BlockPos getScreenOpeningData(@NotNull final ServerPlayer player) {
         return this.worldPosition;
     }
 
@@ -294,21 +294,21 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity im
 
     // ==================== Recipe Tracking ====================
 
-    public void recipeUsed(Identifier recipeId) {
-        if (recipeId != null) {
+    public void recipeUsed(final Identifier recipeId) {
+        if(recipeId != null) {
             recipesUsed.addTo(recipeId, 1);
         }
     }
 
-    public void awardUsedRecipes(Player player, List<ItemStack> items) {
-        if (level == null || level.isClientSide())
+    public void awardUsedRecipes(final Player player, final List<ItemStack> items) {
+        if(level == null || level.isClientSide())
             return;
 
-        List<RecipeHolder<?>> recipesToAward = new ArrayList<>();
+        final List<RecipeHolder<?>> recipesToAward = new ArrayList<>();
 
-        if (level instanceof ServerLevel serverLevel) {
-            for (var entry : recipesUsed.object2IntEntrySet()) {
-                ResourceKey<Recipe<?>> key = ResourceKey.create(Registries.RECIPE, entry.getKey());
+        if(level instanceof final ServerLevel serverLevel) {
+            for(final var entry : recipesUsed.object2IntEntrySet()) {
+                final ResourceKey<Recipe<?>> key = ResourceKey.create(Registries.RECIPE, entry.getKey());
                 serverLevel.getServer().getRecipeManager().byKey(key).ifPresent(recipesToAward::add);
             }
         }

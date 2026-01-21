@@ -2,7 +2,10 @@
 	"required": true,
 	"package": "com.gnottero.cassiopeia.mixin",
 	"compatibilityLevel": "JAVA_21",
-	"mixins": [],
+	"mixins": [
+		"server.ControllerUpdateDetectorMixin",
+		"server.BlockUpdateDetectorMixin"
+	],
 	"client": [
 		"client.LevelRendererMixin",
 		"client.CameraAccessor"

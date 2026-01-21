@@ -45,8 +45,8 @@ public class StructureHighlightRenderer {
         ClientPlayNetworking.registerGlobalReceiver(StructureHighlightPayload.TYPE, (payload, context) -> {
             context.client().execute(() -> {
                 highlights.clear();
-                for (Structure.StructureError error : payload.errors()) {
-                    if (error.expectedBlockState != null) {
+                for(final Structure.StructureError error : payload.errors()) {
+                    if(error.expectedBlockState != null) {
                         highlights.add(new Highlight(error.pos, error.type, error.expectedBlockState));
                     }
                 }
@@ -60,9 +60,9 @@ public class StructureHighlightRenderer {
 
 
     public static boolean hasHighlights() {
-        if (highlights.isEmpty())
+        if(highlights.isEmpty())
             return false;
-        if (System.currentTimeMillis() - highlightStartTime > HIGHLIGHT_DURATION_MS) {
+        if(System.currentTimeMillis() - highlightStartTime > HIGHLIGHT_DURATION_MS) {
             highlights.clear();
             return false;
         }
@@ -75,37 +75,35 @@ public class StructureHighlightRenderer {
      * Called during BEFORE_DEBUG_RENDER with proper view matrix applied.
      */
     @SuppressWarnings("java:S7467")
-    private static void renderGhostBlocks(WorldRenderContext context) {
-        if (!hasHighlights())
-            return;
+    private static void renderGhostBlocks(final WorldRenderContext context) {
+        if(!hasHighlights()) return;
 
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null)
-            return;
+        final Minecraft mc = Minecraft.getInstance();
+        if(mc.level == null) return;
 
-        BlockRenderDispatcher blockRenderer = mc.getBlockRenderer();
+        final BlockRenderDispatcher blockRenderer = mc.getBlockRenderer();
 
         // Use the PoseStack from context - Fabric says this has proper view matrix
-        PoseStack poseStack = context.matrices();
+        final PoseStack poseStack = context.matrices();
 
         // Use the context's consumer as recommended by Fabric API
         // "vertex coordinates sent to consumers should be relative to the camera"
-        MultiBufferSource consumers = context.consumers();
+        final MultiBufferSource consumers = context.consumers();
 
         // Get camera position using accessor mixin
-        Camera camera = mc.gameRenderer.getMainCamera();
-        Vec3 camPos = ((CameraAccessor) camera).cassiopeia$getPosition();
+        final Camera camera = mc.gameRenderer.getMainCamera();
+        final Vec3 camPos = ((CameraAccessor) camera).cassiopeia$getPosition();
 
         // Wrap to force translucent rendering using context consumers
-        MultiBufferSource ghostSource = type -> new TranslucentVertexConsumer(
+        final MultiBufferSource ghostSource = type -> new TranslucentVertexConsumer(
             consumers.getBuffer(RenderTypes.translucentMovingBlock()), (int) (GHOST_BLOCK_ALPHA_PERCENTAGE * 255)
         );
 
-        for (Highlight highlight : highlights) {
-            BlockPos pos = highlight.pos;
-            BlockState state = highlight.expectedState;
+        for(final Highlight highlight : highlights) {
+            final BlockPos pos = highlight.pos;
+            final BlockState state = highlight.expectedState;
 
-            if (state == null || state.isAir())
+            if(state == null || state.isAir())
                 continue;
 
             poseStack.pushPose();
@@ -115,7 +113,7 @@ public class StructureHighlightRenderer {
 
             try {
                 blockRenderer.renderSingleBlock(state, poseStack, ghostSource, 0xF000F0, OverlayTexture.NO_OVERLAY);
-            } catch (Exception e) {
+            } catch(final Exception e) {
                 // Silently ignore render errors
             }
 
@@ -129,11 +127,11 @@ public class StructureHighlightRenderer {
      * Called from LevelRendererMixin for outline visualization.
      */
     public static void emitGizmos() {
-        if (!hasHighlights())
+        if(!hasHighlights())
             return;
 
-        for (Highlight highlight : highlights) {
-            int color = highlight.type == Structure.StructureError.ErrorType.MISSING
+        for(final Highlight highlight : highlights) {
+            final int color = highlight.type == Structure.StructureError.ErrorType.MISSING
                     ? 0xFFFF3333 // Red outline
                     : 0xFFFFCC33; // Yellow/Orange outline
 
@@ -142,23 +140,23 @@ public class StructureHighlightRenderer {
     }
 
 
-    private static void emitBlockOutline(BlockPos pos, int color) {
-        float width = 2.0f;
-        double x0 = pos.getX() - 0.002;
-        double y0 = pos.getY() - 0.002;
-        double z0 = pos.getZ() - 0.002;
-        double x1 = pos.getX() + 1.002;
-        double y1 = pos.getY() + 1.002;
-        double z1 = pos.getZ() + 1.002;
+    private static void emitBlockOutline(final BlockPos pos, final int color) {
+        final float width = 2.0f;
+        final double x0 = pos.getX() - 0.002;
+        final double y0 = pos.getY() - 0.002;
+        final double z0 = pos.getZ() - 0.002;
+        final double x1 = pos.getX() + 1.002;
+        final double y1 = pos.getY() + 1.002;
+        final double z1 = pos.getZ() + 1.002;
 
-        Vec3 v000 = new Vec3(x0, y0, z0);
-        Vec3 v100 = new Vec3(x1, y0, z0);
-        Vec3 v110 = new Vec3(x1, y0, z1);
-        Vec3 v010 = new Vec3(x0, y0, z1);
-        Vec3 v001 = new Vec3(x0, y1, z0);
-        Vec3 v101 = new Vec3(x1, y1, z0);
-        Vec3 v111 = new Vec3(x1, y1, z1);
-        Vec3 v011 = new Vec3(x0, y1, z1);
+        final Vec3 v000 = new Vec3(x0, y0, z0);
+        final Vec3 v100 = new Vec3(x1, y0, z0);
+        final Vec3 v110 = new Vec3(x1, y0, z1);
+        final Vec3 v010 = new Vec3(x0, y0, z1);
+        final Vec3 v001 = new Vec3(x0, y1, z0);
+        final Vec3 v101 = new Vec3(x1, y1, z0);
+        final Vec3 v111 = new Vec3(x1, y1, z1);
+        final Vec3 v011 = new Vec3(x0, y1, z1);
 
         // Bottom face edges
         Gizmos.line(v000, v100, color, width);
@@ -197,58 +195,58 @@ public class StructureHighlightRenderer {
         private final int alpha;
 
 
-        public TranslucentVertexConsumer(com.mojang.blaze3d.vertex.VertexConsumer delegate, int alpha) {
+        public TranslucentVertexConsumer(final com.mojang.blaze3d.vertex.VertexConsumer delegate, final int alpha) {
             this.delegate = delegate;
             this.alpha = alpha;
         }
 
         @Override
-        public com.mojang.blaze3d.vertex.VertexConsumer addVertex(float x, float y, float z) {
+        public com.mojang.blaze3d.vertex.VertexConsumer addVertex(final float x, final float y, final float z) {
             delegate.addVertex(x, y, z);
             return this;
         }
 
         @Override
-        public com.mojang.blaze3d.vertex.VertexConsumer setColor(int r, int g, int b, int a) {
+        public com.mojang.blaze3d.vertex.VertexConsumer setColor(final int r, final int g, final int b, final int a) {
             delegate.setColor(r, g, b, (a * alpha) / 255);
             return this;
         }
 
         @Override
-        public com.mojang.blaze3d.vertex.VertexConsumer setColor(int color) {
-            int a = (color >> 24) & 0xFF;
-            int r = (color >> 16) & 0xFF;
-            int g = (color >>  8) & 0xFF;
-            int b =  color        & 0xFF;
+        public com.mojang.blaze3d.vertex.VertexConsumer setColor(final int color) {
+            final int a = (color >> 24) & 0xFF;
+            final int r = (color >> 16) & 0xFF;
+            final int g = (color >>  8) & 0xFF;
+            final int b =  color        & 0xFF;
             return setColor(r, g, b, a);
         }
 
         @Override
-        public com.mojang.blaze3d.vertex.VertexConsumer setUv(float u, float v) {
+        public com.mojang.blaze3d.vertex.VertexConsumer setUv(final float u, final float v) {
             delegate.setUv(u, v);
             return this;
         }
 
         @Override
-        public com.mojang.blaze3d.vertex.VertexConsumer setUv1(int u, int v) {
+        public com.mojang.blaze3d.vertex.VertexConsumer setUv1(final int u, final int v) {
             delegate.setUv1(u, v);
             return this;
         }
 
         @Override
-        public com.mojang.blaze3d.vertex.VertexConsumer setUv2(int u, int v) {
+        public com.mojang.blaze3d.vertex.VertexConsumer setUv2(final int u, final int v) {
             delegate.setUv2(u, v);
             return this;
         }
 
         @Override
-        public com.mojang.blaze3d.vertex.VertexConsumer setNormal(float nx, float ny, float nz) {
+        public com.mojang.blaze3d.vertex.VertexConsumer setNormal(final float nx, final float ny, final float nz) {
             delegate.setNormal(nx, ny, nz);
             return this;
         }
 
         @Override
-        public com.mojang.blaze3d.vertex.VertexConsumer setLineWidth(float width) {
+        public com.mojang.blaze3d.vertex.VertexConsumer setLineWidth(final float width) {
             delegate.setLineWidth(width);
             return this;
         }

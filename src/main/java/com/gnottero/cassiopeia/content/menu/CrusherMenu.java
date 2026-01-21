@@ -10,7 +10,6 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 
@@ -24,12 +23,12 @@ public class CrusherMenu extends AbstractCrushingMenu {
 
 
     // Client Constructor - receives BlockPos from ExtendedScreenHandlerType
-    public CrusherMenu(int containerId, Inventory inv, BlockPos pos) {
+    public CrusherMenu(final int containerId, final Inventory inv, final BlockPos pos) {
         this(containerId, inv, inv.player.level().getBlockEntity(pos), new SimpleContainerData(CrusherMachineHandler.DATA_COUNT));
     }
 
     // Server Constructor / Internal
-    public CrusherMenu(int containerId, Inventory inv, BlockEntity entity, ContainerData data) {
+    public CrusherMenu(final int containerId, final Inventory inv, final BlockEntity entity, final ContainerData data) {
         super(ModScreenHandlers.CRUSHER, containerId, inv.player);
         this.blockEntity = (BasicControllerBlockEntity) entity;
         this.data = data;
@@ -52,8 +51,8 @@ public class CrusherMenu extends AbstractCrushingMenu {
 
 
 
-    public boolean isFuel(ItemStack stack) {
-        if (level != null) {
+    public boolean isFuel(final ItemStack stack) {
+        if(level != null) {
             return CrusherMachineHandler.getBurnTime(level.fuelValues(), stack) > 0;
         }
         return false;
@@ -73,30 +72,30 @@ public class CrusherMenu extends AbstractCrushingMenu {
 
     // Returns burn progress as a float 0-1
     public float getBurnProgress() {
-        int litTime     = data.get(0);
-        int litDuration = data.get(1);
+        final int litTime     = data.get(0);
+        final int litDuration = data.get(1);
         return litDuration != 0 ? (float) litTime / (float) litDuration : 0;
     }
 
     // Returns crush progress as a float 0-1
     public float getCrushProgress() {
-        int progress     = data.get(2);
-        int maxProgress = data.get(3);
+        final int progress     = data.get(2);
+        final int maxProgress = data.get(3);
         return maxProgress != 0 ? (float) progress / (float) maxProgress : 0;
     }
 
     public int getScaledProgress() {
-        int progress     = data.get(2);
-        int maxProgress = data.get(3); // DATA_COOKING_TOTAL_TIME
-        int progressArrowSize = 24; // Arrow width in pixels
+        final int progress     = data.get(2);
+        final int maxProgress = data.get(3); // DATA_COOKING_TOTAL_TIME
+        final int progressArrowSize = 24; // Arrow width in pixels
 
         return maxProgress != 0 && progress != 0 ? progress * progressArrowSize / maxProgress : 0;
     }
 
     public int getScaledFuelProgress() {
-        int litTime     = data.get(0);
-        int litDuration = data.get(1); // DATA_LIT_DURATION
-        int burnProgressSize = 14;
+        final int litTime     = data.get(0);
+        final int litDuration = data.get(1); // DATA_LIT_DURATION
+        final int burnProgressSize = 14;
 
         return litDuration != 0 && litTime != 0 ? litTime * burnProgressSize / litDuration : 0;
     }
@@ -114,24 +113,24 @@ public class CrusherMenu extends AbstractCrushingMenu {
     private static final int VANILLA_SLOT_COUNT = 36;
 
     @Override
-    public ItemStack quickMoveStack(Player playerIn, int pIndex) {
-        Slot sourceSlot = slots.get(pIndex);
-        if (sourceSlot == null || !sourceSlot.hasItem()) return ItemStack.EMPTY;
-        ItemStack sourceStack = sourceSlot.getItem();
-        ItemStack copyOfSourceStack = sourceStack.copy();
+    public ItemStack quickMoveStack(final Player playerIn, final int pIndex) {
+        final Slot sourceSlot = slots.get(pIndex);
+        if(!sourceSlot.hasItem()) return ItemStack.EMPTY;
+        final ItemStack sourceStack = sourceSlot.getItem();
+        final ItemStack copyOfSourceStack = sourceStack.copy();
 
-        if (pIndex < VANILLA_FIRST_SLOT_INDEX) {
-            if (!moveItemStackTo(sourceStack, VANILLA_FIRST_SLOT_INDEX, VANILLA_FIRST_SLOT_INDEX + VANILLA_SLOT_COUNT, true)) {
+        if(pIndex < VANILLA_FIRST_SLOT_INDEX) {
+            if(!moveItemStackTo(sourceStack, VANILLA_FIRST_SLOT_INDEX, VANILLA_FIRST_SLOT_INDEX + VANILLA_SLOT_COUNT, true)) {
                 return ItemStack.EMPTY;
             }
         }
-        else if (pIndex >= VANILLA_FIRST_SLOT_INDEX && pIndex < VANILLA_FIRST_SLOT_INDEX + VANILLA_SLOT_COUNT) {
-            if (!moveItemStackTo(sourceStack, TE_INVENTORY_FIRST_SLOT_INDEX, TE_INVENTORY_FIRST_SLOT_INDEX + TE_INVENTORY_SLOT_COUNT, false)) {
+        else if(pIndex < VANILLA_FIRST_SLOT_INDEX + VANILLA_SLOT_COUNT) {
+            if(!moveItemStackTo(sourceStack, TE_INVENTORY_FIRST_SLOT_INDEX, TE_INVENTORY_FIRST_SLOT_INDEX + TE_INVENTORY_SLOT_COUNT, false)) {
                 return ItemStack.EMPTY;
             }
         }
 
-        if (sourceStack.getCount() == 0) {
+        if(sourceStack.getCount() == 0) {
             sourceSlot.set(ItemStack.EMPTY);
         }
         else {
@@ -145,20 +144,20 @@ public class CrusherMenu extends AbstractCrushingMenu {
 
 
     @Override
-    public boolean stillValid(Player player) {
+    public boolean stillValid(final Player player) {
         return blockEntity.stillValid(player);
     }
 
-    private void addPlayerInventory(Inventory playerInventory) {
-        for (int i = 0; i < 3; ++i) {
-            for (int l = 0; l < 9; ++l) {
+    private void addPlayerInventory(final Inventory playerInventory) {
+        for(int i = 0; i < 3; ++i) {
+            for(int l = 0; l < 9; ++l) {
                 this.addSlot(new Slot(playerInventory, l + i * 9 + 9, 8 + l * 18, 84 + i * 18));
             }
         }
     }
 
-    private void addPlayerHotbar(Inventory playerInventory) {
-        for (int i = 0; i < 9; ++i) {
+    private void addPlayerHotbar(final Inventory playerInventory) {
+        for(int i = 0; i < 9; ++i) {
             this.addSlot(new Slot(playerInventory, i, 8 + i * 18, 142));
         }
     }

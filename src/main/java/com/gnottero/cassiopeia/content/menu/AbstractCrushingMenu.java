@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class AbstractCrushingMenu extends AbstractContainerMenu {
     protected final Level level;
 
-    protected AbstractCrushingMenu(@Nullable MenuType<?> menuType, int containerId, Player player) {
+    protected AbstractCrushingMenu(@Nullable final MenuType<?> menuType, final int containerId, final Player player) {
         super(menuType, containerId);
         this.level = player.level();
     }

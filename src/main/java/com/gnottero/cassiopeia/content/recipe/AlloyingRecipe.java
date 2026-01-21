@@ -28,12 +28,12 @@ public class AlloyingRecipe implements Recipe<AlloyingRecipeInput> {
 
 
     public AlloyingRecipe(
-        String group,
-        Ingredient inputA,
-        Ingredient inputB,
-        ItemStack result,
-        float experience,
-        int alloyingTime
+        final String group,
+        final Ingredient inputA,
+        final Ingredient inputB,
+        final ItemStack result,
+        final float experience,
+        final int alloyingTime
     ) {
         this.group = group;
         this.inputA = inputA;
@@ -47,16 +47,16 @@ public class AlloyingRecipe implements Recipe<AlloyingRecipeInput> {
 
 
     @Override
-    public boolean matches(AlloyingRecipeInput input, Level level) {
+    public boolean matches(final AlloyingRecipeInput input, final Level level) {
 
         // Check if inputs match in either order
-        boolean matchAB = inputA.test(input.getInputA()) && inputB.test(input.getInputB());
-        boolean matchBA = inputA.test(input.getInputB()) && inputB.test(input.getInputA());
+        final boolean matchAB = inputA.test(input.getInputA()) && inputB.test(input.getInputB());
+        final boolean matchBA = inputA.test(input.getInputB()) && inputB.test(input.getInputA());
         return matchAB || matchBA;
     }
 
     @Override
-    public @NotNull ItemStack assemble(AlloyingRecipeInput input, HolderLookup.Provider provider) {
+    public @NotNull ItemStack assemble(final AlloyingRecipeInput input, final HolderLookup.Provider provider) {
         return result.copy();
     }
 
@@ -112,7 +112,7 @@ public class AlloyingRecipe implements Recipe<AlloyingRecipeInput> {
     }
 
     public NonNullList<Ingredient> placementIngredients() {
-        NonNullList<Ingredient> list = NonNullList.create();
+        final NonNullList<Ingredient> list = NonNullList.create();
         list.add(inputA);
         list.add(inputB);
         return list;

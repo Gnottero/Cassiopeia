@@ -9,7 +9,7 @@ public class InvalidStructureException extends Exception {
     }
 
     // Constructor with message
-    public InvalidStructureException(String message) {
+    public InvalidStructureException(final String message) {
         super(message);
     }
 }

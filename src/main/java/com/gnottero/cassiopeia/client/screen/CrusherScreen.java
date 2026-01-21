@@ -29,7 +29,7 @@ public class CrusherScreen extends AbstractContainerScreen<CrusherMenu> {
 
 
 
-    public CrusherScreen(CrusherMenu menu, Inventory playerInventory, Component title) {
+    public CrusherScreen(final CrusherMenu menu, final Inventory playerInventory, final Component title) {
         super(menu, playerInventory, title);
     }
 
@@ -42,16 +42,16 @@ public class CrusherScreen extends AbstractContainerScreen<CrusherMenu> {
 
 
     @Override
-    protected void renderLabels(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY) {
+    protected void renderLabels(@NotNull final GuiGraphics guiGraphics, final int mouseX, final int mouseY) {
         guiGraphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, this.titleLabelColor, false);
         guiGraphics.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, this.inventoryLabelColor, false);
     }
 
 
     @Override
-    protected void renderBg(@NotNull GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
-        int x = this.leftPos;
-        int y = this.topPos;
+    protected void renderBg(@NotNull final GuiGraphics guiGraphics, final float partialTick, final int mouseX, final int mouseY) {
+        final int x = this.leftPos;
+        final int y = this.topPos;
 
         // Draw main background
         guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE,
@@ -62,15 +62,15 @@ public class CrusherScreen extends AbstractContainerScreen<CrusherMenu> {
         );
 
         // Draw burn indicator (flame) - sprite is 14x14
-        if (this.menu.isBurning()) {
-            float burnProgress = this.menu.getBurnProgress();
-            int burnHeight = (int) Math.ceil(14 * burnProgress);
-            if (burnHeight > 0) {
+        if(this.menu.isBurning()) {
+            final float burnProgress = this.menu.getBurnProgress();
+            final int burnHeight = (int) Math.ceil(14 * burnProgress);
+            if(burnHeight > 0) {
 
                 // Flame sprite position: x+56, y+36 (bottom of flame area)
                 // Sprite draws from bottom up
-                int flameX = x + 56;
-                int flameY = y + 36 + 14 - burnHeight;
+                final int flameX = x + 56;
+                final int flameY = y + 36 + 14 - burnHeight;
 
                 // Use blit with sprite texture - draw portion of sprite from bottom
                 guiGraphics.blit(RenderPipelines.GUI_TEXTURED, LIT_PROGRESS_SPRITE,
@@ -84,9 +84,9 @@ public class CrusherScreen extends AbstractContainerScreen<CrusherMenu> {
 
         // Draw progress arrow - sprite dimensions (get from image, appears to be
         // ~24x17)
-        float crushProgress = this.menu.getCrushProgress();
-        int progressWidth = (int) Math.ceil(24 * crushProgress);
-        if (progressWidth > 0) {
+        final float crushProgress = this.menu.getCrushProgress();
+        final int progressWidth = (int) Math.ceil(24 * crushProgress);
+        if(progressWidth > 0) {
             // Arrow position: x+79, y+34
             guiGraphics.blit(RenderPipelines.GUI_TEXTURED, CRUSH_PROGRESS_SPRITE,
                 x + 79, y + 34,    // dest x, y
@@ -99,24 +99,24 @@ public class CrusherScreen extends AbstractContainerScreen<CrusherMenu> {
 
 
     @Override
-    public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    public void render(@NotNull final GuiGraphics guiGraphics, final int mouseX, final int mouseY, final float partialTick) {
         super.render(guiGraphics, mouseX, mouseY, partialTick);
         this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
 
 
     // Setters for label colors
-    public void setTitleLabelColor(int color) {
+    public void setTitleLabelColor(final int color) {
         this.titleLabelColor = color;
     }
 
 
-    public void setInventoryLabelColor(int color) {
+    public void setInventoryLabelColor(final int color) {
         this.inventoryLabelColor = color;
     }
 
 
-    public void setLabelColors(int titleColor, int inventoryColor) {
+    public void setLabelColors(final int titleColor, final int inventoryColor) {
         this.titleLabelColor = titleColor;
         this.inventoryLabelColor = inventoryColor;
     }

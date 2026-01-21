@@ -1,15 +1,13 @@
 package com.gnottero.cassiopeia.content.block.entity;
 
-import com.gnottero.cassiopeia.structures.Structure;
-import com.gnottero.cassiopeia.structures.StructureManager;
+import com.gnottero.cassiopeia.structures.IncrementalStructureValidator;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -19,10 +17,6 @@ import net.minecraft.world.level.storage.ValueOutput;
 import org.apache.logging.log4j.util.Strings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Vector3d;
-
-import java.util.List;
-import java.util.Optional;
 
 
 
@@ -31,16 +25,17 @@ public abstract class AbstractControllerBlockEntity extends BlockEntity {
 
     private static final String STRUCTURE_ID_KEY = "structure_id";
     private String structureId = Strings.EMPTY;
+    private boolean registered = false;
 
 
 
 
-    protected AbstractControllerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
+    protected AbstractControllerBlockEntity(final BlockEntityType<?> type, final BlockPos pos, final BlockState state) {
         super(type, pos, state);
     }
 
 
-    public void setStructureId(String id) {
+    public void setStructureId(final String id) {
         this.structureId = id;
         this.setChanged();
     }
@@ -52,16 +47,16 @@ public abstract class AbstractControllerBlockEntity extends BlockEntity {
 
 
     @Override
-    protected void saveAdditional(@NotNull ValueOutput output) {
+    protected void saveAdditional(@NotNull final ValueOutput output) {
         super.saveAdditional(output);
-        if (!structureId.isEmpty()) {
+        if(!structureId.isEmpty()) {
             output.putString(STRUCTURE_ID_KEY, structureId);
         }
     }
 
 
     @Override
-    protected void loadAdditional(@NotNull ValueInput input) {
+    protected void loadAdditional(@NotNull final ValueInput input) {
         super.loadAdditional(input);
         this.structureId = input.getStringOr(STRUCTURE_ID_KEY, Strings.EMPTY);
     }
@@ -75,41 +70,29 @@ public abstract class AbstractControllerBlockEntity extends BlockEntity {
 
 
     @Override
-    public @NotNull CompoundTag getUpdateTag(HolderLookup.@NotNull Provider registries) {
+    public @NotNull CompoundTag getUpdateTag(final HolderLookup.@NotNull Provider registries) {
         return this.saveWithoutMetadata(registries);
     }
 
 
-    public boolean verifyStructure(Level level, BlockPos pos) {
-        if (structureId.isEmpty()) {
-            return false;
+
+
+    public boolean verifyStructure() {
+        //! ensureRegistered is called by validateStructure
+        return IncrementalStructureValidator.validateStructure(level, getBlockPos(), this);
+    }
+
+    public void ensureRegistered() {
+        if(!registered && level != null && !level.isClientSide()) {
+            IncrementalStructureValidator.registerController(level, getBlockPos());
+            registered = true;
         }
+    }
 
-        Optional<Structure> structureOpt = StructureManager.getStructure(structureId);
-        if (structureOpt.isEmpty()) {
-            return false;
+    public void invalidateStructureCache() {
+        if(registered) {
+            IncrementalStructureValidator.unregisterController(level, getBlockPos());
+            registered = false;
         }
-
-        Structure structure = structureOpt.get();
-
-        // For single-block structures (just the controller), skip complex verification
-        // Check if structure only contains the controller block at offset [0,0,0]
-        List<Structure.BlockEntry> blocks = structure.getBlocks();
-        if (blocks.size() == 1) {
-            Structure.BlockEntry entry = blocks.get(0);
-            Vector3d offset = entry.getOffset();
-
-            // If the only block is at offset 0,0,0 - this is a single-block machine
-            if (offset.get(0) == 0.0 && offset.get(1) == 0.0 && offset.get(2) == 0.0) {
-
-                // Just verify the controller block matches
-                String expectedBlockId = entry.getBlock();
-                String actualBlockId = BuiltInRegistries.BLOCK.getKey(level.getBlockState(pos).getBlock()).toString();
-                return actualBlockId.equals(expectedBlockId);
-            }
-        }
-
-        // For multi-block structures, use full verification
-        return structure.verify(level, pos);
     }
 }

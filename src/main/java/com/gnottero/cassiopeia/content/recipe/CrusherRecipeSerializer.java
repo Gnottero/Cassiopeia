@@ -38,12 +38,12 @@ public class CrusherRecipeSerializer implements RecipeSerializer<CrusherRecipe> 
             buf.writeInt(recipe.getCrushingTime());
         },
         buf -> {
-            String group = buf.readUtf();
-            CrushingBookCategory category = buf.readEnum(CrushingBookCategory.class);
-            Ingredient input = Ingredient.CONTENTS_STREAM_CODEC.decode(buf);
-            ItemStack output = ItemStack.STREAM_CODEC.decode(buf);
-            float experience = buf.readFloat();
-            int crushingTime = buf.readInt();
+            final String group = buf.readUtf();
+            final CrushingBookCategory category = buf.readEnum(CrushingBookCategory.class);
+            final Ingredient input = Ingredient.CONTENTS_STREAM_CODEC.decode(buf);
+            final ItemStack output = ItemStack.STREAM_CODEC.decode(buf);
+            final float experience = buf.readFloat();
+            final int crushingTime = buf.readInt();
             return new CrusherRecipe(group, category, input, output, experience, crushingTime);
         }
     );

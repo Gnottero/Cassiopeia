@@ -31,12 +31,12 @@ public class AlloyKilnMenu extends AbstractContainerMenu {
 
 
     // Client Constructor
-    public AlloyKilnMenu(int containerId, Inventory inv, BlockPos pos) {
+    public AlloyKilnMenu(final int containerId, final Inventory inv, final BlockPos pos) {
         this(containerId, inv, inv.player.level().getBlockEntity(pos), new SimpleContainerData(AlloyKilnMachineHandler.DATA_COUNT));
     }
 
     // Server Constructor
-    public AlloyKilnMenu(int containerId, Inventory inv, BlockEntity entity, ContainerData data) {
+    public AlloyKilnMenu(final int containerId, final Inventory inv, final BlockEntity entity, final ContainerData data) {
         super(ModScreenHandlers.ALLOY_KILN, containerId);
         this.blockEntity = (BasicControllerBlockEntity) entity;
         this.level = inv.player.level();
@@ -61,7 +61,7 @@ public class AlloyKilnMenu extends AbstractContainerMenu {
 
 
 
-    public boolean isFuel(ItemStack stack) {
+    public boolean isFuel(final ItemStack stack) {
         return level != null && level.fuelValues().burnDuration(stack) > 0;
     }
 
@@ -74,28 +74,28 @@ public class AlloyKilnMenu extends AbstractContainerMenu {
     }
 
     public float getBurnProgress() {
-        int litTime     = data.get(AlloyKilnMachineHandler.DATA_LIT_TIME);
-        int litDuration = data.get(AlloyKilnMachineHandler.DATA_LIT_DURATION);
+        final int litTime     = data.get(AlloyKilnMachineHandler.DATA_LIT_TIME);
+        final int litDuration = data.get(AlloyKilnMachineHandler.DATA_LIT_DURATION);
         return litDuration != 0 ? (float) litTime / (float) litDuration : 0;
     }
 
     public float getAlloyProgress() {
-        int progress    = data.get(AlloyKilnMachineHandler.DATA_ALLOYING_PROGRESS);
-        int maxProgress = data.get(AlloyKilnMachineHandler.DATA_ALLOYING_TOTAL_TIME);
+        final int progress    = data.get(AlloyKilnMachineHandler.DATA_ALLOYING_PROGRESS);
+        final int maxProgress = data.get(AlloyKilnMachineHandler.DATA_ALLOYING_TOTAL_TIME);
         return maxProgress != 0 ? (float) progress / (float) maxProgress : 0;
     }
 
     public int getScaledProgress() {
-        int progress    = data.get(AlloyKilnMachineHandler.DATA_ALLOYING_PROGRESS);
-        int maxProgress = data.get(AlloyKilnMachineHandler.DATA_ALLOYING_TOTAL_TIME);
-        int progressArrowSize = 24;
+        final int progress    = data.get(AlloyKilnMachineHandler.DATA_ALLOYING_PROGRESS);
+        final int maxProgress = data.get(AlloyKilnMachineHandler.DATA_ALLOYING_TOTAL_TIME);
+        final int progressArrowSize = 24;
         return maxProgress != 0 && progress != 0 ? progress * progressArrowSize / maxProgress : 0;
     }
 
     public int getScaledFuelProgress() {
-        int litTime     = data.get(AlloyKilnMachineHandler.DATA_LIT_TIME);
-        int litDuration = data.get(AlloyKilnMachineHandler.DATA_LIT_DURATION);
-        int burnProgressSize = 14;
+        final int litTime     = data.get(AlloyKilnMachineHandler.DATA_LIT_TIME);
+        final int litDuration = data.get(AlloyKilnMachineHandler.DATA_LIT_DURATION);
+        final int burnProgressSize = 14;
         return litDuration != 0 && litTime != 0 ? litTime * burnProgressSize / litDuration : 0;
     }
 
@@ -108,24 +108,24 @@ public class AlloyKilnMenu extends AbstractContainerMenu {
     private static final int VANILLA_SLOT_COUNT = 36;
 
     @Override
-    public ItemStack quickMoveStack(Player playerIn, int pIndex) {
-        Slot sourceSlot = slots.get(pIndex);
-        if (sourceSlot == null || !sourceSlot.hasItem()) return ItemStack.EMPTY;
-        ItemStack sourceStack = sourceSlot.getItem();
-        ItemStack copyOfSourceStack = sourceStack.copy();
+    public ItemStack quickMoveStack(final Player playerIn, final int pIndex) {
+        final Slot sourceSlot = slots.get(pIndex);
+        if(!sourceSlot.hasItem()) return ItemStack.EMPTY;
+        final ItemStack sourceStack = sourceSlot.getItem();
+        final ItemStack copyOfSourceStack = sourceStack.copy();
 
-        if (pIndex < VANILLA_FIRST_SLOT_INDEX) {
-            if (!moveItemStackTo(sourceStack, VANILLA_FIRST_SLOT_INDEX, VANILLA_FIRST_SLOT_INDEX + VANILLA_SLOT_COUNT, true)) {
+        if(pIndex < VANILLA_FIRST_SLOT_INDEX) {
+            if(!moveItemStackTo(sourceStack, VANILLA_FIRST_SLOT_INDEX, VANILLA_FIRST_SLOT_INDEX + VANILLA_SLOT_COUNT, true)) {
                 return ItemStack.EMPTY;
             }
         }
-        else if (pIndex >= VANILLA_FIRST_SLOT_INDEX && pIndex < VANILLA_FIRST_SLOT_INDEX + VANILLA_SLOT_COUNT) {
-            if (!moveItemStackTo(sourceStack, TE_INVENTORY_FIRST_SLOT_INDEX, TE_INVENTORY_FIRST_SLOT_INDEX + TE_INVENTORY_SLOT_COUNT, false)) {
+        else if(pIndex < VANILLA_FIRST_SLOT_INDEX + VANILLA_SLOT_COUNT) {
+            if(!moveItemStackTo(sourceStack, TE_INVENTORY_FIRST_SLOT_INDEX, TE_INVENTORY_FIRST_SLOT_INDEX + TE_INVENTORY_SLOT_COUNT, false)) {
                 return ItemStack.EMPTY;
             }
         }
 
-        if (sourceStack.getCount() == 0) {
+        if(sourceStack.getCount() == 0) {
             sourceSlot.set(ItemStack.EMPTY);
         }
         else {
@@ -139,20 +139,20 @@ public class AlloyKilnMenu extends AbstractContainerMenu {
 
 
     @Override
-    public boolean stillValid(Player player) {
+    public boolean stillValid(final Player player) {
         return blockEntity.stillValid(player);
     }
 
-    private void addPlayerInventory(Inventory playerInventory) {
-        for (int i = 0; i < 3; ++i) {
-            for (int l = 0; l < 9; ++l) {
+    private void addPlayerInventory(final Inventory playerInventory) {
+        for(int i = 0; i < 3; ++i) {
+            for(int l = 0; l < 9; ++l) {
                 this.addSlot(new Slot(playerInventory, l + i * 9 + 9, 8 + l * 18, 84 + i * 18));
             }
         }
     }
 
-    private void addPlayerHotbar(Inventory playerInventory) {
-        for (int i = 0; i < 9; ++i) {
+    private void addPlayerHotbar(final Inventory playerInventory) {
+        for(int i = 0; i < 9; ++i) {
             this.addSlot(new Slot(playerInventory, i, 8 + i * 18, 142));
         }
     }

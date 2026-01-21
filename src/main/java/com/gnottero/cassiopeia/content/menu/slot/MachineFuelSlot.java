@@ -16,25 +16,25 @@ import net.minecraft.world.level.Level;
 public class MachineFuelSlot extends Slot {
     private final Level level;
 
-    public MachineFuelSlot(Level level, Container container, int slot, int x, int y) {
+    public MachineFuelSlot(final Level level, final Container container, final int slot, final int x, final int y) {
         super(container, slot, x, y);
         this.level = level;
     }
 
     @Override
-    public boolean mayPlace(ItemStack itemStack) {
-        if (level != null) {
+    public boolean mayPlace(final ItemStack itemStack) {
+        if(level != null) {
             return level.fuelValues().burnDuration(itemStack) > 0 || isBucket(itemStack);
         }
         return isBucket(itemStack);
     }
 
     @Override
-    public int getMaxStackSize(ItemStack itemStack) {
+    public int getMaxStackSize(final ItemStack itemStack) {
         return isBucket(itemStack) ? 1 : super.getMaxStackSize(itemStack);
     }
 
-    public static boolean isBucket(ItemStack itemStack) {
+    public static boolean isBucket(final ItemStack itemStack) {
         return itemStack.is(Items.BUCKET);
     }
 }

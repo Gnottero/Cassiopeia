@@ -1,6 +1,7 @@
 package com.gnottero.cassiopeia.structures;
 
 import com.gnottero.cassiopeia.content.block.ModBlocks;
+import com.gnottero.cassiopeia.utils.Utils;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.fabricmc.loader.api.FabricLoader;
@@ -10,10 +11,9 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
-import net.minecraft.world.phys.Vec3;
 
 import org.jetbrains.annotations.NotNull;
-import org.joml.Vector3d;
+import org.joml.Vector3i;
 
 import java.io.File;
 import java.io.FileReader;
@@ -39,12 +39,19 @@ public class StructureManager {
     private static final File STRUCTURE_DIR = FabricLoader.getInstance().getConfigDir().resolve("cassiopeia/structures").toFile();
 
     static {
-        if (!STRUCTURE_DIR.exists()) {
+        if(!STRUCTURE_DIR.exists()) {
             STRUCTURE_DIR.mkdirs();
         }
     }
 
 
+
+
+    //FIXME fix keepAir. structures should contain this parameter and store air instead of skipping air blocks on saves.
+    //FIXME This allows the new structure verification to work well. check this parameter when verifying air
+
+    //FIXME alternatively, save structures but replace air with a special "any" block instance, so that the verification method can match it properly.
+    //FIXME the number of blocks must always fill the xyz volume, otherwise verification breaks
 
     /**
      * Scans the specified area and saves it as a structure.
@@ -56,23 +63,23 @@ public class StructureManager {
      * @throws InvalidStructureException if the structure doesn't contain a controller or it contains more than one.
      */
     @SuppressWarnings("java:S1119")
-    public static void saveStructure(Level level, BlockPos from, BlockPos to, String identifier, boolean keepAir) throws InvalidStructureException {
+    public static void saveStructure(final Level level, final BlockPos from, final BlockPos to, final String identifier, final boolean keepAir) throws InvalidStructureException {
 
         // Find bounding box
-        int minX = Math.min(from.getX(), to.getX());
-        int minY = Math.min(from.getY(), to.getY());
-        int minZ = Math.min(from.getZ(), to.getZ());
-        int maxX = Math.max(from.getX(), to.getX());
-        int maxY = Math.max(from.getY(), to.getY());
-        int maxZ = Math.max(from.getZ(), to.getZ());
+        final int minX = Math.min(from.getX(), to.getX());
+        final int minY = Math.min(from.getY(), to.getY());
+        final int minZ = Math.min(from.getZ(), to.getZ());
+        final int maxX = Math.max(from.getX(), to.getX());
+        final int maxY = Math.max(from.getY(), to.getY());
+        final int maxZ = Math.max(from.getZ(), to.getZ());
 
         // Find controller block
         BlockPos controllerPos = null;
         BlockState controllerState = null;
         controllerSearch:
-        for (int x = minX; x <= maxX; x++) {
-            for (int y = minY; y <= maxY; y++) {
-                for (int z = minZ; z <= maxZ; z++) {
+        for(int x = minX; x <= maxX; x++) {
+            for(int y = minY; y <= maxY; y++) {
+                for(int z = minZ; z <= maxZ; z++) {
                     final BlockPos pos = new BlockPos(x, y, z);
                     final var state = level.getBlockState(pos);
                     if(state.getBlock() == ModBlocks.BASIC_CONTROLLER) {
@@ -88,86 +95,84 @@ public class StructureManager {
         }
 
 
-        Property<?> facingProp = controllerState.getBlock().getStateDefinition().getProperty("facing");
-        Object facingVal = (facingProp != null) ? controllerState.getValue(facingProp) : null;
+        final Property<?> facingProp = controllerState.getBlock().getStateDefinition().getProperty("facing");
+        final Object facingVal = (facingProp != null) ? controllerState.getValue(facingProp) : null;
 
-        if (!(facingVal instanceof Direction)) {
+        if(!(facingVal instanceof Direction)) {
             throw new RuntimeException("Controller block must have a facing property");
         }
 
-        Direction controllerFacing = (Direction) facingVal;
-
-        // Coordinate system basis
-        BlockUtils.Basis basis = BlockUtils.getBasis(controllerFacing);
-        Vec3 front = basis.front();
-        Vec3 up = basis.up();
-        Vec3 right = basis.right();
-
-        Structure structure = new Structure();
-        String controllerId = BuiltInRegistries.BLOCK.getKey(controllerState.getBlock()).toString();
+        // For each block
+        final Direction controllerFacing = (Direction) facingVal;
+        final Structure structure = new Structure();
+        final String controllerId = BuiltInRegistries.BLOCK.getKey(controllerState.getBlock()).toString();
         structure.setController(controllerId);
+        for(int x = minX; x <= maxX; x++) {
+            for(int y = minY; y <= maxY; y++) {
+                for(int z = minZ; z <= maxZ; z++) {
 
-        for (int x = minX; x <= maxX; x++) {
-            for (int y = minY; y <= maxY; y++) {
-                for (int z = minZ; z <= maxZ; z++) {
-                    BlockPos pos = new BlockPos(x, y, z);
-                    BlockState state = level.getBlockState(pos);
+                    // Skip controller
+                    final BlockPos pos = new BlockPos(x, y, z);
+                    final BlockState state = level.getBlockState(pos);
                     if(state.getBlock() == ModBlocks.BASIC_CONTROLLER && !pos.equals(controllerPos)) {
                         throw new InvalidStructureException("The structure contains more than one controller");
                     }
 
-                    if (state.isAir() && !keepAir) {
+                    //FIXME
+                    //FIXME
+                    //FIXME
+                    //FIXME
+                    // Skip air if required
+                    if(state.isAir() && !keepAir) {
                         continue;
                     }
 
-                    // Calculate relative offset
-                    Vec3 delta = new Vec3((float)x - controllerPos.getX(), (float)y - controllerPos.getY(), (float)z - controllerPos.getZ());
-
-                    double offFront = delta.dot(front);
-                    double offUp = delta.dot(up);
-                    double offRight = delta.dot(right);
-
-                    Vector3d offset = new Vector3d(offFront, offUp, offRight);
-
-                    String blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
-                    Map<String, String> properties = BlockUtils.processBlockProperties(state, controllerFacing);
-
+                    // Calculate relative offset and add the block to the structure
+                    final Vector3i offset = Utils.globalToLocal(pos, controllerPos, controllerFacing);
+                    final String blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
+                    final Map<String, String> properties = Utils.processBlockProperties(state, controllerFacing);
                     structure.addBlock(new Structure.BlockEntry(blockId, offset, properties));
                 }
             }
         }
 
         // Save to file
-        File file = new File(STRUCTURE_DIR, identifier + ".json");
+        final File file = new File(STRUCTURE_DIR, identifier + ".json");
         writeStructureToFile(structure, file);
-        CACHE.remove(identifier); // Validate cache
+
+        // Update cache and refresh validation structures of all active controllers
+        IncrementalStructureValidator.unregisterMatching(identifier);
+        CACHE.put(identifier, structure);
     }
 
 
 
 
-    @NotNull
-    public static Optional<Structure> getStructure(@NotNull String identifier) {
-        if (CACHE.containsKey(identifier)) {
-            return Optional.ofNullable(CACHE.get(identifier));
+
+
+
+
+    public static @NotNull Optional<Structure> getStructure(@NotNull final String identifier) {
+        if(CACHE.containsKey(identifier)) {
+            return Optional.of(CACHE.get(identifier));
         }
 
-        File file = new File(STRUCTURE_DIR, identifier + ".json");
-        if (!file.exists()) {
+        final File file = new File(STRUCTURE_DIR, identifier + ".json");
+        if(!file.exists()) {
             createDefaultIfKnown(identifier, file);
         }
 
-        if (!file.exists()) {
+        if(!file.exists()) {
             return Optional.empty();
         }
 
         try (Reader reader = new FileReader(file)) {
-            Structure structure = GSON.fromJson(reader, Structure.class);
-            if (structure != null) {
+            final Structure structure = GSON.fromJson(reader, Structure.class);
+            if(structure != null) {
                 CACHE.put(identifier, structure);
                 return Optional.of(structure);
             }
-        } catch (IOException e) {
+        } catch(final IOException e) {
             e.printStackTrace();
         }
         return Optional.empty();
@@ -176,20 +181,18 @@ public class StructureManager {
 
 
 
-    private static void createDefaultIfKnown(String identifier, File file) {
-        if (!identifier.equals("crusher")) {
+    private static void createDefaultIfKnown(final String identifier, final File file) {
+        if(!identifier.equals("crusher")) {
             return;
         }
 
-        String controllerId = "cassiopeia:basic_controller";
-        Structure structure = new Structure();
+        final String controllerId = "cassiopeia:basic_controller";
+        final Structure structure = new Structure();
         structure.setController(controllerId);
-
-        Vector3d offset = new Vector3d(0d);
 
         // Add controller itself as the single block
         // Note: properties map can be empty to match any properties
-        structure.addBlock(new Structure.BlockEntry(controllerId, offset, new java.util.HashMap<>()));
+        structure.addBlock(new Structure.BlockEntry(controllerId, new Vector3i(0), new java.util.HashMap<>()));
 
         writeStructureToFile(structure, file);
     }
@@ -197,10 +200,10 @@ public class StructureManager {
 
 
 
-    private static void writeStructureToFile(Structure structure, File file) {
+    private static void writeStructureToFile(final Structure structure, final File file) {
         try (Writer writer = new FileWriter(file)) {
             GSON.toJson(structure, writer);
-        } catch (IOException e) {
+        } catch(final IOException e) {
             e.printStackTrace();
             throw new RuntimeException("Failed to save structure file", e);
         }
@@ -211,18 +214,18 @@ public class StructureManager {
 
     @NotNull
     public static Set<String> getAvailableStructures() {
-        if (!STRUCTURE_DIR.exists()) {
+        if(!STRUCTURE_DIR.exists()) {
             return Collections.emptySet();
         }
 
-        File[] files = STRUCTURE_DIR.listFiles((dir, name) -> name.endsWith(".json"));
-        if (files == null) {
+        final File[] files = STRUCTURE_DIR.listFiles((dir, name) -> name.endsWith(".json"));
+        if(files == null) {
             return Collections.emptySet();
         }
 
-        Set<String> structures = new HashSet<>();
-        for (File file : files) {
-            String name = file.getName();
+        final Set<String> structures = new HashSet<>();
+        for(final File file : files) {
+            final String name = file.getName();
             structures.add(name.substring(0, name.length() - 5));
         }
         return structures;

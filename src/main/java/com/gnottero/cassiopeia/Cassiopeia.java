@@ -2,6 +2,8 @@ package com.gnottero.cassiopeia;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.minecraft.server.MinecraftServer;
 
 import com.gnottero.cassiopeia.command.CassiopeiaCommands;
 import com.gnottero.cassiopeia.content.block.ModBlocks;
@@ -13,6 +15,7 @@ import com.gnottero.cassiopeia.content.recipe.ModRecipes;
 import com.gnottero.cassiopeia.content.screen.ModScreenHandlers;
 import com.gnottero.cassiopeia.network.StructureHighlightPayload;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,11 +30,14 @@ public class Cassiopeia implements ModInitializer {
     // That way, it's clear which mod wrote info, warnings, and errors.
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
+    private static MinecraftServer server;
+    public static @NotNull MinecraftServer getServer() { return server; }
+
     @Override
     public void onInitialize() {
-        // This code runs as soon as Minecraft is in a mod-load-ready state.
-        // However, some things (like resources) may still be uninitialized.
         // ModRegistry.registerCreativeTabs();
+
+        ServerLifecycleEvents.SERVER_STARTED.register(_server -> { server = _server; });
 
         net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry.playS2C().register(
             StructureHighlightPayload.TYPE,
