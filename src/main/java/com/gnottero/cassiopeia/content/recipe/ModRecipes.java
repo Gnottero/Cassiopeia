@@ -74,8 +74,10 @@ public class ModRecipes {
         Cassiopeia.LOGGER.info("Registering Recipes for " + Cassiopeia.MOD_ID);
 
         // Force load inner class
-        @SuppressWarnings("unused")
-        final
-        Class<?> __unused = Categories.class;
+        try {
+            Class.forName("com.gnottero.cassiopeia.content.recipe.ModRecipes.Categories");
+        } catch(ClassNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 }
