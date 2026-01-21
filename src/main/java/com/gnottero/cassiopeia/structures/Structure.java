@@ -82,18 +82,18 @@ public class Structure {
 
 
     public void ensureInitialized() {
-        if (initialized) return;
+        if(initialized) return;
 
         // Initialize controller
-        if (controller != null && !controller.isEmpty()) {
+        if(controller != null && !controller.isEmpty()) {
             Identifier id = Identifier.tryParse(controller);
-            if (id != null) {
+            if(id != null) {
                 cachedControllerBlock = BuiltInRegistries.BLOCK.getOptional(id).orElse(null);
             }
         }
 
         // Initialize all the blocks and calculate the corners
-        for (BlockEntry entry : blocks) {
+        for(BlockEntry entry : blocks) {
             entry.initialize();
             minCorner.min(entry.getOffset());
             maxCorner.max(entry.getOffset());
@@ -121,7 +121,7 @@ public class Structure {
     //  * @return A list of errors found. If stopOnFirstError is true, the list will contain at most one error.
     //  */
     // private List<StructureError> validate(Level level, BlockPos controllerPos, boolean stopOnFirstError) {
-    //     if (level == null || controllerPos == null) {
+    //     if(level == null || controllerPos == null) {
     //         return Collections.singletonList(new StructureError(controllerPos, StructureError.ErrorType.MISSING, "Invalid arguments", null, null));
     //     }
     //     ensureInitialized();
@@ -130,9 +130,9 @@ public class Structure {
 
     //     // Check Controller
     //     BlockState controllerState = level.getBlockState(controllerPos);
-    //     if (cachedControllerBlock != null && !controllerState.is(cachedControllerBlock)) {
+    //     if(cachedControllerBlock != null && !controllerState.is(cachedControllerBlock)) {
     //         errors.add(new StructureError(controllerPos, StructureError.ErrorType.MISSING, controller, null, null));
-    //         if (stopOnFirstError) return errors;
+    //         if(stopOnFirstError) return errors;
     //     }
 
 
@@ -141,24 +141,24 @@ public class Structure {
     //         Direction controllerFacing = getControllerFacing(controllerState);
     //         BlockUtils.Basis basis = BlockUtils.getBasis(controllerFacing);
 
-    //         for (BlockEntry entry : blocks) {
+    //         for(BlockEntry entry : blocks) {
     //             BlockPos targetPos = BlockUtils.calculateTargetPos(controllerPos, entry.getOffset(), basis);
     //             BlockState targetState = level.getBlockState(targetPos);
 
     //             // 1. Check Block Type
-    //             if (!targetState.is(entry.cachedBlock)) {
+    //             if(!targetState.is(entry.cachedBlock)) {
     //                 BlockState expectedStateForRender = buildDesiredBlockState(entry, controllerFacing);
     //                 errors.add(new StructureError(targetPos, StructureError.ErrorType.MISSING, entry.getBlock(), null, expectedStateForRender));
-    //                 if (stopOnFirstError) return errors;
+    //                 if(stopOnFirstError) return errors;
     //                 else continue;
     //             }
 
     //             // 2. Check Properties
     //             Map<String, String> mismatchedProps = checkProperties(targetState, entry, controllerFacing);
-    //             if (!mismatchedProps.isEmpty()) {
+    //             if(!mismatchedProps.isEmpty()) {
     //                 BlockState expectedStateForRender = buildDesiredBlockState(entry, controllerFacing);
     //                 errors.add(new StructureError(targetPos, StructureError.ErrorType.WRONG_STATE, entry.getBlock(), mismatchedProps, expectedStateForRender));
-    //                 if (stopOnFirstError) return errors;
+    //                 if(stopOnFirstError) return errors;
     //             }
     //         }
     //     }
@@ -171,13 +171,13 @@ public class Structure {
     //TODO this should prob be a public method in a utility class
     public static Direction getControllerFacing(BlockState controllerState) {
         Property<?> facingProp = controllerState.getBlock().getStateDefinition().getProperty("facing");
-        if (facingProp == null) {
+        if(facingProp == null) {
             facingProp = controllerState.getBlock().getStateDefinition().getProperty("horizontal_facing");
         }
 
-        if (facingProp != null) {
+        if(facingProp != null) {
             Object val = controllerState.getValue(facingProp);
-            if (val instanceof Direction direction) {
+            if(val instanceof Direction direction) {
                 return direction;
             }
         }
@@ -247,30 +247,30 @@ public class Structure {
 
 
     private Map<String, String> checkProperties(BlockState currentState, BlockEntry entry, Direction controllerFacing) {
-        if (entry.cachedProperties == null || entry.cachedProperties.isEmpty()) {
+        if(entry.cachedProperties == null || entry.cachedProperties.isEmpty()) {
             return Collections.emptyMap();
         }
 
         Map<String, String> mismatched = new HashMap<>();
-        for (Map.Entry<Property<?>, Comparable<?>> propEntry : entry.cachedProperties.entrySet()) {
+        for(Map.Entry<Property<?>, Comparable<?>> propEntry : entry.cachedProperties.entrySet()) {
             Property<?> property = propEntry.getKey();
             Comparable<?> desiredValue = propEntry.getValue();
 
             // Handle Facing rotation
-            if (property.getName().equals("facing") || property.getName().equals("horizontal_facing")) {
-                if (desiredValue instanceof Direction desiredDir) {
+            if(property.getName().equals("facing") || property.getName().equals("horizontal_facing")) {
+                if(desiredValue instanceof Direction desiredDir) {
 
                     // The desired value stored in the structure is "normalized" (relative to NORTH).
                     // We need to denormalize it to the actual world direction to compare with the world state.
                     Direction desiredWorldDir = BlockUtils.denormalizeFacing(desiredDir, controllerFacing);
-                    if (!currentState.getValue(property).equals(desiredWorldDir)) {
+                    if(!currentState.getValue(property).equals(desiredWorldDir)) {
                         mismatched.put(property.getName(), desiredDir.getName()); // Return the normalized name as expected
                     }
                     continue;
                 }
             }
 
-            if (!currentState.getValue(property).equals(desiredValue)) {
+            if(!currentState.getValue(property).equals(desiredValue)) {
                 mismatched.put(property.getName(), desiredValue.toString());
             }
         }
@@ -328,14 +328,14 @@ public class Structure {
          */
         public void initialize() {
             Identifier id = Identifier.tryParse(block);
-            if (id != null) {
+            if(id != null) {
                 this.cachedBlock = BuiltInRegistries.BLOCK.getOptional(id).orElse(null);
             }
-            if (this.cachedBlock != null && properties != null) {
+            if(this.cachedBlock != null && properties != null) {
                 this.cachedProperties = new HashMap<>();
-                for (Map.Entry<String, String> entry : properties.entrySet()) {
+                for(Map.Entry<String, String> entry : properties.entrySet()) {
                     Property<?> prop = cachedBlock.getStateDefinition().getProperty(entry.getKey());
-                    if (prop != null) {
+                    if(prop != null) {
                         Optional<? extends Comparable<?>> val = prop.getValue(entry.getValue());
                         val.ifPresent(comparable -> cachedProperties.put(prop, comparable));
                     }

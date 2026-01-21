@@ -62,10 +62,10 @@ public class CrusherScreen extends AbstractContainerScreen<CrusherMenu> {
         );
 
         // Draw burn indicator (flame) - sprite is 14x14
-        if (this.menu.isBurning()) {
+        if(this.menu.isBurning()) {
             float burnProgress = this.menu.getBurnProgress();
             int burnHeight = (int) Math.ceil(14 * burnProgress);
-            if (burnHeight > 0) {
+            if(burnHeight > 0) {
 
                 // Flame sprite position: x+56, y+36 (bottom of flame area)
                 // Sprite draws from bottom up
@@ -86,7 +86,7 @@ public class CrusherScreen extends AbstractContainerScreen<CrusherMenu> {
         // ~24x17)
         float crushProgress = this.menu.getCrushProgress();
         int progressWidth = (int) Math.ceil(24 * crushProgress);
-        if (progressWidth > 0) {
+        if(progressWidth > 0) {
             // Arrow position: x+79, y+34
             guiGraphics.blit(RenderPipelines.GUI_TEXTURED, CRUSH_PROGRESS_SPRITE,
                 x + 79, y + 34,    // dest x, y

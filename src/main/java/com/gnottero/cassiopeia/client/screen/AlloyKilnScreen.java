@@ -64,10 +64,10 @@ public class AlloyKilnScreen extends AbstractContainerScreen<AlloyKilnMenu> {
         );
 
         // Draw burn indicator (flame) - sprite is 14x14
-        if (this.menu.isBurning()) {
+        if(this.menu.isBurning()) {
             float burnProgress = this.menu.getBurnProgress();
             int burnHeight = (int) Math.ceil(14 * burnProgress);
-            if (burnHeight > 0) {
+            if(burnHeight > 0) {
                 int flameX = x + 38;
                 int flameY = y + 36 + 14 - burnHeight;
 
@@ -83,7 +83,7 @@ public class AlloyKilnScreen extends AbstractContainerScreen<AlloyKilnMenu> {
         // Draw progress arrow - 24x17
         float alloyProgress = this.menu.getAlloyProgress();
         int progressWidth = (int) Math.ceil(24 * alloyProgress);
-        if (progressWidth > 0) {
+        if(progressWidth > 0) {
             guiGraphics.blit(RenderPipelines.GUI_TEXTURED, ALLOY_PROGRESS_SPRITE,
                 x + 79, y + 34,     // dest x, y
                 0f, 0f,             // source u, v (from bottom of sprite)

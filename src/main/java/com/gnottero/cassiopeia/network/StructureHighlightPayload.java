@@ -30,7 +30,7 @@ public record StructureHighlightPayload(List<Structure.StructureError> errors) i
     public static final StreamCodec<RegistryFriendlyByteBuf, StructureHighlightPayload> STREAM_CODEC = StreamCodec.of(
         (buf, payload) -> {
             buf.writeInt(payload.errors.size());
-            for (Structure.StructureError error : payload.errors) {
+            for(Structure.StructureError error : payload.errors) {
                 buf.writeBlockPos(error.pos);
                 buf.writeEnum(error.type);
 
@@ -43,15 +43,15 @@ public record StructureHighlightPayload(List<Structure.StructureError> errors) i
             int size = buf.readInt();
             List<Structure.StructureError> errors = new ArrayList<>(size);
             HolderLookup<net.minecraft.world.level.block.Block> blockLookup = BuiltInRegistries.BLOCK;
-            for (int i = 0; i < size; i++) {
+            for(int i = 0; i < size; i++) {
                 BlockPos pos = buf.readBlockPos();
                 Structure.StructureError.ErrorType type = buf.readEnum(Structure.StructureError.ErrorType.class);
                 String stateStr = buf.readUtf();
                 BlockState state = null;
-                if (!stateStr.isEmpty()) {
+                if(!stateStr.isEmpty()) {
                     try {
                         state = BlockStateParser.parseForBlock(blockLookup, stateStr, false).blockState();
-                    } catch (Exception e) {
+                    } catch(Exception e) {
                         // Fallback: ignore parse errors
                     }
                 }

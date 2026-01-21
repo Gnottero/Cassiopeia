@@ -30,7 +30,7 @@ public class MachineResultSlot extends Slot {
 
     @Override
     public ItemStack remove(int amount) {
-        if (this.hasItem()) {
+        if(this.hasItem()) {
             this.removeCount += Math.min(amount, this.getItem().getCount());
         }
         return super.remove(amount);
@@ -59,7 +59,7 @@ public class MachineResultSlot extends Slot {
      * BasicControllerBlockEntity.
      */
     private void awardRecipesIfApplicable() {
-        if (this.player instanceof ServerPlayer serverPlayer
+        if(this.player instanceof ServerPlayer serverPlayer
                 && this.container instanceof BasicControllerBlockEntity controllerEntity) {
             controllerEntity.awardUsedRecipes(serverPlayer, java.util.Collections.emptyList());
         }

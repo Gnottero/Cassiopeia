@@ -39,7 +39,7 @@ public class StructureManager {
     private static final File STRUCTURE_DIR = FabricLoader.getInstance().getConfigDir().resolve("cassiopeia/structures").toFile();
 
     static {
-        if (!STRUCTURE_DIR.exists()) {
+        if(!STRUCTURE_DIR.exists()) {
             STRUCTURE_DIR.mkdirs();
         }
     }
@@ -77,9 +77,9 @@ public class StructureManager {
         BlockPos controllerPos = null;
         BlockState controllerState = null;
         controllerSearch:
-        for (int x = minX; x <= maxX; x++) {
-            for (int y = minY; y <= maxY; y++) {
-                for (int z = minZ; z <= maxZ; z++) {
+        for(int x = minX; x <= maxX; x++) {
+            for(int y = minY; y <= maxY; y++) {
+                for(int z = minZ; z <= maxZ; z++) {
                     final BlockPos pos = new BlockPos(x, y, z);
                     final var state = level.getBlockState(pos);
                     if(state.getBlock() == ModBlocks.BASIC_CONTROLLER) {
@@ -98,7 +98,7 @@ public class StructureManager {
         Property<?> facingProp = controllerState.getBlock().getStateDefinition().getProperty("facing");
         Object facingVal = (facingProp != null) ? controllerState.getValue(facingProp) : null;
 
-        if (!(facingVal instanceof Direction)) {
+        if(!(facingVal instanceof Direction)) {
             throw new RuntimeException("Controller block must have a facing property");
         }
 
@@ -107,9 +107,9 @@ public class StructureManager {
         Structure structure = new Structure();
         String controllerId = BuiltInRegistries.BLOCK.getKey(controllerState.getBlock()).toString();
         structure.setController(controllerId);
-        for (int x = minX; x <= maxX; x++) {
-            for (int y = minY; y <= maxY; y++) {
-                for (int z = minZ; z <= maxZ; z++) {
+        for(int x = minX; x <= maxX; x++) {
+            for(int y = minY; y <= maxY; y++) {
+                for(int z = minZ; z <= maxZ; z++) {
 
                     // Skip controller
                     BlockPos pos = new BlockPos(x, y, z);
@@ -123,7 +123,7 @@ public class StructureManager {
                     //FIXME
                     //FIXME
                     // Skip air if required
-                    if (state.isAir() && !keepAir) {
+                    if(state.isAir() && !keepAir) {
                         continue;
                     }
 
@@ -153,26 +153,26 @@ public class StructureManager {
 
 
     public static @NotNull Optional<Structure> getStructure(@NotNull String identifier) {
-        if (CACHE.containsKey(identifier)) {
+        if(CACHE.containsKey(identifier)) {
             return Optional.of(CACHE.get(identifier));
         }
 
         File file = new File(STRUCTURE_DIR, identifier + ".json");
-        if (!file.exists()) {
+        if(!file.exists()) {
             createDefaultIfKnown(identifier, file);
         }
 
-        if (!file.exists()) {
+        if(!file.exists()) {
             return Optional.empty();
         }
 
         try (Reader reader = new FileReader(file)) {
             Structure structure = GSON.fromJson(reader, Structure.class);
-            if (structure != null) {
+            if(structure != null) {
                 CACHE.put(identifier, structure);
                 return Optional.of(structure);
             }
-        } catch (IOException e) {
+        } catch(IOException e) {
             e.printStackTrace();
         }
         return Optional.empty();
@@ -182,7 +182,7 @@ public class StructureManager {
 
 
     private static void createDefaultIfKnown(String identifier, File file) {
-        if (!identifier.equals("crusher")) {
+        if(!identifier.equals("crusher")) {
             return;
         }
 
@@ -203,7 +203,7 @@ public class StructureManager {
     private static void writeStructureToFile(Structure structure, File file) {
         try (Writer writer = new FileWriter(file)) {
             GSON.toJson(structure, writer);
-        } catch (IOException e) {
+        } catch(IOException e) {
             e.printStackTrace();
             throw new RuntimeException("Failed to save structure file", e);
         }
@@ -214,17 +214,17 @@ public class StructureManager {
 
     @NotNull
     public static Set<String> getAvailableStructures() {
-        if (!STRUCTURE_DIR.exists()) {
+        if(!STRUCTURE_DIR.exists()) {
             return Collections.emptySet();
         }
 
         File[] files = STRUCTURE_DIR.listFiles((dir, name) -> name.endsWith(".json"));
-        if (files == null) {
+        if(files == null) {
             return Collections.emptySet();
         }
 
         Set<String> structures = new HashSet<>();
-        for (File file : files) {
+        for(File file : files) {
             String name = file.getName();
             structures.add(name.substring(0, name.length() - 5));
         }

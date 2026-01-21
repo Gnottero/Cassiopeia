@@ -60,7 +60,7 @@ public class CassiopeiaCommands {
 
 
     private static final com.mojang.brigadier.suggestion.SuggestionProvider<CommandSourceStack> SUGGEST_STRUCTURES = (ctx, builder) -> {
-        for (String s : StructureManager.getAvailableStructures()) {
+        for(String s : StructureManager.getAvailableStructures()) {
             builder.suggest(s);
         }
         return builder.buildFuture();
@@ -88,11 +88,11 @@ public class CassiopeiaCommands {
             false);
             return 1;
         }
-        catch (InvalidStructureException e) {
+        catch(InvalidStructureException e) {
             ctx.getSource().sendFailure(Component.translatable("command.cassiopeia.structure.save.failed", e.getMessage()));
             return 0;
         }
-        catch (Exception e) {
+        catch(Exception e) {
             ctx.getSource().sendFailure(Component.translatable("command.cassiopeia.structure.save.failed", e.getMessage()));
             e.printStackTrace();
             return 0;
@@ -114,7 +114,7 @@ public class CassiopeiaCommands {
 
         // Check if the structure exists
         Optional<Structure> structureOpt = StructureManager.getStructure(identifier);
-        if (structureOpt.isPresent()) {
+        if(structureOpt.isPresent()) {
             ctx.getSource().sendFailure(Component.translatable("command.cassiopeia.structure.not_found", identifier));
             return 0;
         }
@@ -122,7 +122,7 @@ public class CassiopeiaCommands {
 
         // If the structure is valid, send the player the success message
         boolean matches = IncrementalStructureValidator.validateStructure(ctx.getSource().getLevel(), controller);
-        if (matches) {
+        if(matches) {
             ctx.getSource().sendSuccess(
                 () -> Component.translatable("command.cassiopeia.structure.verified")
                 .withStyle(net.minecraft.ChatFormatting.GREEN),

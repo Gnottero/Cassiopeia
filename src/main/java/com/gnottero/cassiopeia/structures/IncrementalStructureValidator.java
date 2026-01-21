@@ -375,7 +375,7 @@ public class IncrementalStructureValidator {
             final BlockState currentState = level.getBlockState(worldPos);
 
             // Check Block Type (incorrect state)
-            if (!currentState.is(entry.getCachedBlock())) {
+            if(!currentState.is(entry.getCachedBlock())) {
                 BlockState expectedStateForRender = buildDesiredBlockState(entry, direction);
                 errors.add(new StructureError(worldPos, StructureError.ErrorType.MISSING, entry.getBlock(), null, expectedStateForRender));
                 continue;
@@ -383,7 +383,7 @@ public class IncrementalStructureValidator {
 
             // Check Properties (wrong block)
             Map<String, String> mismatchedProps = checkProperties(currentState, entry, direction);
-            if (!mismatchedProps.isEmpty()) {
+            if(!mismatchedProps.isEmpty()) {
                 BlockState expectedStateForRender = buildDesiredBlockState(entry, direction);
                 errors.add(new StructureError(worldPos, StructureError.ErrorType.WRONG_STATE, entry.getBlock(), mismatchedProps, expectedStateForRender));
                 //! continue
@@ -394,30 +394,30 @@ public class IncrementalStructureValidator {
 
 
     private static Map<String, String> checkProperties(BlockState currentState, BlockEntry entry, Direction controllerFacing) {
-        if (entry.getCachedProperties() == null || entry.getCachedProperties().isEmpty()) {
+        if(entry.getCachedProperties() == null || entry.getCachedProperties().isEmpty()) {
             return Collections.emptyMap();
         }
 
         Map<String, String> mismatched = new HashMap<>();
-        for (Map.Entry<Property<?>, Comparable<?>> propEntry : entry.getCachedProperties().entrySet()) {
+        for(Map.Entry<Property<?>, Comparable<?>> propEntry : entry.getCachedProperties().entrySet()) {
             Property<?> property = propEntry.getKey();
             Comparable<?> desiredValue = propEntry.getValue();
 
             // Handle Facing rotation
-            if (property.getName().equals("facing") || property.getName().equals("horizontal_facing")) {
-                if (desiredValue instanceof Direction desiredDir) {
+            if(property.getName().equals("facing") || property.getName().equals("horizontal_facing")) {
+                if(desiredValue instanceof Direction desiredDir) {
 
                     // The desired value stored in the structure is "normalized" (relative to NORTH).
                     // We need to denormalize it to the actual world direction to compare with the world state.
                     Direction desiredWorldDir = BlockUtils.denormalizeFacing(desiredDir, controllerFacing);
-                    if (!currentState.getValue(property).equals(desiredWorldDir)) {
+                    if(!currentState.getValue(property).equals(desiredWorldDir)) {
                         mismatched.put(property.getName(), desiredDir.getName()); // Return the normalized name as expected
                     }
                     continue;
                 }
             }
 
-            if (!currentState.getValue(property).equals(desiredValue)) {
+            if(!currentState.getValue(property).equals(desiredValue)) {
                 mismatched.put(property.getName(), desiredValue.toString());
             }
         }
@@ -427,21 +427,21 @@ public class IncrementalStructureValidator {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private static BlockState buildDesiredBlockState(BlockEntry entry, Direction controllerFacing) {
-        if (entry.getCachedBlock() == null) {
+        if(entry.getCachedBlock() == null) {
             return null;
         }
 
         BlockState state = entry.getCachedBlock().defaultBlockState();
-        if (entry.getCachedProperties() == null) {
+        if(entry.getCachedProperties() == null) {
             return state;
         }
 
-        for (Map.Entry<Property<?>, Comparable<?>> propEntry : entry.getCachedProperties().entrySet()) {
+        for(Map.Entry<Property<?>, Comparable<?>> propEntry : entry.getCachedProperties().entrySet()) {
             Property property = propEntry.getKey();
             Comparable value = propEntry.getValue();
 
-            if (property.getName().equals("facing") || property.getName().equals("horizontal_facing")) {
-                if (value instanceof Direction dir) {
+            if(property.getName().equals("facing") || property.getName().equals("horizontal_facing")) {
+                if(value instanceof Direction dir) {
                     value = BlockUtils.denormalizeFacing(dir, controllerFacing);
                 }
             }

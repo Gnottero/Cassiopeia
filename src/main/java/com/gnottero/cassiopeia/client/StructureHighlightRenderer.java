@@ -45,8 +45,8 @@ public class StructureHighlightRenderer {
         ClientPlayNetworking.registerGlobalReceiver(StructureHighlightPayload.TYPE, (payload, context) -> {
             context.client().execute(() -> {
                 highlights.clear();
-                for (Structure.StructureError error : payload.errors()) {
-                    if (error.expectedBlockState != null) {
+                for(Structure.StructureError error : payload.errors()) {
+                    if(error.expectedBlockState != null) {
                         highlights.add(new Highlight(error.pos, error.type, error.expectedBlockState));
                     }
                 }
@@ -60,9 +60,9 @@ public class StructureHighlightRenderer {
 
 
     public static boolean hasHighlights() {
-        if (highlights.isEmpty())
+        if(highlights.isEmpty())
             return false;
-        if (System.currentTimeMillis() - highlightStartTime > HIGHLIGHT_DURATION_MS) {
+        if(System.currentTimeMillis() - highlightStartTime > HIGHLIGHT_DURATION_MS) {
             highlights.clear();
             return false;
         }
@@ -76,11 +76,11 @@ public class StructureHighlightRenderer {
      */
     @SuppressWarnings("java:S7467")
     private static void renderGhostBlocks(WorldRenderContext context) {
-        if (!hasHighlights())
+        if(!hasHighlights())
             return;
 
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null)
+        if(mc.level == null)
             return;
 
         BlockRenderDispatcher blockRenderer = mc.getBlockRenderer();
@@ -101,11 +101,11 @@ public class StructureHighlightRenderer {
             consumers.getBuffer(RenderTypes.translucentMovingBlock()), (int) (GHOST_BLOCK_ALPHA_PERCENTAGE * 255)
         );
 
-        for (Highlight highlight : highlights) {
+        for(Highlight highlight : highlights) {
             BlockPos pos = highlight.pos;
             BlockState state = highlight.expectedState;
 
-            if (state == null || state.isAir())
+            if(state == null || state.isAir())
                 continue;
 
             poseStack.pushPose();
@@ -115,7 +115,7 @@ public class StructureHighlightRenderer {
 
             try {
                 blockRenderer.renderSingleBlock(state, poseStack, ghostSource, 0xF000F0, OverlayTexture.NO_OVERLAY);
-            } catch (Exception e) {
+            } catch(Exception e) {
                 // Silently ignore render errors
             }
 
@@ -129,10 +129,10 @@ public class StructureHighlightRenderer {
      * Called from LevelRendererMixin for outline visualization.
      */
     public static void emitGizmos() {
-        if (!hasHighlights())
+        if(!hasHighlights())
             return;
 
-        for (Highlight highlight : highlights) {
+        for(Highlight highlight : highlights) {
             int color = highlight.type == Structure.StructureError.ErrorType.MISSING
                     ? 0xFFFF3333 // Red outline
                     : 0xFFFFCC33; // Yellow/Orange outline

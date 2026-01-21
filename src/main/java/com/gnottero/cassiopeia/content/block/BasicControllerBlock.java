@@ -42,11 +42,11 @@ public class BasicControllerBlock extends AbstractControllerBlock {
     @Override
     @SuppressWarnings("java:S2638")
     public @Nullable <T extends BlockEntity> BlockEntityTicker<T> getTicker(@NotNull Level level, @NotNull BlockState state, @NotNull BlockEntityType<T> type) {
-        if (level.isClientSide()) {
+        if(level.isClientSide()) {
             return null;
         }
         return (lvl, pos, st, be) -> {
-            if (be instanceof BasicControllerBlockEntity controllerBE) {
+            if(be instanceof BasicControllerBlockEntity controllerBE) {
                 BasicControllerBlockEntity.serverTick(lvl, pos, st, controllerBE);
             }
         };
@@ -58,8 +58,8 @@ public class BasicControllerBlock extends AbstractControllerBlock {
         String structureId = be.getStructureId();
 
         // Check if this is a machine with a registered handler
-        if (structureId != null && be instanceof BasicControllerBlockEntity machineBE) {
-            if (MachineHandlerRegistry.hasHandler(structureId)) {
+        if(structureId != null && be instanceof BasicControllerBlockEntity machineBE) {
+            if(MachineHandlerRegistry.hasHandler(structureId)) {
                 player.openMenu(machineBE);
             }
         }

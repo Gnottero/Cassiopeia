@@ -92,7 +92,7 @@ public class CrusherMachineHandler implements MachineHandler {
 
     @Override
     public int[] getSlotsForFace(Direction side) {
-        return switch (side) {
+        return switch(side) {
             case UP -> SLOTS_UP;
             case DOWN -> SLOTS_DOWN;
             default -> SLOTS_SIDES;
@@ -101,10 +101,10 @@ public class CrusherMachineHandler implements MachineHandler {
 
     @Override
     public boolean canPlaceItem(BasicControllerBlockEntity be, int slot, ItemStack stack) {
-        if (slot == OUTPUT_SLOT) {
+        if(slot == OUTPUT_SLOT) {
             return false;
         }
-        else if (slot == FUEL_SLOT) {
+        else if(slot == FUEL_SLOT) {
             Level level = be.getLevel();
             return level != null && getBurnTime(level.fuelValues(), stack) > 0;
         }
@@ -127,7 +127,7 @@ public class CrusherMachineHandler implements MachineHandler {
      */
     @Override
     public void serverTick(Level level, BlockPos pos, BlockState state, BasicControllerBlockEntity be) {
-        if (!be.verifyStructure()) {
+        if(!be.verifyStructure()) {
             return;
         }
 
@@ -144,7 +144,7 @@ public class CrusherMachineHandler implements MachineHandler {
         boolean changed = false;
 
         // Decrement fuel (fuel burns regardless of input - vanilla behavior)
-        if (litTime > 0) {
+        if(litTime > 0) {
             litTime--;
             changed = true;
         }
@@ -155,21 +155,21 @@ public class CrusherMachineHandler implements MachineHandler {
         // Try to get recipe for current input
         Optional<RecipeHolder<CrusherRecipe>> recipeOpt = getRecipe(level, inputStack);
 
-        if (recipeOpt.isPresent()) {
+        if(recipeOpt.isPresent()) {
             RecipeHolder<CrusherRecipe> holder = recipeOpt.get();
             CrusherRecipe recipe = holder.value();
             int recipeCookTime = recipe.getCrushingTime();
 
             // Update total time if changed
-            if (crushingTotalTime != recipeCookTime) {
+            if(crushingTotalTime != recipeCookTime) {
                 crushingTotalTime = recipeCookTime;
                 changed = true;
             }
 
             // Try to consume fuel if not lit but have fuel and valid recipe
-            if (litTime <= 0 && !fuelStack.isEmpty() && canProcess(items, recipe)) {
+            if(litTime <= 0 && !fuelStack.isEmpty() && canProcess(items, recipe)) {
                 int burnTime = getBurnTime(fuelValues, fuelStack);
-                if (burnTime > 0) {
+                if(burnTime > 0) {
                     litTime = burnTime;
                     litDuration = burnTime;
                     consumeFuel(items);
@@ -178,9 +178,9 @@ public class CrusherMachineHandler implements MachineHandler {
             }
 
             // Process if lit and can process
-            if (litTime > 0 && canProcess(items, recipe)) {
+            if(litTime > 0 && canProcess(items, recipe)) {
                 crushingProgress++;
-                if (crushingProgress >= crushingTotalTime) {
+                if(crushingProgress >= crushingTotalTime) {
                     crushingProgress = 0;
                     process(items, recipe);
                     recordRecipeUsed(be, holder);
@@ -189,14 +189,14 @@ public class CrusherMachineHandler implements MachineHandler {
             }
 
             // No fuel - decay progress (vanilla behavior)
-            else if (litTime <= 0 && crushingProgress > 0) {
+            else if(litTime <= 0 && crushingProgress > 0) {
                 crushingProgress = Math.max(0, crushingProgress - 2);
                 changed = true;
             }
         }
 
         // No valid recipe - reset crushing progress but keep fuel burning
-        else if (crushingProgress > 0) {
+        else if(crushingProgress > 0) {
             crushingProgress = 0;
             changed = true;
         }
@@ -207,7 +207,7 @@ public class CrusherMachineHandler implements MachineHandler {
         be.setMachineData(DATA_CRUSHING_PROGRESS,   crushingProgress);
         be.setMachineData(DATA_CRUSHING_TOTAL_TIME, crushingTotalTime);
 
-        if (changed) {
+        if(changed) {
             be.setChanged();
         }
     }
@@ -216,7 +216,7 @@ public class CrusherMachineHandler implements MachineHandler {
 
 
     private Optional<RecipeHolder<CrusherRecipe>> getRecipe(Level level, ItemStack input) {
-        if (level == null || input.isEmpty() || !(level instanceof ServerLevel serverLevel)) {
+        if(level == null || input.isEmpty() || !(level instanceof ServerLevel serverLevel)) {
             return Optional.empty();
         }
         SingleRecipeInput recipeInput = new SingleRecipeInput(input);
@@ -230,10 +230,10 @@ public class CrusherMachineHandler implements MachineHandler {
         ItemStack result = recipe.getResult();
         ItemStack outputSlot = items.get(OUTPUT_SLOT);
 
-        if (outputSlot.isEmpty()) {
+        if(outputSlot.isEmpty()) {
             return true;
         }
-        if (!ItemStack.isSameItemSameComponents(outputSlot, result)) {
+        if(!ItemStack.isSameItemSameComponents(outputSlot, result)) {
             return false;
         }
         return outputSlot.getCount() + result.getCount() <= outputSlot.getMaxStackSize();
@@ -247,10 +247,10 @@ public class CrusherMachineHandler implements MachineHandler {
         ItemStack result = recipe.getResult().copy();
         ItemStack outputSlot = items.get(OUTPUT_SLOT);
 
-        if (outputSlot.isEmpty()) {
+        if(outputSlot.isEmpty()) {
             items.set(OUTPUT_SLOT, result);
         }
-        else if (ItemStack.isSameItemSameComponents(outputSlot, result)) {
+        else if(ItemStack.isSameItemSameComponents(outputSlot, result)) {
             outputSlot.grow(result.getCount());
         }
 
@@ -266,7 +266,7 @@ public class CrusherMachineHandler implements MachineHandler {
         ItemStack remainder = fuelItem.getCraftingRemainder();
         fuelStack.shrink(1);
 
-        if (fuelStack.isEmpty()) {
+        if(fuelStack.isEmpty()) {
             items.set(FUEL_SLOT, remainder.isEmpty() ? ItemStack.EMPTY : remainder);
         }
     }
@@ -277,11 +277,11 @@ public class CrusherMachineHandler implements MachineHandler {
     private void recordRecipeUsed(BasicControllerBlockEntity be, RecipeHolder<CrusherRecipe> holder) {
         String idStr = holder.id().toString();
         int idx = idStr.lastIndexOf(" / ");
-        if (idx != -1) {
+        if(idx != -1) {
             idStr = idStr.substring(idx + 3, idStr.length() - 1);
         }
         Identifier id = Identifier.tryParse(idStr);
-        if (id != null) {
+        if(id != null) {
             be.recipeUsed(id);
         }
     }

@@ -49,7 +49,7 @@ public abstract class AbstractControllerBlockEntity extends BlockEntity {
     @Override
     protected void saveAdditional(@NotNull ValueOutput output) {
         super.saveAdditional(output);
-        if (!structureId.isEmpty()) {
+        if(!structureId.isEmpty()) {
             output.putString(STRUCTURE_ID_KEY, structureId);
         }
     }

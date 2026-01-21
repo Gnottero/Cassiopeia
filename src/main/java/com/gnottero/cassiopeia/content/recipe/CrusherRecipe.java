@@ -32,7 +32,7 @@ public class CrusherRecipe extends AbstractCrushingRecipe {
 
     @Override
     public RecipeBookCategory recipeBookCategory() {
-        return switch (this.category) {
+        return switch(this.category) {
             case BLOCKS -> ModRecipes.Categories.CRUSHER_BLOCKS;
             case ITEMS  -> ModRecipes.Categories.CRUSHER_ITEMS;
             case MISC   -> ModRecipes.Categories.CRUSHER_MISC;

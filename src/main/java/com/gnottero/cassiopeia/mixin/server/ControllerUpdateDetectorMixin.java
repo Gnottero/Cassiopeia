@@ -30,7 +30,7 @@ public class ControllerUpdateDetectorMixin {
         BlockEntity blockEntity = (BlockEntity)(Object)this;
         Level level = blockEntity.getLevel();
 
-        if (level instanceof ServerLevel && blockEntity instanceof AbstractControllerBlockEntity c) {
+        if(level instanceof ServerLevel && blockEntity instanceof AbstractControllerBlockEntity c) {
             c.invalidateStructureCache();
         }
     }

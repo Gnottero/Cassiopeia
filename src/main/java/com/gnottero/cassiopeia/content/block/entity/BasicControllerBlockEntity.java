@@ -65,13 +65,13 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity im
     private final ContainerData containerData = new ContainerData() {
         @Override
         public int get(int index) {
-            if (index < 0 || index >= MAX_DATA_COUNT) return 0;
+            if(index < 0 || index >= MAX_DATA_COUNT) return 0;
             else return machineData[index];
         }
 
         @Override
         public void set(int index, int value) {
-            if (index >= 0 && index < MAX_DATA_COUNT) {
+            if(index >= 0 && index < MAX_DATA_COUNT) {
                 machineData[index] = value;
             }
         }
@@ -90,7 +90,7 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity im
 
     private Optional<MachineHandler> getHandler() {
         String structureId = getStructureId();
-        if (structureId == null) return Optional.empty();
+        if(structureId == null) return Optional.empty();
         else return MachineHandlerRegistry.getHandler(structureId);
     }
 
@@ -113,12 +113,12 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity im
     }
 
     public int getMachineData(int index) {
-        if (index < 0 || index >= MAX_DATA_COUNT) return 0;
+        if(index < 0 || index >= MAX_DATA_COUNT) return 0;
         else return machineData[index];
     }
 
     public void setMachineData(int index, int value) {
-        if (index >= 0 && index < MAX_DATA_COUNT) {
+        if(index >= 0 && index < MAX_DATA_COUNT) {
             machineData[index] = value;
         }
     }
@@ -160,8 +160,8 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity im
     @Override
     public boolean isEmpty() {
         int size = getContainerSize();
-        for (int i = 0; i < size; i++) {
-            if (!machineItems.get(i).isEmpty()) {
+        for(int i = 0; i < size; i++) {
+            if(!machineItems.get(i).isEmpty()) {
                 return false;
             }
         }
@@ -171,38 +171,38 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity im
     @Override
     public @NotNull ItemStack getItem(int slot) {
         int size = getContainerSize();
-        if (slot < 0 || slot >= size) return ItemStack.EMPTY;
+        if(slot < 0 || slot >= size) return ItemStack.EMPTY;
         else return machineItems.get(slot);
     }
 
     @Override
     public @NotNull ItemStack removeItem(int slot, int amount) {
-        if (getContainerSize() == 0) return ItemStack.EMPTY;
+        if(getContainerSize() == 0) return ItemStack.EMPTY;
         else return ContainerHelper.removeItem(machineItems, slot, amount);
     }
 
     @Override
     public @NotNull ItemStack removeItemNoUpdate(int slot) {
-        if (getContainerSize() == 0) return ItemStack.EMPTY;
+        if(getContainerSize() == 0) return ItemStack.EMPTY;
         else return ContainerHelper.takeItem(machineItems, slot);
     }
 
     @Override
     public void setItem(int slot, @NotNull ItemStack stack) {
         int size = getContainerSize();
-        if (slot < 0 || slot >= size) return;
+        if(slot < 0 || slot >= size) return;
 
         ItemStack existing = machineItems.get(slot);
         boolean sameItem = !stack.isEmpty() && ItemStack.isSameItemSameComponents(existing, stack);
         machineItems.set(slot, stack);
 
-        if (stack.getCount() > getMaxStackSize()) {
+        if(stack.getCount() > getMaxStackSize()) {
             stack.setCount(getMaxStackSize());
         }
 
         // Reset cooking progress when input changes (not fuel time!)
         getHandler().ifPresent(handler -> {
-            if (slot == handler.getInputSlotIndex() && !sameItem) {
+            if(slot == handler.getInputSlotIndex() && !sameItem) {
                 setMachineData(handler.getProcessProgressIndex(), 0);
                 setChanged();
             }
@@ -222,7 +222,7 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity im
     @Override
     public void clearContent() {
         int size = getContainerSize();
-        for (int i = 0; i < size; i++) {
+        for(int i = 0; i < size; i++) {
             machineItems.set(i, ItemStack.EMPTY);
         }
     }
@@ -258,9 +258,9 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity im
         // Load recipes used
         CompoundTag recipesTag = input.read(TAG_RECIPES_USED, CompoundTag.CODEC).orElse(new CompoundTag());
         recipesUsed.clear();
-        for (String key : recipesTag.keySet()) {
+        for(String key : recipesTag.keySet()) {
             Identifier id = Identifier.tryParse(key);
-            if (id != null) {
+            if(id != null) {
                 recipesUsed.put(id, recipesTag.getIntOr(key, 0));
             }
         }
@@ -295,19 +295,19 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity im
     // ==================== Recipe Tracking ====================
 
     public void recipeUsed(Identifier recipeId) {
-        if (recipeId != null) {
+        if(recipeId != null) {
             recipesUsed.addTo(recipeId, 1);
         }
     }
 
     public void awardUsedRecipes(Player player, List<ItemStack> items) {
-        if (level == null || level.isClientSide())
+        if(level == null || level.isClientSide())
             return;
 
         List<RecipeHolder<?>> recipesToAward = new ArrayList<>();
 
-        if (level instanceof ServerLevel serverLevel) {
-            for (var entry : recipesUsed.object2IntEntrySet()) {
+        if(level instanceof ServerLevel serverLevel) {
+            for(var entry : recipesUsed.object2IntEntrySet()) {
                 ResourceKey<Recipe<?>> key = ResourceKey.create(Registries.RECIPE, entry.getKey());
                 serverLevel.getServer().getRecipeManager().byKey(key).ifPresent(recipesToAward::add);
             }

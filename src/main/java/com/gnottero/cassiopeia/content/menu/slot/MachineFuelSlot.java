@@ -23,7 +23,7 @@ public class MachineFuelSlot extends Slot {
 
     @Override
     public boolean mayPlace(ItemStack itemStack) {
-        if (level != null) {
+        if(level != null) {
             return level.fuelValues().burnDuration(itemStack) > 0 || isBucket(itemStack);
         }
         return isBucket(itemStack);

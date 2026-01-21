@@ -27,12 +27,12 @@ public class BlockUtils {
     public static Map<String, String> processBlockProperties(BlockState state, Direction controllerFacing) {
         Map<String, String> properties = new HashMap<>();
 
-        for (Property<?> property : state.getProperties()) {
+        for(Property<?> property : state.getProperties()) {
             String key = property.getName();
             Object rawValue = state.getValue(property);
             String value = rawValue.toString();
 
-            if ((key.equals("facing") || key.equals("horizontal_facing")) && rawValue instanceof Direction blockFacing) {
+            if((key.equals("facing") || key.equals("horizontal_facing")) && rawValue instanceof Direction blockFacing) {
 
                 // Normalize facing relative to controller
                 Direction normalizedFacing = normalizeFacing(blockFacing, controllerFacing);
@@ -50,14 +50,14 @@ public class BlockUtils {
      * Normalizes a facing direction relative to the controller's facing.
      */
     public static Direction normalizeFacing(Direction blockFacing, Direction controllerFacing) {
-        if (blockFacing.getAxis().isVertical() || controllerFacing.getAxis().isVertical()) {
+        if(blockFacing.getAxis().isVertical() || controllerFacing.getAxis().isVertical()) {
             return blockFacing;
         }
 
         int controllerIndex = getHorizontalIndex(controllerFacing);
         int blockIndex = getHorizontalIndex(blockFacing);
 
-        if (controllerIndex == -1 || blockIndex == -1) {
+        if(controllerIndex == -1 || blockIndex == -1) {
             return blockFacing;
         }
 
@@ -67,14 +67,14 @@ public class BlockUtils {
 
 
     public static Direction denormalizeFacing(Direction normalizedFacing, Direction controllerFacing) {
-        if (normalizedFacing.getAxis().isVertical() || controllerFacing.getAxis().isVertical()) {
+        if(normalizedFacing.getAxis().isVertical() || controllerFacing.getAxis().isVertical()) {
             return normalizedFacing;
         }
 
         int controllerIndex = getHorizontalIndex(controllerFacing);
         int normalizedIndex = getHorizontalIndex(normalizedFacing);
 
-        if (controllerIndex == -1 || normalizedIndex == -1) {
+        if(controllerIndex == -1 || normalizedIndex == -1) {
             return normalizedFacing;
         }
 
@@ -84,7 +84,7 @@ public class BlockUtils {
 
 
     private static int getHorizontalIndex(Direction direction) {
-        return switch (direction) {
+        return switch(direction) {
             case NORTH -> 0;
             case EAST  -> 1;
             case SOUTH -> 2;
@@ -95,7 +95,7 @@ public class BlockUtils {
 
 
     private static Direction getHorizontalDirection(int index) {
-        return switch (index) {
+        return switch(index) {
             case 0  -> Direction.NORTH;
             case 1  -> Direction.EAST;
             case 2  -> Direction.SOUTH;
@@ -123,7 +123,7 @@ public class BlockUtils {
     private static final Map<Direction, Basis> BASIS_CACHE = new EnumMap<>(Direction.class);
 
     static {
-        for (Direction dir : Direction.values()) {
+        for(Direction dir : Direction.values()) {
             BASIS_CACHE.put(dir, Basis.from(dir));
         }
     }

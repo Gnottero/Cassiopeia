@@ -13,7 +13,7 @@ public record AlloyingRecipeInput(ItemStack inputA, ItemStack inputB) implements
 
     @Override
     public ItemStack getItem(int index) {
-        return switch (index) {
+        return switch(index) {
             case 0 -> inputA;
             case 1 -> inputB;
             default -> ItemStack.EMPTY;
