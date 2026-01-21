@@ -46,6 +46,12 @@ public class StructureManager {
 
 
 
+    //FIXME fix keepAir. structures should contain this parameter and store air instead of skipping air blocks on saves.
+    //FIXME This allows the new structure verification to work well. check this parameter when verifying air
+
+    //FIXME alternatively, save structures but replace air with a special "any" block instance, so that the verification method can match it properly.
+    //FIXME the number of blocks must always fill the xyz volume, otherwise verification breaks
+
     /**
      * Scans the specified area and saves it as a structure.
      * @param level //TODO
@@ -111,6 +117,10 @@ public class StructureManager {
                         throw new InvalidStructureException("The structure contains more than one controller");
                     }
 
+                    //FIXME
+                    //FIXME
+                    //FIXME
+                    //FIXME
                     // Skip air if required
                     if (state.isAir() && !keepAir) {
                         continue;
@@ -136,7 +146,7 @@ public class StructureManager {
 
     public static @NotNull Optional<Structure> getStructure(@NotNull String identifier) {
         if (CACHE.containsKey(identifier)) {
-            return Optional.ofNullable(CACHE.get(identifier));
+            return Optional.of(CACHE.get(identifier));
         }
 
         File file = new File(STRUCTURE_DIR, identifier + ".json");

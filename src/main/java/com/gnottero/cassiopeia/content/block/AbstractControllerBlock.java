@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import org.jetbrains.annotations.NotNull;
 import net.minecraft.ChatFormatting;
@@ -315,10 +316,10 @@ public abstract class AbstractControllerBlock extends BaseEntityBlock {
     private MutableComponent getBlockComponent(String blockName) {
         try {
             Identifier id = Identifier.parse(blockName);
-            Optional<Holder.Reference<Block>> blockHolder = BuiltInRegistries.BLOCK.get(id);
+            Optional<Holder.Reference<Block>> blockHolderOpt = BuiltInRegistries.BLOCK.get(id);
 
-            if (blockHolder.isPresent()) {
-                return Component.translatable(blockHolder.get().value().getDescriptionId());
+            if (blockHolderOpt.isPresent()) {
+                return Component.translatable(blockHolderOpt.get().value().getDescriptionId());
             }
         }
         catch (Exception e) {

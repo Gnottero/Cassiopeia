@@ -1,5 +1,7 @@
 package com.gnottero.cassiopeia.command;
 
+import java.util.Optional;
+
 import com.gnottero.cassiopeia.structures.InvalidStructureException;
 import com.gnottero.cassiopeia.structures.Structure;
 import com.gnottero.cassiopeia.structures.StructureManager;
@@ -67,6 +69,12 @@ public class CassiopeiaCommands {
 
 
 
+    /**
+     * Executes the verify command.
+     * @param ctx The command context.
+     * @param keepAir Whether to keep air blocks in the structure or ignore them.
+     * @return 1 if the command succeeded, 0 otherwise.
+     */
     private static int executeSave(CommandContext<CommandSourceStack> ctx, boolean keepAir) throws CommandSyntaxException {
         BlockPos from = BlockPosArgument.getLoadedBlockPos(ctx, "from");
         BlockPos to = BlockPosArgument.getLoadedBlockPos(ctx, "to");
@@ -94,19 +102,26 @@ public class CassiopeiaCommands {
 
 
 
+    /**
+     * Executes the verify command.
+     * @param ctx The command context.
+     * @return 1 if the command succeeded, 0 otherwise.
+     */
     private static int executeVerify(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
         BlockPos controller = BlockPosArgument.getLoadedBlockPos(ctx, "controller");
         String identifier = StringArgumentType.getString(ctx, "identifier");
 
-        java.util.Optional<Structure> structureOpt = StructureManager.getStructure(identifier);
 
-        if (structureOpt.isEmpty()) {
+        // Check if the structure exists
+        Optional<Structure> structureOpt = StructureManager.getStructure(identifier);
+        if (structureOpt.isPresent()) {
             ctx.getSource().sendFailure(Component.translatable("command.cassiopeia.structure.not_found", identifier));
             return 0;
         }
 
-        boolean matches = StructureValidator.validateStructure(ctx.getSource().getLevel(), controller);
 
+        // If the structure is valid, send the player the success message
+        boolean matches = StructureValidator.validateStructure(ctx.getSource().getLevel(), controller);
         if (matches) {
             ctx.getSource().sendSuccess(
                 () -> Component.translatable("command.cassiopeia.structure.verified")
@@ -114,6 +129,9 @@ public class CassiopeiaCommands {
             false);
             return 1;
         }
+
+
+        // If the structure is not valid, send the player an error
         else {
             ctx.getSource().sendSuccess(
                 () -> Component.translatable("command.cassiopeia.structure.mismatch")

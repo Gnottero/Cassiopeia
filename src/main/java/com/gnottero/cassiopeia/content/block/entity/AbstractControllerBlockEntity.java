@@ -1,7 +1,5 @@
 package com.gnottero.cassiopeia.content.block.entity;
 
-import com.gnottero.cassiopeia.structures.Structure;
-import com.gnottero.cassiopeia.structures.StructureManager;
 import com.gnottero.cassiopeia.structures.StructureValidator;
 
 import net.minecraft.core.BlockPos;
@@ -21,8 +19,6 @@ import org.apache.logging.log4j.util.Strings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Optional;
-
 
 
 
@@ -30,6 +26,7 @@ public abstract class AbstractControllerBlockEntity extends BlockEntity {
 
     private static final String STRUCTURE_ID_KEY = "structure_id";
     private String structureId = Strings.EMPTY;
+    private boolean registered = false;
 
 
 
@@ -79,26 +76,12 @@ public abstract class AbstractControllerBlockEntity extends BlockEntity {
     }
 
 
+
+
     public boolean verifyStructure(Level level, BlockPos pos) {
         ensureRegistered(); //! Lazy controller registration
         return StructureValidator.validateStructure(level, pos);
-        // // Make sure the ID is there
-        // if (structureId.isEmpty()) {
-        //     return false;
-        // }
-
-        // // Make sure the specified structure exists
-        // Optional<Structure> structureOpt = StructureManager.getStructure(structureId);
-        // if (structureOpt.isEmpty()) {
-        //     return false;
-        // }
-
-        // // Check in-world controller and blocks
-        // Structure structure = structureOpt.get();
-        // return structure.verify(level, pos);
     }
-//TODO clean up the code
-    private boolean registered = false;
 
     public void ensureRegistered() {
         if(!registered && level != null && !level.isClientSide()) {
@@ -106,6 +89,7 @@ public abstract class AbstractControllerBlockEntity extends BlockEntity {
             registered = true;
         }
     }
+
     public void invalidateStructureCache() {
         registered = false;
     }

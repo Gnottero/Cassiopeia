@@ -261,7 +261,7 @@ public class BasicControllerBlockEntity extends AbstractControllerBlockEntity im
         for (String key : recipesTag.keySet()) {
             Identifier id = Identifier.tryParse(key);
             if (id != null) {
-                recipesUsed.put(id, recipesTag.getInt(key).orElse(0));
+                recipesUsed.put(id, recipesTag.getIntOr(key, 0));
             }
         }
     }
