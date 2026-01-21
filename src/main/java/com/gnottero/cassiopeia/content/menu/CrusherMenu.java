@@ -115,7 +115,7 @@ public class CrusherMenu extends AbstractCrushingMenu {
     @Override
     public ItemStack quickMoveStack(final Player playerIn, final int pIndex) {
         final Slot sourceSlot = slots.get(pIndex);
-        if(sourceSlot == null || !sourceSlot.hasItem()) return ItemStack.EMPTY;
+        if(!sourceSlot.hasItem()) return ItemStack.EMPTY;
         final ItemStack sourceStack = sourceSlot.getItem();
         final ItemStack copyOfSourceStack = sourceStack.copy();
 
@@ -124,7 +124,7 @@ public class CrusherMenu extends AbstractCrushingMenu {
                 return ItemStack.EMPTY;
             }
         }
-        else if(pIndex >= VANILLA_FIRST_SLOT_INDEX && pIndex < VANILLA_FIRST_SLOT_INDEX + VANILLA_SLOT_COUNT) {
+        else if(pIndex < VANILLA_FIRST_SLOT_INDEX + VANILLA_SLOT_COUNT) {
             if(!moveItemStackTo(sourceStack, TE_INVENTORY_FIRST_SLOT_INDEX, TE_INVENTORY_FIRST_SLOT_INDEX + TE_INVENTORY_SLOT_COUNT, false)) {
                 return ItemStack.EMPTY;
             }

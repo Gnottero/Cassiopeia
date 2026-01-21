@@ -307,6 +307,7 @@ public class Structure {
             return cachedBlock;
         }
 
+        @SuppressWarnings("java:S1452")
         public Map<Property<?>, Comparable<?>> getCachedProperties() {
             return cachedProperties;
         }
