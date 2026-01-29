@@ -5,6 +5,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 
@@ -19,6 +20,7 @@ import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3i;
 
+import com.gnottero.cassiopeia.Cassiopeia;
 import com.gnottero.cassiopeia.utils.Utils;
 
 
@@ -178,6 +180,11 @@ public class Structure {
         final BlockEntry entry = blocks.get(index);
         final Block desiredBlock = entry.cachedBlock;
 
+        // Return true if entry allows any block
+        if(entry.doesAllowAny()) {
+            return false;
+        }
+
         // Check Block Type
         if(!currentState.is(desiredBlock)) {
             return false;
@@ -197,7 +204,7 @@ public class Structure {
         }
 
         final Map<String, String> mismatched = new HashMap<>();
-        for(final Map.Entry<Property<?>, Comparable<?>> propEntry : entry.cachedProperties.entrySet()) {
+        for(final var propEntry : entry.cachedProperties.entrySet()) {
             final Property<?> property = propEntry.getKey();
             final Comparable<?> desiredValue = propEntry.getValue();
 
@@ -255,39 +262,69 @@ public class Structure {
 
 
     public static class BlockEntry {
+        public static final @NotNull String ANY_BLOCK_ID = Cassiopeia.MOD_ID + ".any_block";
         private final String block;
         private final Vector3i offset;
         private final Map<String, String> properties;
+        private final boolean allowsAny;
 
         private transient Block cachedBlock;
         private transient Map<Property<?>, Comparable<?>> cachedProperties;
 
-        public BlockEntry(final String block, final Vector3i offset, final Map<String, String> properties) {
+
+        private BlockEntry(final String block, final Vector3i offset, final Map<String, String> properties, final boolean allowsAny) {
             this.block = block;
             this.offset = offset;
             this.properties = properties;
+            this.allowsAny = allowsAny;
         }
+
+        /**
+         * Creates a new BlockEntry that only allows the specified block with the provided properties.
+         * @param block The required block.
+         * @param offset The offset of the block relative to the controller's position and orientation.
+         * @param block The required properties of the block.
+         */
+        public BlockEntry(final String block, final Vector3i offset, final Map<String, String> properties) {
+            this(block, offset, properties, false);
+        }
+
+        /**
+         * Creates a new BlockEntry that allows any block.
+         * @param offset The offset of the block relative to the controller's position and orientation.
+         */
+        public BlockEntry(final @NotNull Vector3i offset) {
+            this(BuiltInRegistries.BLOCK.getKey(Blocks.AIR).toString(), offset, new HashMap<>(), true);
+        }
+
+
 
         /**
          * Initializes the block entry.
          */
         public void initialize() {
-            final Identifier id = Identifier.tryParse(block);
-            if(id != null) {
-                this.cachedBlock = BuiltInRegistries.BLOCK.getOptional(id).orElse(null);
-            }
-            if(this.cachedBlock != null && properties != null) {
-                this.cachedProperties = new HashMap<>();
-                for(final Map.Entry<String, String> entry : properties.entrySet()) {
-                    final Property<?> prop = cachedBlock.getStateDefinition().getProperty(entry.getKey());
-                    if(prop != null) {
-                        final Optional<? extends Comparable<?>> val = prop.getValue(entry.getValue());
-                        val.ifPresent(comparable -> cachedProperties.put(prop, comparable));
-                    }
-                }
+            if(allowsAny) {
+                this.cachedBlock = Blocks.AIR;
+                this.cachedProperties = Collections.emptyMap();
             }
             else {
-                this.cachedProperties = Collections.emptyMap();
+                final Identifier id = Identifier.tryParse(block);
+                if(id != null) {
+                    this.cachedBlock = BuiltInRegistries.BLOCK.getOptional(id).orElse(null);
+                }
+                if(this.cachedBlock != null && properties != null) {
+                    this.cachedProperties = new HashMap<>();
+                    for(final Map.Entry<String, String> entry : properties.entrySet()) {
+                        final Property<?> prop = cachedBlock.getStateDefinition().getProperty(entry.getKey());
+                        if(prop != null) {
+                            final Optional<? extends Comparable<?>> val = prop.getValue(entry.getValue());
+                            val.ifPresent(comparable -> cachedProperties.put(prop, comparable));
+                        }
+                    }
+                }
+                else {
+                    this.cachedProperties = Collections.emptyMap();
+                }
             }
         }
 
@@ -310,6 +347,10 @@ public class Structure {
         @SuppressWarnings("java:S1452")
         public Map<Property<?>, Comparable<?>> getCachedProperties() {
             return cachedProperties;
+        }
+
+        public boolean doesAllowAny() {
+            return allowsAny;
         }
     }
 }

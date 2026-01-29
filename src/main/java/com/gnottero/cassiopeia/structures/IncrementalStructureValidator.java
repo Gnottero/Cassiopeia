@@ -392,6 +392,12 @@ public class IncrementalStructureValidator {
 
         // For each block in the block entry list
         for(final BlockEntry entry : controllerData.structure.getBlocks()) {
+
+            // Skip checks if entry allows all blocks
+            if(entry.doesAllowAny()) {
+                continue;
+            }
+
             final BlockPos worldPos = Utils.localToGlobal(entry.getOffset(), pos, direction);
             final BlockState currentState = level.getBlockState(worldPos);
 

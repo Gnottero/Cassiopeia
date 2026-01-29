@@ -47,12 +47,6 @@ public class StructureManager {
 
 
 
-    //FIXME fix keepAir. structures should contain this parameter and store air instead of skipping air blocks on saves.
-    //FIXME This allows the new structure verification to work well. check this parameter when verifying air
-
-    //FIXME alternatively, save structures but replace air with a special "any" block instance, so that the verification method can match it properly.
-    //FIXME the number of blocks must always fill the xyz volume, otherwise verification breaks
-
     /**
      * Scans the specified area and saves it as a structure.
      * @param level //TODO
@@ -118,20 +112,18 @@ public class StructureManager {
                         throw new InvalidStructureException("The structure contains more than one controller");
                     }
 
-                    //FIXME
-                    //FIXME
-                    //FIXME
-                    //FIXME
                     // Skip air if required
+                    final Vector3i offset = Utils.globalToLocal(pos, controllerPos, controllerFacing);
                     if(state.isAir() && !keepAir) {
-                        continue;
+                        structure.addBlock(new Structure.BlockEntry(offset));
                     }
 
-                    // Calculate relative offset and add the block to the structure
-                    final Vector3i offset = Utils.globalToLocal(pos, controllerPos, controllerFacing);
-                    final String blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
-                    final Map<String, String> properties = Utils.processBlockProperties(state, controllerFacing);
-                    structure.addBlock(new Structure.BlockEntry(blockId, offset, properties));
+                    // Add the block to the structure otherwise
+                    else {
+                        final String blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
+                        final Map<String, String> properties = Utils.processBlockProperties(state, controllerFacing);
+                        structure.addBlock(new Structure.BlockEntry(blockId, offset, properties));
+                    }
                 }
             }
         }
