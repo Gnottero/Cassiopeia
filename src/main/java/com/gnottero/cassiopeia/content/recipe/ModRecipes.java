@@ -75,7 +75,7 @@ public class ModRecipes {
 
         // Force load inner class
         try {
-            Class.forName("com.gnottero.cassiopeia.content.recipe.ModRecipes.Categories");
+            Class.forName("com.gnottero.cassiopeia.content.recipe.ModRecipes$Categories");
         } catch(ClassNotFoundException e) {
             e.printStackTrace();
         }
