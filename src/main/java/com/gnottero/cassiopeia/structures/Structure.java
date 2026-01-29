@@ -182,7 +182,7 @@ public class Structure {
 
         // Return true if entry allows any block
         if(entry.doesAllowAny()) {
-            return false;
+            return true;
         }
 
         // Check Block Type
