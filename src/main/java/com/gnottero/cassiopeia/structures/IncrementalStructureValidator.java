@@ -13,7 +13,6 @@ import org.joml.Vector3i;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -511,19 +510,13 @@ public class IncrementalStructureValidator {
                 final Level level = Cassiopeia.getServer().getLevel(key.dimension);
                 if(level != null) unregisterController(level, key.pos);
             }
-
-            // // Retrieve server, level and block entity
-            // final Level level = Cassiopeia.getServer().getLevel(key.dimension);
-            // if(level instanceof final ServerLevel serverLevel) {
-            //     final BlockEntity be = serverLevel.getBlockEntity(key.pos);
-
-            //     // If the block entity is a controller and its ID matches the provided identifier
-            //     if(be instanceof final AbstractControllerBlockEntity cbe && cbe.getStructureId().equals(identifier)) {
-
-            //         // Unregister the cached data
-            //         unregisterController(serverLevel, key.pos);
-            //     }
-            // }
         }
+    }
+
+
+
+    public static void unregisterAll() {
+        controllers.clear();
+        blocks.clear();
     }
 }
