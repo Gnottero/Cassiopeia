@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.gnottero.cassiopeia.content.block.entity.AbstractControllerBlockEntity;
+import com.gnottero.cassiopeia.structures.IncrementalStructureValidator;
 
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
@@ -31,7 +32,7 @@ public class ControllerUpdateDetectorMixin {
         final Level level = blockEntity.getLevel();
 
         if(level instanceof ServerLevel && blockEntity instanceof final AbstractControllerBlockEntity c) {
-            c.invalidateStructureCache();
+            IncrementalStructureValidator.unregisterController(level, c.getBlockPos());
         }
     }
 }

@@ -87,10 +87,4 @@ public abstract class AbstractControllerBlockEntity extends BlockEntity {
             IncrementalStructureValidator.registerController(level, getBlockPos());
         }
     }
-
-    public void invalidateStructureCache() {
-        if(IncrementalStructureValidator.isRegistered(level, getBlockPos())) {
-            IncrementalStructureValidator.unregisterController(level, getBlockPos());
-        }
-    }
 }
