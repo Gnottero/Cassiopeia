@@ -217,6 +217,27 @@ public class IncrementalStructureValidator {
 
 
 
+    /**
+     * Checks if a controller is currently registered.
+     * @param level The level the controller is in.
+     * @param pos The position of the controller to check.
+     * @return True if the specified controller is registered, false otherwise.
+     */
+    public static boolean isRegistered(final @NotNull Level level, final @NotNull BlockPos pos) {
+        if(level.isClientSide()) return false;
+
+        // Compute key and check if it exists
+        final BlockKey controllerKey = new BlockKey(level.dimension(), pos);
+        return controllers.containsKey(controllerKey);
+    }
+
+
+
+
+
+
+
+
     public enum BlockChangeAction { PLACE, BREAK }
     /**
      * Callback method for block changes. It keeps track of matching blocks in active structures.
@@ -238,10 +259,12 @@ public class IncrementalStructureValidator {
         if(level.isClientSide()) return;
 
 
-        // If the modified block is a controller, register/unregister/scan it based on the action
+        // If the modified block is a controller, register/unregister it based on the action
         //TODO this might need to check a controller tag or something, if we add more controller types in the future. "basic controller" suggests non basic types will be a thing
-        if     (action == BlockChangeAction.PLACE && newState.is(ModBlocks.BASIC_CONTROLLER)) registerController  (level, pos);
+        if     (action == BlockChangeAction.PLACE && newState.is(ModBlocks.BASIC_CONTROLLER))   registerController(level, pos);
         else if(action == BlockChangeAction.BREAK && oldState.is(ModBlocks.BASIC_CONTROLLER)) unregisterController(level, pos);
+
+
 
 
         // If the modified block is not a controller
