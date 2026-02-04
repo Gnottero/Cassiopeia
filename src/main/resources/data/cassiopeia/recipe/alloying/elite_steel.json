@@ -1,0 +1,25 @@
+{
+    "type": "cassiopeia:alloying",
+    "group": "elite_metals",
+    "base_metal": {
+        "ingredient": "minecraft:iron_ingot",
+        "count": 4
+    },
+    "alloying_metal": {
+        "ingredient": "minecraft:diamond",
+        "count": 1,
+        "components": {
+            "minecraft:custom_data": "{quality:100}"
+        }
+    },
+    "result": {
+        "count": 2,
+        "id": "minecraft:netherite_ingot",
+        "components": {
+            "minecraft:item_name": "Elite Steel",
+            "minecraft:rarity": "epic"
+        }
+    },
+    "experience": 10.0,
+    "alloying_time": 600
+}

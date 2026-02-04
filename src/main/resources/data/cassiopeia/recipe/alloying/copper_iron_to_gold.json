@@ -1,11 +1,16 @@
 {
     "type": "cassiopeia:alloying",
     "group": "bronze",
-    "input_a": "minecraft:copper_ingot",
-    "input_b": "minecraft:iron_ingot",
+    "base_metal": {
+        "ingredient": "#minecraft:planks",
+        "count": 8
+    },
+    "alloying_metal": {
+        "ingredient": "minecraft:iron_ingot"
+    },
     "result": {
-        "count": 2,
-        "id": "minecraft:gold_ingot"
+        "count": 1,
+        "id": "minecraft:chest"
     },
     "experience": 0.5,
     "alloying_time": 300

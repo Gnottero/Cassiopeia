@@ -21,9 +21,8 @@ public class ModRecipes {
         private Categories() {}
         public static final Registry<RecipeBookCategory> registry = BuiltInRegistries.RECIPE_BOOK_CATEGORY;
 
+        // Crusher categories
         public static final RecipeBookCategory CRUSHER_SEARCH    = Registry.register(registry, Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, "crusher_search"), new RecipeBookCategory());
-        public static final RecipeBookCategory CRUSHER_BLOCKS    = Registry.register(registry, Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, "crusher_blocks"), new RecipeBookCategory());
-        public static final RecipeBookCategory CRUSHER_ITEMS     = Registry.register(registry, Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, "crusher_items"), new RecipeBookCategory());
         public static final RecipeBookCategory CRUSHER_MISC      = Registry.register(registry, Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, "crusher_misc"), new RecipeBookCategory());
 
         // Alloy Kiln categories
@@ -32,11 +31,11 @@ public class ModRecipes {
     }
 
 
-    // Crusher recipes
-    public static final RecipeType<CrusherRecipe> CRUSHER_TYPE = Registry.register(
+    // Crushing recipes
+    public static final RecipeType<CrushingRecipe> CRUSHING_TYPE = Registry.register(
         BuiltInRegistries.RECIPE_TYPE,
         Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, "crushing"),
-        new RecipeType<CrusherRecipe>() {
+        new RecipeType<CrushingRecipe>() {
             @Override public String toString() {
                 return "crushing";
             }
@@ -44,10 +43,10 @@ public class ModRecipes {
     );
 
 
-    public static final RecipeSerializer<CrusherRecipe> CRUSHER_SERIALIZER = Registry.register(
+    public static final RecipeSerializer<CrushingRecipe> CRUSHING_SERIALIZER = Registry.register(
         BuiltInRegistries.RECIPE_SERIALIZER,
         Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, "crushing"),
-        CrusherRecipeSerializer.INSTANCE
+        CrushingRecipeSerializer.INSTANCE
     );
 
 
