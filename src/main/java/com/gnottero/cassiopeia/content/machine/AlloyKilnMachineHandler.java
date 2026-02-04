@@ -27,9 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-
-
-
 /**
  * Machine handler for the Alloy Kiln.
  * 2 inputs + fuel → 1 output.
@@ -63,9 +60,6 @@ public class AlloyKilnMachineHandler implements MachineHandler {
     private static final int[] SLOTS_DOWN = { OUTPUT_SLOT, FUEL_SLOT };
     private static final int[] SLOTS_SIDES = { FUEL_SLOT };
 
-
-
-
     @Override
     public String getStructureId() {
         return STRUCTURE_ID;
@@ -98,7 +92,7 @@ public class AlloyKilnMachineHandler implements MachineHandler {
 
     @Override
     public int[] getSlotsForFace(final Direction side) {
-        return switch(side) {
+        return switch (side) {
             case UP -> SLOTS_UP;
             case DOWN -> SLOTS_DOWN;
             default -> SLOTS_SIDES;
@@ -107,9 +101,9 @@ public class AlloyKilnMachineHandler implements MachineHandler {
 
     @Override
     public boolean canPlaceItem(final BasicControllerBlockEntity be, final int slot, final ItemStack stack) {
-        if(slot == OUTPUT_SLOT) {
+        if (slot == OUTPUT_SLOT) {
             return false;
-        } else if(slot == FUEL_SLOT) {
+        } else if (slot == FUEL_SLOT) {
             final Level level = be.getLevel();
             return level != null && level.fuelValues().burnDuration(stack) > 0;
         }
@@ -122,27 +116,25 @@ public class AlloyKilnMachineHandler implements MachineHandler {
         return slot == OUTPUT_SLOT;
     }
 
-
-
-
     @Override
-    public void serverTick(final Level level, final BlockPos pos, final BlockState state, final BasicControllerBlockEntity be) {
-        if(!be.verifyStructure()) {
+    public void serverTick(final Level level, final BlockPos pos, final BlockState state,
+            final BasicControllerBlockEntity be) {
+        if (!be.verifyStructure()) {
             return;
         }
 
         final NonNullList<ItemStack> items = be.getMachineItems();
         final FuelValues fuelValues = level.fuelValues();
 
-        int litTime           = be.getMachineData(DATA_LIT_TIME);
-        int litDuration       = be.getMachineData(DATA_LIT_DURATION);
-        int alloyingProgress  = be.getMachineData(DATA_ALLOYING_PROGRESS);
+        int litTime = be.getMachineData(DATA_LIT_TIME);
+        int litDuration = be.getMachineData(DATA_LIT_DURATION);
+        int alloyingProgress = be.getMachineData(DATA_ALLOYING_PROGRESS);
         int alloyingTotalTime = be.getMachineData(DATA_ALLOYING_TOTAL_TIME);
 
         boolean changed = false;
 
         // Decrement fuel (fuel burns regardless of input)
-        if(litTime > 0) {
+        if (litTime > 0) {
             litTime--;
             changed = true;
         }
@@ -153,20 +145,20 @@ public class AlloyKilnMachineHandler implements MachineHandler {
 
         final Optional<RecipeHolder<AlloyingRecipe>> recipeOpt = getRecipe(level, inputA, inputB);
 
-        if(recipeOpt.isPresent()) {
+        if (recipeOpt.isPresent()) {
             final RecipeHolder<AlloyingRecipe> holder = recipeOpt.get();
             final AlloyingRecipe recipe = holder.value();
             final int recipeTime = recipe.getAlloyingTime();
 
-            if(alloyingTotalTime != recipeTime) {
+            if (alloyingTotalTime != recipeTime) {
                 alloyingTotalTime = recipeTime;
                 changed = true;
             }
 
             // Try to consume fuel
-            if(litTime <= 0 && !fuelStack.isEmpty() && canProcess(items, recipe)) {
+            if (litTime <= 0 && !fuelStack.isEmpty() && canProcess(items, recipe)) {
                 final int burnTime = fuelValues.burnDuration(fuelStack);
-                if(burnTime > 0) {
+                if (burnTime > 0) {
                     litTime = burnTime;
                     litDuration = burnTime;
                     consumeFuel(items);
@@ -175,83 +167,78 @@ public class AlloyKilnMachineHandler implements MachineHandler {
             }
 
             // Process if lit and can process
-            if(litTime > 0 && canProcess(items, recipe)) {
+            if (litTime > 0 && canProcess(items, recipe)) {
                 alloyingProgress++;
-                if(alloyingProgress >= alloyingTotalTime) {
+                if (alloyingProgress >= alloyingTotalTime) {
                     alloyingProgress = 0;
                     process(items, recipe);
                     recordRecipeUsed(be, holder);
                 }
                 changed = true;
-            }
-            else if(litTime <= 0 && alloyingProgress > 0) {
+            } else if (litTime <= 0 && alloyingProgress > 0) {
                 alloyingProgress = Math.max(0, alloyingProgress - 2);
                 changed = true;
             }
-        }
-        else if(alloyingProgress > 0) {
+        } else if (alloyingProgress > 0) {
             alloyingProgress = 0;
             changed = true;
         }
 
-        be.setMachineData(DATA_LIT_TIME,            litTime);
-        be.setMachineData(DATA_LIT_DURATION,        litDuration);
-        be.setMachineData(DATA_ALLOYING_PROGRESS,   alloyingProgress);
+        be.setMachineData(DATA_LIT_TIME, litTime);
+        be.setMachineData(DATA_LIT_DURATION, litDuration);
+        be.setMachineData(DATA_ALLOYING_PROGRESS, alloyingProgress);
         be.setMachineData(DATA_ALLOYING_TOTAL_TIME, alloyingTotalTime);
 
-        if(changed) {
+        if (changed) {
             be.setChanged();
         }
     }
 
-
-
-
-    private Optional<RecipeHolder<AlloyingRecipe>> getRecipe(final Level level, final ItemStack inputA, final ItemStack inputB) {
-        if(level == null || (inputA.isEmpty() && inputB.isEmpty()) || !(level instanceof final ServerLevel serverLevel)) {
+    private Optional<RecipeHolder<AlloyingRecipe>> getRecipe(final Level level, final ItemStack inputA,
+            final ItemStack inputB) {
+        if (level == null || (inputA.isEmpty() && inputB.isEmpty())
+                || !(level instanceof final ServerLevel serverLevel)) {
             return Optional.empty();
         }
         final AlloyingRecipeInput recipeInput = new AlloyingRecipeInput(inputA, inputB);
         return serverLevel.recipeAccess().getRecipeFor(ModRecipes.ALLOYING_TYPE, recipeInput, serverLevel);
     }
 
-
-
-
     private boolean canProcess(final NonNullList<ItemStack> items, final AlloyingRecipe recipe) {
         final ItemStack result = recipe.getResult();
         final ItemStack outputSlot = items.get(OUTPUT_SLOT);
 
-        if(outputSlot.isEmpty()) {
+        if (outputSlot.isEmpty()) {
             return true;
         }
-        if(!ItemStack.isSameItemSameComponents(outputSlot, result)) {
+        if (!ItemStack.isSameItemSameComponents(outputSlot, result)) {
             return false;
         }
         return outputSlot.getCount() + result.getCount() <= outputSlot.getMaxStackSize();
     }
 
-
-
-
     private void process(final NonNullList<ItemStack> items, final AlloyingRecipe recipe) {
-        final ItemStack inputA = items.get(INPUT_SLOT_A);
-        final ItemStack inputB = items.get(INPUT_SLOT_B);
+        final ItemStack stackA = items.get(INPUT_SLOT_A);
+        final ItemStack stackB = items.get(INPUT_SLOT_B);
         final ItemStack result = recipe.getResult().copy();
         final ItemStack outputSlot = items.get(OUTPUT_SLOT);
 
-        if(outputSlot.isEmpty()) {
+        if (outputSlot.isEmpty()) {
             items.set(OUTPUT_SLOT, result);
         } else if(ItemStack.isSameItemSameComponents(outputSlot, result)) {
             outputSlot.grow(result.getCount());
         }
 
-        inputA.shrink(1);
-        inputB.shrink(1);
+        // Determine which ingredient matched which slot to shrink correct counts
+        if(recipe.getInputA().test(stackA) && recipe.getInputB().test(stackB)) {
+            stackA.shrink(recipe.getInputA().count());
+            stackB.shrink(recipe.getInputB().count());
+        } else {
+            // Must be the other way around due to matches() logic
+            stackA.shrink(recipe.getInputB().count());
+            stackB.shrink(recipe.getInputA().count());
+        }
     }
-
-
-
 
     private void consumeFuel(final NonNullList<ItemStack> items) {
         final ItemStack fuelStack = items.get(FUEL_SLOT);
@@ -264,9 +251,6 @@ public class AlloyKilnMachineHandler implements MachineHandler {
         }
     }
 
-
-
-
     private void recordRecipeUsed(final BasicControllerBlockEntity be, final RecipeHolder<AlloyingRecipe> holder) {
         String idStr = holder.id().toString();
         final int idx = idStr.lastIndexOf(" / ");
@@ -278,9 +262,6 @@ public class AlloyKilnMachineHandler implements MachineHandler {
             be.recipeUsed(id);
         }
     }
-
-
-
 
     @Override
     public void saveAdditional(final ValueOutput output, final BasicControllerBlockEntity be) {

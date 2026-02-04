@@ -2,8 +2,9 @@ package com.gnottero.cassiopeia.content.machine;
 
 import com.gnottero.cassiopeia.content.block.entity.BasicControllerBlockEntity;
 import com.gnottero.cassiopeia.content.menu.CrusherMenu;
-import com.gnottero.cassiopeia.content.recipe.CrusherRecipe;
+import com.gnottero.cassiopeia.content.recipe.CrushingRecipe;
 import com.gnottero.cassiopeia.content.recipe.ModRecipes;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
@@ -22,10 +23,11 @@ import net.minecraft.world.level.block.entity.FuelValues;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 
 
@@ -153,11 +155,11 @@ public class CrusherMachineHandler implements MachineHandler {
         final ItemStack fuelStack = items.get(FUEL_SLOT);
 
         // Try to get recipe for current input
-        final Optional<RecipeHolder<CrusherRecipe>> recipeOpt = getRecipe(level, inputStack);
+        final Optional<RecipeHolder<CrushingRecipe>> recipeOpt = getRecipe(level, inputStack);
 
         if(recipeOpt.isPresent()) {
-            final RecipeHolder<CrusherRecipe> holder = recipeOpt.get();
-            final CrusherRecipe recipe = holder.value();
+            final RecipeHolder<CrushingRecipe> holder = recipeOpt.get();
+            final CrushingRecipe recipe = holder.value();
             final int recipeCookTime = recipe.getCrushingTime();
 
             // Update total time if changed
@@ -215,18 +217,18 @@ public class CrusherMachineHandler implements MachineHandler {
 
 
 
-    private Optional<RecipeHolder<CrusherRecipe>> getRecipe(final Level level, final ItemStack input) {
+    private Optional<RecipeHolder<CrushingRecipe>> getRecipe(final Level level, final ItemStack input) {
         if(level == null || input.isEmpty() || !(level instanceof final ServerLevel serverLevel)) {
             return Optional.empty();
         }
         final SingleRecipeInput recipeInput = new SingleRecipeInput(input);
-        return serverLevel.recipeAccess().getRecipeFor(ModRecipes.CRUSHER_TYPE, recipeInput, serverLevel);
+        return serverLevel.recipeAccess().getRecipeFor(ModRecipes.CRUSHING_TYPE, recipeInput, serverLevel);
     }
 
 
 
 
-    private boolean canProcess(final NonNullList<ItemStack> items, final CrusherRecipe recipe) {
+    private boolean canProcess(final NonNullList<ItemStack> items, final CrushingRecipe recipe) {
         final ItemStack result = recipe.getResult();
         final ItemStack outputSlot = items.get(OUTPUT_SLOT);
 
@@ -242,8 +244,8 @@ public class CrusherMachineHandler implements MachineHandler {
 
 
 
-    private void process(final NonNullList<ItemStack> items, final CrusherRecipe recipe) {
-        final ItemStack inputStack = items.get(INPUT_SLOT);
+    private void process(final NonNullList<ItemStack> items, final CrushingRecipe recipe) {
+        final ItemStack input = items.get(INPUT_SLOT);
         final ItemStack result = recipe.getResult().copy();
         final ItemStack outputSlot = items.get(OUTPUT_SLOT);
 
@@ -254,7 +256,7 @@ public class CrusherMachineHandler implements MachineHandler {
             outputSlot.grow(result.getCount());
         }
 
-        inputStack.shrink(1);
+        input.shrink(recipe.getInput().count());
     }
 
 
@@ -274,7 +276,7 @@ public class CrusherMachineHandler implements MachineHandler {
 
 
 
-    private void recordRecipeUsed(final BasicControllerBlockEntity be, final RecipeHolder<CrusherRecipe> holder) {
+    private void recordRecipeUsed(final BasicControllerBlockEntity be, final RecipeHolder<CrushingRecipe> holder) {
         String idStr = holder.id().toString();
         final int idx = idStr.lastIndexOf(" / ");
         if(idx != -1) {

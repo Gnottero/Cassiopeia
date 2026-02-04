@@ -47,12 +47,6 @@ public class StructureManager {
 
 
 
-    //FIXME fix keepAir. structures should contain this parameter and store air instead of skipping air blocks on saves.
-    //FIXME This allows the new structure verification to work well. check this parameter when verifying air
-
-    //FIXME alternatively, save structures but replace air with a special "any" block instance, so that the verification method can match it properly.
-    //FIXME the number of blocks must always fill the xyz volume, otherwise verification breaks
-
     /**
      * Scans the specified area and saves it as a structure.
      * @param level //TODO
@@ -118,20 +112,18 @@ public class StructureManager {
                         throw new InvalidStructureException("The structure contains more than one controller");
                     }
 
-                    //FIXME
-                    //FIXME
-                    //FIXME
-                    //FIXME
                     // Skip air if required
+                    final Vector3i offset = Utils.globalToLocal(pos, controllerPos, controllerFacing);
                     if(state.isAir() && !keepAir) {
-                        continue;
+                        structure.addBlock(new Structure.BlockEntry(offset));
                     }
 
-                    // Calculate relative offset and add the block to the structure
-                    final Vector3i offset = Utils.globalToLocal(pos, controllerPos, controllerFacing);
-                    final String blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
-                    final Map<String, String> properties = Utils.processBlockProperties(state, controllerFacing);
-                    structure.addBlock(new Structure.BlockEntry(blockId, offset, properties));
+                    // Add the block to the structure otherwise
+                    else {
+                        final String blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
+                        final Map<String, String> properties = Utils.processBlockProperties(state, controllerFacing);
+                        structure.addBlock(new Structure.BlockEntry(blockId, offset, properties));
+                    }
                 }
             }
         }
@@ -159,14 +151,10 @@ public class StructureManager {
 
         final File file = new File(STRUCTURE_DIR, identifier + ".json");
         if(!file.exists()) {
-            createDefaultIfKnown(identifier, file);
-        }
-
-        if(!file.exists()) {
             return Optional.empty();
         }
 
-        try (Reader reader = new FileReader(file)) {
+        try(Reader reader = new FileReader(file)) {
             final Structure structure = GSON.fromJson(reader, Structure.class);
             if(structure != null) {
                 CACHE.put(identifier, structure);
@@ -181,27 +169,8 @@ public class StructureManager {
 
 
 
-    private static void createDefaultIfKnown(final String identifier, final File file) {
-        if(!identifier.equals("crusher")) {
-            return;
-        }
-
-        final String controllerId = "cassiopeia:basic_controller";
-        final Structure structure = new Structure();
-        structure.setController(controllerId);
-
-        // Add controller itself as the single block
-        // Note: properties map can be empty to match any properties
-        structure.addBlock(new Structure.BlockEntry(controllerId, new Vector3i(0), new java.util.HashMap<>()));
-
-        writeStructureToFile(structure, file);
-    }
-
-
-
-
     private static void writeStructureToFile(final Structure structure, final File file) {
-        try (Writer writer = new FileWriter(file)) {
+        try(Writer writer = new FileWriter(file)) {
             GSON.toJson(structure, writer);
         } catch(final IOException e) {
             e.printStackTrace();

@@ -1,0 +1,25 @@
+{
+    "type": "cassiopeia:alloying",
+    "group": "empowered_gems",
+    "base_metal": {
+        "ingredient": "#c:gems/amethyst",
+        "count": 8
+    },
+    "alloying_metal": {
+        "ingredient": "minecraft:lapis_lazuli",
+        "count": 1,
+        "components": {
+            "minecraft:custom_data": "{energy:50.0}"
+        }
+    },
+    "result": {
+        "count": 1,
+        "id": "minecraft:diamond",
+        "components": {
+            "minecraft:enchantment_glint_override": true,
+            "minecraft:item_name": "Empowered Amethyst"
+        }
+    },
+    "experience": 5.0,
+    "alloying_time": 400
+}

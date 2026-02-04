@@ -25,7 +25,7 @@ public abstract class AbstractControllerBlockEntity extends BlockEntity {
 
     private static final String STRUCTURE_ID_KEY = "structure_id";
     private String structureId = Strings.EMPTY;
-    private boolean registered = false;
+    // private boolean registered = false; //TODO remove
 
 
 
@@ -83,16 +83,8 @@ public abstract class AbstractControllerBlockEntity extends BlockEntity {
     }
 
     public void ensureRegistered() {
-        if(!registered && level != null && !level.isClientSide()) {
+        if(!IncrementalStructureValidator.isRegistered(level, getBlockPos()) && level != null && !level.isClientSide()) {
             IncrementalStructureValidator.registerController(level, getBlockPos());
-            registered = true;
-        }
-    }
-
-    public void invalidateStructureCache() {
-        if(registered) {
-            IncrementalStructureValidator.unregisterController(level, getBlockPos());
-            registered = false;
         }
     }
 }
