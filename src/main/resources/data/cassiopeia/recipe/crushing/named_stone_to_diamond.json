@@ -1,0 +1,19 @@
+{
+    "type": "cassiopeia:crushing",
+    "group": "special",
+    "crushed": {
+        "ingredient": "minecraft:stone",
+        "count": 1,
+        "components": {
+            "minecraft:custom_name": {
+                "text": "Diamond Heart"
+            }
+        }
+    },
+    "result": {
+        "id": "minecraft:diamond",
+        "count": 1
+    },
+    "experience": 5.0,
+    "crushing_time": 400
+}

@@ -13,48 +13,68 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 
-
-
-
 public class ModBlocks {
-    private ModBlocks() {}
+        private ModBlocks() {
+        }
 
-    public static final ResourceKey<Block> BASIC_CONTROLLER_KEY = ResourceKey.create(
-        Registries.BLOCK,
-        Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, "basic_controller")
-    );
+        public static final ResourceKey<Block> BASIC_CONTROLLER_KEY = ResourceKey.create(
+                        Registries.BLOCK,
+                        Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, "basic_controller"));
 
-    public static final Block BASIC_CONTROLLER = registerBlock(
-        "basic_controller",
-        new BasicControllerBlock(BlockBehaviour.Properties.of()
-            .setId(BASIC_CONTROLLER_KEY)
-            .mapColor(MapColor.METAL)
-            .strength(5.0F, 6.0F)
-            .sound(SoundType.METAL)
-            .requiresCorrectToolForDrops()
-            .noOcclusion()
-        )
-    );
+        public static final ResourceKey<Block> INPUT_HATCH_KEY = ResourceKey.create(
+                        Registries.BLOCK,
+                        Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, "input_hatch"));
 
-    private static Block registerBlock(final String name, final Block block) {
-        registerBlockItem(name, block);
-        return Registry.register(
-            BuiltInRegistries.BLOCK,
-            Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, name),
-            block
-        );
-    }
+        public static final ResourceKey<Block> OUTPUT_HATCH_KEY = ResourceKey.create(
+                        Registries.BLOCK,
+                        Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, "output_hatch"));
 
-    private static Item registerBlockItem(final String name, final Block block) {
-        final ResourceKey<Item> itemKey = ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, name));
-        return Registry.register(
-            BuiltInRegistries.ITEM,
-            Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, name),
-            new BlockItem(block, new Item.Properties().setId(itemKey))
-        );
-    }
+        public static final Block BASIC_CONTROLLER = registerBlock(
+                        "basic_controller",
+                        new BasicControllerBlock(BlockBehaviour.Properties.of()
+                                        .setId(BASIC_CONTROLLER_KEY)
+                                        .mapColor(MapColor.METAL)
+                                        .strength(5.0F, 6.0F)
+                                        .sound(SoundType.METAL)
+                                        .requiresCorrectToolForDrops()
+                                        .noOcclusion()));
 
-    public static void registerModBlocks() {
-        Cassiopeia.LOGGER.info("Registering ModBlocks for " + Cassiopeia.MOD_ID);
-    }
+        public static final Block INPUT_HATCH = registerBlock(
+                        "input_hatch",
+                        new InputHatchBlock(BlockBehaviour.Properties.of()
+                                        .setId(INPUT_HATCH_KEY)
+                                        .mapColor(MapColor.METAL)
+                                        .strength(5.0F, 6.0F)
+                                        .sound(SoundType.METAL)
+                                        .requiresCorrectToolForDrops()));
+
+        public static final Block OUTPUT_HATCH = registerBlock(
+                        "output_hatch",
+                        new OutputHatchBlock(BlockBehaviour.Properties.of()
+                                        .setId(OUTPUT_HATCH_KEY)
+                                        .mapColor(MapColor.METAL)
+                                        .strength(5.0F, 6.0F)
+                                        .sound(SoundType.METAL)
+                                        .requiresCorrectToolForDrops()));
+
+        private static Block registerBlock(final String name, final Block block) {
+                registerBlockItem(name, block);
+                return Registry.register(
+                                BuiltInRegistries.BLOCK,
+                                Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, name),
+                                block);
+        }
+
+        private static Item registerBlockItem(final String name, final Block block) {
+                final ResourceKey<Item> itemKey = ResourceKey.create(Registries.ITEM,
+                                Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, name));
+                return Registry.register(
+                                BuiltInRegistries.ITEM,
+                                Identifier.fromNamespaceAndPath(Cassiopeia.MOD_ID, name),
+                                new BlockItem(block, new Item.Properties().setId(itemKey)));
+        }
+
+        public static void registerModBlocks() {
+                Cassiopeia.LOGGER.info("Registering ModBlocks for " + Cassiopeia.MOD_ID);
+        }
 }

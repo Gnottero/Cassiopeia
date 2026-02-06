@@ -1,12 +1,24 @@
 {
     "type": "cassiopeia:crushing",
-    "category": "items",
-    "crushingtime": 200,
+    "crushing_time": 200,
     "experience": 0.2,
     "group": "iron_ingot",
-    "ingredient": "minecraft:iron_ingot",
+    "crushed": {
+        "ingredient": "minecraft:iron_ingot"
+    },
     "result": {
         "count": 9,
         "id": "minecraft:iron_nugget"
+    },
+    "byproduct": {
+        "id": "minecraft:gold_nugget",
+        "count": 2,
+        "chance": 0.5,
+        "components": {
+            "minecraft:custom_name": {
+                "text": "Gilded Byproduct",
+                "italic": true
+            }
+        }
     }
 }

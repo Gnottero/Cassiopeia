@@ -1,5 +1,7 @@
 package com.gnottero.cassiopeia.content.recipe;
 
+import org.jetbrains.annotations.NotNull;
+
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -14,29 +16,30 @@ public class CrushingRecipeSerializer implements RecipeSerializer<CrushingRecipe
     public static final CrushingRecipeSerializer INSTANCE = new CrushingRecipeSerializer();
 
     private static final MapCodec<CrushingRecipe> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-        Codec.STRING.optionalFieldOf("group", "").forGetter(CrushingRecipe::group),
-        IngredientWithComponents.CODEC.fieldOf("crushed").forGetter(CrushingRecipe::getInput),
-        ItemStack.STRICT_CODEC.fieldOf("result").forGetter(CrushingRecipe::getResult),
-        Codec.FLOAT.optionalFieldOf("experience", 0.0f).forGetter(CrushingRecipe::getExperience),
-        Codec.INT.optionalFieldOf("crushing_time", 200).forGetter(CrushingRecipe::getCrushingTime))
-        .apply(instance, CrushingRecipe::new));
+            Codec.STRING.optionalFieldOf("group", "").forGetter(CrushingRecipe::group),
+            IngredientWithComponents.CODEC.fieldOf("crushed").forGetter(CrushingRecipe::getInput),
+            ItemStack.STRICT_CODEC.fieldOf("result").forGetter(CrushingRecipe::getResult),
+            Byproduct.CODEC.optionalFieldOf("byproduct").forGetter(CrushingRecipe::getByproduct),
+            Codec.FLOAT.optionalFieldOf("experience", 0.0f).forGetter(CrushingRecipe::getExperience),
+            Codec.INT.optionalFieldOf("crushing_time", 200).forGetter(CrushingRecipe::getCrushingTime))
+            .apply(instance, CrushingRecipe::new));
 
     private static final StreamCodec<RegistryFriendlyByteBuf, CrushingRecipe> STREAM_CODEC = StreamCodec.composite(
             ByteBufCodecs.STRING_UTF8, CrushingRecipe::group,
             IngredientWithComponents.STREAM_CODEC, CrushingRecipe::getInput,
             ItemStack.STREAM_CODEC, CrushingRecipe::getResult,
+            Byproduct.STREAM_CODEC.apply(ByteBufCodecs::optional), CrushingRecipe::getByproduct,
             ByteBufCodecs.FLOAT, CrushingRecipe::getExperience,
             ByteBufCodecs.INT, CrushingRecipe::getCrushingTime,
             CrushingRecipe::new);
 
     @Override
-    public MapCodec<CrushingRecipe> codec() {
+    public @NotNull MapCodec<CrushingRecipe> codec() {
         return CODEC;
     }
 
     @Override
-    public StreamCodec<RegistryFriendlyByteBuf, CrushingRecipe> streamCodec() {
+    public @NotNull StreamCodec<RegistryFriendlyByteBuf, CrushingRecipe> streamCodec() {
         return STREAM_CODEC;
     }
-    
 }

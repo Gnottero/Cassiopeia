@@ -1,5 +1,7 @@
 package com.gnottero.cassiopeia.content.recipe;
 
+import java.util.Optional;
+
 import org.jetbrains.annotations.NotNull;
 
 import net.minecraft.core.HolderLookup.Provider;
@@ -16,23 +18,24 @@ public class CrushingRecipe implements Recipe<SingleRecipeInput> {
     private final String group;
     private final IngredientWithComponents input;
     private final ItemStack result;
+    private final Optional<Byproduct> byproduct;
     private final float experience;
     private final int crushingTime;
 
     public CrushingRecipe(
-        final String group,
-        final IngredientWithComponents input,
-        final ItemStack result,
-        final float experience,
-        final int crushingTime
-    ) {
+            final String group,
+            final IngredientWithComponents input,
+            final ItemStack result,
+            final Optional<Byproduct> byproduct,
+            final float experience,
+            final int crushingTime) {
         this.group = group;
         this.input = input;
         this.result = result;
+        this.byproduct = byproduct;
         this.experience = experience;
         this.crushingTime = crushingTime;
     }
-
 
     @Override
     public boolean matches(SingleRecipeInput recipeInput, Level level) {
@@ -74,13 +77,16 @@ public class CrushingRecipe implements Recipe<SingleRecipeInput> {
         return true;
     }
 
-    // Getters
     public IngredientWithComponents getInput() {
         return input;
     }
 
     public ItemStack getResult() {
         return result;
+    }
+
+    public Optional<Byproduct> getByproduct() {
+        return byproduct;
     }
 
     public float getExperience() {
@@ -90,5 +96,4 @@ public class CrushingRecipe implements Recipe<SingleRecipeInput> {
     public int getCrushingTime() {
         return crushingTime;
     }
-    
 }

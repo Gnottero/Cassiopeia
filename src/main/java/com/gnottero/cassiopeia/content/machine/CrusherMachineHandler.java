@@ -2,6 +2,7 @@ package com.gnottero.cassiopeia.content.machine;
 
 import com.gnottero.cassiopeia.content.block.entity.BasicControllerBlockEntity;
 import com.gnottero.cassiopeia.content.menu.CrusherMenu;
+import com.gnottero.cassiopeia.content.recipe.Byproduct;
 import com.gnottero.cassiopeia.content.recipe.CrushingRecipe;
 import com.gnottero.cassiopeia.content.recipe.ModRecipes;
 
@@ -29,9 +30,6 @@ import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-
-
-
 /**
  * Machine handler for the Crusher.
  * Follows vanilla AbstractFurnaceBlockEntity pattern with serverTick.
@@ -44,7 +42,8 @@ public class CrusherMachineHandler implements MachineHandler {
     public static final int INPUT_SLOT = 0;
     public static final int FUEL_SLOT = 1;
     public static final int OUTPUT_SLOT = 2;
-    public static final int SLOT_COUNT = 3;
+    public static final int BYPRODUCT_SLOT = 3;
+    public static final int SLOT_COUNT = 4;
 
     // Data indices (matches vanilla furnace pattern)
     public static final int DATA_LIT_TIME = 0;
@@ -61,11 +60,8 @@ public class CrusherMachineHandler implements MachineHandler {
 
     // Hopper slot mappings
     private static final int[] SLOTS_UP = { INPUT_SLOT };
-    private static final int[] SLOTS_DOWN = { OUTPUT_SLOT, FUEL_SLOT };
+    private static final int[] SLOTS_DOWN = { OUTPUT_SLOT, BYPRODUCT_SLOT };
     private static final int[] SLOTS_SIDES = { FUEL_SLOT };
-
-
-
 
     @Override
     public String getStructureId() {
@@ -94,7 +90,7 @@ public class CrusherMachineHandler implements MachineHandler {
 
     @Override
     public int[] getSlotsForFace(final Direction side) {
-        return switch(side) {
+        return switch (side) {
             case UP -> SLOTS_UP;
             case DOWN -> SLOTS_DOWN;
             default -> SLOTS_SIDES;
@@ -103,10 +99,9 @@ public class CrusherMachineHandler implements MachineHandler {
 
     @Override
     public boolean canPlaceItem(final BasicControllerBlockEntity be, final int slot, final ItemStack stack) {
-        if(slot == OUTPUT_SLOT) {
+        if (slot == OUTPUT_SLOT || slot == BYPRODUCT_SLOT) {
             return false;
-        }
-        else if(slot == FUEL_SLOT) {
+        } else if (slot == FUEL_SLOT) {
             final Level level = be.getLevel();
             return level != null && getBurnTime(level.fuelValues(), stack) > 0;
         }
@@ -115,11 +110,8 @@ public class CrusherMachineHandler implements MachineHandler {
 
     @Override
     public boolean canTakeItem(final int slot, final ItemStack stack, final Direction direction) {
-        return slot == OUTPUT_SLOT;
+        return slot == OUTPUT_SLOT || slot == BYPRODUCT_SLOT;
     }
-
-
-
 
     /**
      * Server-side tick processing following vanilla furnace pattern.
@@ -128,8 +120,9 @@ public class CrusherMachineHandler implements MachineHandler {
      * - Crushing progress resets when input removed or no valid recipe
      */
     @Override
-    public void serverTick(final Level level, final BlockPos pos, final BlockState state, final BasicControllerBlockEntity be) {
-        if(!be.verifyStructure()) {
+    public void serverTick(final Level level, final BlockPos pos, final BlockState state,
+            final BasicControllerBlockEntity be) {
+        if (!be.verifyStructure()) {
             return;
         }
 
@@ -137,16 +130,15 @@ public class CrusherMachineHandler implements MachineHandler {
         final FuelValues fuelValues = level.fuelValues();
 
         // Read current state
-        int litTime           = be.getMachineData(DATA_LIT_TIME);
-        int litDuration       = be.getMachineData(DATA_LIT_DURATION);
-        int crushingProgress  = be.getMachineData(DATA_CRUSHING_PROGRESS);
+        int litTime = be.getMachineData(DATA_LIT_TIME);
+        int litDuration = be.getMachineData(DATA_LIT_DURATION);
+        int crushingProgress = be.getMachineData(DATA_CRUSHING_PROGRESS);
         int crushingTotalTime = be.getMachineData(DATA_CRUSHING_TOTAL_TIME);
 
-        final boolean wasLit = litTime > 0; //TODO this is never used. Remove if not needed
         boolean changed = false;
 
         // Decrement fuel (fuel burns regardless of input - vanilla behavior)
-        if(litTime > 0) {
+        if (litTime > 0) {
             litTime--;
             changed = true;
         }
@@ -157,21 +149,21 @@ public class CrusherMachineHandler implements MachineHandler {
         // Try to get recipe for current input
         final Optional<RecipeHolder<CrushingRecipe>> recipeOpt = getRecipe(level, inputStack);
 
-        if(recipeOpt.isPresent()) {
+        if (recipeOpt.isPresent()) {
             final RecipeHolder<CrushingRecipe> holder = recipeOpt.get();
             final CrushingRecipe recipe = holder.value();
             final int recipeCookTime = recipe.getCrushingTime();
 
             // Update total time if changed
-            if(crushingTotalTime != recipeCookTime) {
+            if (crushingTotalTime != recipeCookTime) {
                 crushingTotalTime = recipeCookTime;
                 changed = true;
             }
 
             // Try to consume fuel if not lit but have fuel and valid recipe
-            if(litTime <= 0 && !fuelStack.isEmpty() && canProcess(items, recipe)) {
+            if (litTime <= 0 && !fuelStack.isEmpty() && canProcess(items, recipe)) {
                 final int burnTime = getBurnTime(fuelValues, fuelStack);
-                if(burnTime > 0) {
+                if (burnTime > 0) {
                     litTime = burnTime;
                     litDuration = burnTime;
                     consumeFuel(items);
@@ -180,87 +172,90 @@ public class CrusherMachineHandler implements MachineHandler {
             }
 
             // Process if lit and can process
-            if(litTime > 0 && canProcess(items, recipe)) {
+            if (litTime > 0 && canProcess(items, recipe)) {
                 crushingProgress++;
-                if(crushingProgress >= crushingTotalTime) {
+                if (crushingProgress >= crushingTotalTime) {
                     crushingProgress = 0;
-                    process(items, recipe);
+                    process(level, items, recipe);
                     recordRecipeUsed(be, holder);
                 }
                 changed = true;
             }
 
             // No fuel - decay progress (vanilla behavior)
-            else if(litTime <= 0 && crushingProgress > 0) {
+            else if (litTime <= 0 && crushingProgress > 0) {
                 crushingProgress = Math.max(0, crushingProgress - 2);
                 changed = true;
             }
         }
 
         // No valid recipe - reset crushing progress but keep fuel burning
-        else if(crushingProgress > 0) {
+        else if (crushingProgress > 0) {
             crushingProgress = 0;
             changed = true;
         }
 
         // Write state back
-        be.setMachineData(DATA_LIT_TIME,            litTime);
-        be.setMachineData(DATA_LIT_DURATION,        litDuration);
-        be.setMachineData(DATA_CRUSHING_PROGRESS,   crushingProgress);
+        be.setMachineData(DATA_LIT_TIME, litTime);
+        be.setMachineData(DATA_LIT_DURATION, litDuration);
+        be.setMachineData(DATA_CRUSHING_PROGRESS, crushingProgress);
         be.setMachineData(DATA_CRUSHING_TOTAL_TIME, crushingTotalTime);
 
-        if(changed) {
+        if (changed) {
             be.setChanged();
         }
     }
 
-
-
-
     private Optional<RecipeHolder<CrushingRecipe>> getRecipe(final Level level, final ItemStack input) {
-        if(level == null || input.isEmpty() || !(level instanceof final ServerLevel serverLevel)) {
+        if (level == null || input.isEmpty() || !(level instanceof final ServerLevel serverLevel)) {
             return Optional.empty();
         }
         final SingleRecipeInput recipeInput = new SingleRecipeInput(input);
         return serverLevel.recipeAccess().getRecipeFor(ModRecipes.CRUSHING_TYPE, recipeInput, serverLevel);
     }
 
-
-
-
     private boolean canProcess(final NonNullList<ItemStack> items, final CrushingRecipe recipe) {
         final ItemStack result = recipe.getResult();
         final ItemStack outputSlot = items.get(OUTPUT_SLOT);
 
-        if(outputSlot.isEmpty()) {
-            return true;
+        if (!outputSlot.isEmpty()) {
+            if (!ItemStack.isSameItemSameComponents(outputSlot, result)) {
+                return false;
+            }
+            return outputSlot.getCount() + result.getCount() <= outputSlot.getMaxStackSize();
         }
-        if(!ItemStack.isSameItemSameComponents(outputSlot, result)) {
-            return false;
-        }
-        return outputSlot.getCount() + result.getCount() <= outputSlot.getMaxStackSize();
+
+        return true;
     }
 
-
-
-
-    private void process(final NonNullList<ItemStack> items, final CrushingRecipe recipe) {
+    private void process(final Level level, final NonNullList<ItemStack> items, final CrushingRecipe recipe) {
         final ItemStack input = items.get(INPUT_SLOT);
         final ItemStack result = recipe.getResult().copy();
         final ItemStack outputSlot = items.get(OUTPUT_SLOT);
 
-        if(outputSlot.isEmpty()) {
+        if (outputSlot.isEmpty()) {
             items.set(OUTPUT_SLOT, result);
-        }
-        else if(ItemStack.isSameItemSameComponents(outputSlot, result)) {
+        } else if (ItemStack.isSameItemSameComponents(outputSlot, result)) {
             outputSlot.grow(result.getCount());
         }
 
+        // Roll for byproduct
+        recipe.getByproduct().ifPresent(byproduct -> {
+            if (level.random.nextFloat() < byproduct.chance()) {
+                ItemStack byproductStack = byproduct.result().copy();
+                ItemStack byproductInSlot = items.get(BYPRODUCT_SLOT);
+                if (byproductInSlot.isEmpty()) {
+                    items.set(BYPRODUCT_SLOT, byproductStack);
+                } else if (ItemStack.isSameItemSameComponents(byproductInSlot, byproductStack)) {
+                    if (byproductInSlot.getCount() + byproductStack.getCount() <= byproductInSlot.getMaxStackSize()) {
+                        byproductInSlot.grow(byproductStack.getCount());
+                    }
+                }
+            }
+        });
+
         input.shrink(recipe.getInput().count());
     }
-
-
-
 
     private void consumeFuel(final NonNullList<ItemStack> items) {
         final ItemStack fuelStack = items.get(FUEL_SLOT);
@@ -268,49 +263,40 @@ public class CrusherMachineHandler implements MachineHandler {
         final ItemStack remainder = fuelItem.getCraftingRemainder();
         fuelStack.shrink(1);
 
-        if(fuelStack.isEmpty()) {
+        if (fuelStack.isEmpty()) {
             items.set(FUEL_SLOT, remainder.isEmpty() ? ItemStack.EMPTY : remainder);
         }
     }
 
-
-
-
     private void recordRecipeUsed(final BasicControllerBlockEntity be, final RecipeHolder<CrushingRecipe> holder) {
         String idStr = holder.id().toString();
         final int idx = idStr.lastIndexOf(" / ");
-        if(idx != -1) {
+        if (idx != -1) {
             idStr = idStr.substring(idx + 3, idStr.length() - 1);
         }
         final Identifier id = Identifier.tryParse(idStr);
-        if(id != null) {
+        if (id != null) {
             be.recipeUsed(id);
         }
     }
-
-
-
 
     public static int getBurnTime(final FuelValues fuelValues, final ItemStack fuel) {
         return fuelValues.burnDuration(fuel);
     }
 
-
-
-
     @Override
     public void saveAdditional(final ValueOutput output, final BasicControllerBlockEntity be) {
-        output.putShort(KEY_LIT_TIME,            (short) be.getMachineData(DATA_LIT_TIME));
-        output.putShort(KEY_LIT_DURATION,        (short) be.getMachineData(DATA_LIT_DURATION));
-        output.putShort(KEY_CRUSHING_PROGRESS,   (short) be.getMachineData(DATA_CRUSHING_PROGRESS));
+        output.putShort(KEY_LIT_TIME, (short) be.getMachineData(DATA_LIT_TIME));
+        output.putShort(KEY_LIT_DURATION, (short) be.getMachineData(DATA_LIT_DURATION));
+        output.putShort(KEY_CRUSHING_PROGRESS, (short) be.getMachineData(DATA_CRUSHING_PROGRESS));
         output.putShort(KEY_CRUSHING_TOTAL_TIME, (short) be.getMachineData(DATA_CRUSHING_TOTAL_TIME));
     }
 
     @Override
     public void loadAdditional(final ValueInput input, final BasicControllerBlockEntity be) {
-        be.setMachineData(DATA_LIT_TIME,            input.getShortOr(KEY_LIT_TIME,            (short) 0));
-        be.setMachineData(DATA_LIT_DURATION,        input.getShortOr(KEY_LIT_DURATION,        (short) 0));
-        be.setMachineData(DATA_CRUSHING_PROGRESS,   input.getShortOr(KEY_CRUSHING_PROGRESS,   (short) 0));
+        be.setMachineData(DATA_LIT_TIME, input.getShortOr(KEY_LIT_TIME, (short) 0));
+        be.setMachineData(DATA_LIT_DURATION, input.getShortOr(KEY_LIT_DURATION, (short) 0));
+        be.setMachineData(DATA_CRUSHING_PROGRESS, input.getShortOr(KEY_CRUSHING_PROGRESS, (short) 0));
         be.setMachineData(DATA_CRUSHING_TOTAL_TIME, input.getShortOr(KEY_CRUSHING_TOTAL_TIME, (short) 0));
     }
 
